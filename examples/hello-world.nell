@@ -1,0 +1,8 @@
+#import "Basic" // Contains print and some others basics stuffs
+
+// Entry point
+main :: () -> int {
+    print("Hello, World!")
+
+    return 0
+}
