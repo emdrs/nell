@@ -43,17 +43,23 @@ void show_token(Token token)
         case TOKEN_MINUS:
             type_str = "MINUS";
             break;
-        case TOKEN_OPENBRACE:
-            type_str = "OPENBRACE";
+        case TOKEN_LBRACE:
+            type_str = "LBRACE";
             break;
-        case TOKEN_CLOSEBRACE:
-            type_str = "CLOSEBRACE";
+        case TOKEN_RBRACE:
+            type_str = "RBRACE";
             break;
-        case TOKEN_OPENBRACKET:
-            type_str = "OPENBRACKET";
+        case TOKEN_LPAREN:
+            type_str = "LPAREN";
             break;
-        case TOKEN_CLOSEBRACKET:
-            type_str = "CLOSEBRACKET";
+        case TOKEN_RPAREN:
+            type_str = "RPAREN";
+            break;
+        case TOKEN_LBRACKET:
+            type_str = "LBRACKET";
+            break;
+        case TOKEN_RBRACKET:
+            type_str = "RBRACKET";
             break;
         case TOKEN_SEMICOLON:
             type_str = "SEMICOLON";
@@ -125,10 +131,10 @@ Token next_token()
     switch (ch) {
         case '\n': return (Token) { TOKEN_EOL,         "\n" };
         case ';':  return (Token) { TOKEN_SEMICOLON,    ";" };
-        case '{':  return (Token) { TOKEN_OPENBRACE,    "{" };
-        case '}':  return (Token) { TOKEN_CLOSEBRACE,   "}" };
-        case '(':  return (Token) { TOKEN_OPENBRACKET,  "(" };
-        case ')':  return (Token) { TOKEN_CLOSEBRACKET, ")" };
+        case '{':  return (Token) { TOKEN_LBRACE,       "{" };
+        case '}':  return (Token) { TOKEN_RBRACE,       "}" };
+        case '(':  return (Token) { TOKEN_LPAREN,       "(" };
+        case ')':  return (Token) { TOKEN_RPAREN,       ")" };
         case '=':  return (Token) { TOKEN_EQUALS,       "=" };
         case '\0': return (Token) { TOKEN_EOF,           "" };
     }
