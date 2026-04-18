@@ -7,13 +7,16 @@ typedef enum {
     AST_VARIABLE,
     AST_ASSIGN,
     AST_NUMBER,
+    AST_BLOCK,
+    AST_FUNC_DEF,
     AST_OPERATOR
 } ASTType;
 
-typedef struct {
-    TokenList list;
-    int pos;
-} Parser;
+typedef struct parameter {
+    char *name;
+    char *type;
+    struct parameter *next;
+} Parameter;
 
 typedef struct AST {
     ASTType type;
@@ -23,19 +26,39 @@ typedef struct AST {
 
         struct {
             char sign;
-            struct AST* left;
-            struct AST* right;
+            struct AST *left;
+            struct AST *right;
         } op;
 
         char *identifier;
 
         struct {
             char *assignment;
-            struct AST* to;
-            struct AST* value;
+            struct AST *to;
+            struct AST *value;
         } assign;
+
+        struct {
+            struct AST **statements;
+            int count;
+            int capacity;
+        } block;
+
+        struct {
+            char* name;
+            Parameter *params;
+            int param_count;
+            char *return_type;
+            struct AST *body;
+        } func_def;
     };
 } AST;
+
+typedef struct {
+    TokenList list;
+    int pos;
+} Parser;
+
 
 void show_ast(AST* node, int indent);
 
