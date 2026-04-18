@@ -70,6 +70,17 @@ void advance_parser(Parser* p, unsigned int amount) { p->pos += amount; }
 
 Token parser_peek(Parser* p, int offset) { return p->list.data[p->pos + offset]; }
 
+void match(Parser* p, TokenType type, const char* error_msg) {
+    Token token = parser_peek(p, 0);
+    if (token.type == type) {
+        advance_parser(p, 1);
+    } else {
+        fprintf(stderr, "Erro de Sintaxe: %s (Encontrado: %s)\n", 
+                error_msg, token.text);
+        exit(1);
+    }
+}
+
 AST * create_number(Token token)
 {
     AST *node = malloc(sizeof(AST));
