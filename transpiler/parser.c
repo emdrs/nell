@@ -107,6 +107,17 @@ AST * create_identifier(Token token)
     return node;
 }
 
+AST * create_assignment(Token to, AST *value, Token sign)
+{
+    AST *node = malloc(sizeof(AST));
+    node->type = AST_ASSIGN;
+    node->assign.assignment = sign.text;
+    node->assign.to = create_identifier(to);
+    node->assign.value = value;
+
+    return node;
+}
+
 AST* parse_factor(Parser* p) {
     Token token = parser_peek(p, 0);
 
@@ -137,11 +148,37 @@ AST * parse_expression(Parser *p)
     return left;
 }
 
+AST * parse_assignment(Parser *p)
+{
+    Token to   = parser_peek(p, 0);
+    Token sign = parser_peek(p, 1);
+
+    AST *node = malloc(sizeof(AST));
+    node->type = AST_ASSIGN;
+    node->assign.assignment = sign.text;
+    node->assign.to = create_identifier(to);
+
+    advance_parser(p, 2); // Consume identifier and equals
+    node->assign.value = parse_expression(p);
+
+    return node;
+}
+
+AST* parse_statement(Parser* p) {
+    Token t1 = parser_peek(p, 0);
+    Token t2 = parser_peek(p, 1);
+
+    if (t1.type == TOKEN_IDENTIFIER && t2.type == TOKEN_EQUALS)
+        return parse_assignment(p);
+
+    return parse_expression(p);
+}
+
 AST * parse(TokenList list)
 {
     Parser p = { list, 0 };
 
-    AST* ast = parse_expression(&p);
+    AST* ast = parse_statement(&p);
 
     Token t = parser_peek(&p, 0);
     if (t.type != TOKEN_EOF) {

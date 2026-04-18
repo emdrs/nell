@@ -11,8 +11,8 @@ int main(int argc, char *argv[])
 
     printf("\n");
 
-    // AST *ast = parse(tokens);
-    // show_ast(ast, 0);
+    AST *ast = parse(tokens);
+    show_ast(ast, 0);
 
     return 0;
 }
