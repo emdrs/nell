@@ -22,6 +22,12 @@ void show_token(Token token)
 {
     char *type_str;
     switch (token.type) {
+        case TOKEN_IDENTIFIER:
+            type_str = "IDENTIFIER";
+            break;
+        case TOKEN_EQUALS:
+            type_str = "EQUALS";
+            break;
         case TOKEN_NUMBER:
             type_str = "NUMBER";
             break;
@@ -36,7 +42,7 @@ void show_token(Token token)
             break;
     }
 
-    printf("%s(%s) ", type_str, token.value);
+    printf("%s(%s) ", type_str, token.text);
 }
 
 void show_token_list(TokenList list)
@@ -64,6 +70,18 @@ Token number()
     while (ch >= '0' && ch <= '9') advance();
 
     return (Token) {TOKEN_NUMBER, strndup(src + start, pos - start) };
+}
+
+Token identifier()
+{
+    int start = pos;
+
+    while (ch >= 'a' && ch <= 'z' ||
+           ch >= 'A' && ch <= 'Z' ||
+           ch >= '0' && ch <= '9' ||
+           ch == '_') advance();
+
+    return (Token) {TOKEN_IDENTIFIER, strndup(src + start, pos - start) };
 }
 
 Token sign()
@@ -94,6 +112,15 @@ Token next_token()
 
     if (ch > '0' && ch < '9') return number();
 
+    if (ch >= 'a' && ch <= 'z' ||
+        ch >= 'A' && ch <= 'Z' ||
+        ch == '_') return identifier();
+
+    if (ch == '=') {
+        advance();
+        return (Token) { TOKEN_EQUALS, "=" };
+    }
+
     if (ch == '+' || ch == '-') return sign();
 
     if (ch == '\0' ) return (Token) { TOKEN_EOF, "" };
@@ -104,10 +131,8 @@ Token next_token()
 
 TokenList tokenize(const char *source)
 {
-
     src = source;
     ch = src[pos];
-
 
     TokenList list = { NULL, 0, 2 };
     list.data = (Token*) malloc(sizeof(Token) * list.capacity);

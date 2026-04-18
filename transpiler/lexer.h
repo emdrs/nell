@@ -5,13 +5,15 @@ typedef enum {
     TOKEN_NUMBER,
     TOKEN_PLUS,
     TOKEN_MINUS,
+    TOKEN_IDENTIFIER,
+    TOKEN_EQUALS,
     TOKEN_EOF
 } TokenType;
 
 typedef struct {
     TokenType type;
 
-    char *value;
+    char *text;
 } Token;
 
 typedef struct {
