@@ -12,6 +12,9 @@ typedef enum {
     TOKEN_OPENBRACKET,
     TOKEN_CLOSEBRACKET,
     TOKEN_SEMICOLON,
+    TOKEN_COLON,
+    TOKEN_DOUBLE_COLON,
+    TOKEN_ARROW,
     TOKEN_EOL,
     TOKEN_EOF
 } TokenType;
@@ -33,6 +36,6 @@ void push(TokenList* list, Token token);
 void show_token(Token token);
 void show_token_list(TokenList list);
 
-TokenList tokenize(const char *source);
+TokenList tokenize(char *source);
 
 #endif

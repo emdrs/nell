@@ -4,9 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char *src;
+char *src;
 unsigned int pos = 0;
 char ch;
+char next_ch;
 
 void push(TokenList *list, Token token)
 {
@@ -57,12 +58,22 @@ void show_token(Token token)
         case TOKEN_SEMICOLON:
             type_str = "SEMICOLON";
             break;
+        case TOKEN_COLON:
+            type_str = "COLON";
+            break;
+        case TOKEN_DOUBLE_COLON:
+            type_str = "DOUBLE_COLON";
+            break;
+        case TOKEN_ARROW:
+            type_str = "ARROW";
+            break;
         case TOKEN_EOL:
             type_str = "EOL";
             break;
         case TOKEN_EOF:
             type_str = "EOF";
             break;
+          break;
         }
 
     printf(print_type, type_str, token.text);
@@ -80,8 +91,8 @@ void show_token_list(TokenList list)
 
 void advance()
 {
-    pos++;
-    ch = src[pos];
+    ch = src[++pos];
+    if (next_ch != '\0') next_ch = src[pos+1];
 }
 
 void skip_whitespaces() { while (ch == ' ' || ch == '\t') advance(); }
@@ -90,102 +101,71 @@ Token number()
 {
     int start = pos;
 
-    while (ch >= '0' && ch <= '9') advance();
+    while (next_ch >= '0' && next_ch <= '9') advance();
 
-    return (Token) {TOKEN_NUMBER, strndup(src + start, pos - start) };
+    return (Token) {TOKEN_NUMBER, strndup(src + start, (pos - start) + 1) };
 }
 
 Token identifier()
 {
     int start = pos;
 
-    while ((ch >= 'a' && ch <= 'z') ||
-           (ch >= 'A' && ch <= 'Z') ||
-           (ch >= '0' && ch <= '9') ||
-           ch == '_') advance();
+    while ((next_ch >= 'a' && next_ch <= 'z') ||
+           (next_ch >= 'A' && next_ch <= 'Z') ||
+           (next_ch >= '0' && next_ch <= '9') ||
+            next_ch == '_') advance();
 
-    return (Token) {TOKEN_IDENTIFIER, strndup(src + start, pos - start) };
-}
-
-Token sign()
-{
-    TokenType type;
-    switch (ch) {
-        case '+':
-            type = TOKEN_PLUS;
-            break;
-        case '-':
-            type = TOKEN_MINUS;
-            break;
-    }
-
-    char* string = malloc(2);
-    string[0] = ch;
-    string[1] = '\0';
-
-    Token t = (Token) { type, string  };
-    
-    advance();
-    return t;
+    return (Token) {TOKEN_IDENTIFIER, strndup(src + start, (pos - start) + 1) };
 }
 
 Token next_token()
 {
     skip_whitespaces();
 
-    if (ch == '\n') {
-        advance();
-        return (Token) { TOKEN_EOL, "\n" };
+    switch (ch) {
+        case '\n': return (Token) { TOKEN_EOL,         "\n" };
+        case ';':  return (Token) { TOKEN_SEMICOLON,   "\n" };
+        case '{':  return (Token) { TOKEN_OPENBRACE,    "{" };
+        case '}':  return (Token) { TOKEN_CLOSEBRACE,   "}" };
+        case '(':  return (Token) { TOKEN_OPENBRACKET,  "(" };
+        case ')':  return (Token) { TOKEN_CLOSEBRACKET, ")" };
+        case '=':  return (Token) { TOKEN_EQUALS,       "=" };
+        case '\0': return (Token) { TOKEN_EOF,           "" };
     }
 
-    if (ch == ';') {
-        advance();
-        return (Token) { TOKEN_SEMICOLON, "\n" };
+    if (ch == ':') {
+        if(next_ch == ':') {
+            advance();
+            return (Token){ TOKEN_DOUBLE_COLON, "::" }; 
+        }
+        return (Token){ TOKEN_COLON, ":" };
     }
 
-    if (ch == '{') {
-        advance();
-        return (Token) { TOKEN_OPENBRACE, "{" };
+    if (ch == '-') {
+        if (next_ch == '>') {
+            advance();
+            return (Token){ TOKEN_ARROW, "->" };
+        }
+        return (Token){ TOKEN_MINUS, "-" };
     }
 
-    if (ch == '}') {
-        advance();
-        return (Token) { TOKEN_CLOSEBRACE, "}" };
-    }
-
-    if (ch == '(') {
-        advance();
-        return (Token) { TOKEN_OPENBRACKET, "(" };
-    }
-
-    if (ch == ')') {
-        advance();
-        return (Token) { TOKEN_CLOSEBRACKET, ")" };
-    }
+    if (ch == '+') return (Token){ TOKEN_PLUS, "+" };
 
     if (ch > '0' && ch < '9') return number();
 
     if ((ch >= 'a' && ch <= 'z') ||
         (ch >= 'A' && ch <= 'Z') ||
-        ch == '_') return identifier();
-
-    if (ch == '=') {
-        advance();
-        return (Token) { TOKEN_EQUALS, "=" };
-    }
-
-    if (ch == '+' || ch == '-') return sign();
-
-    if (ch == '\0' ) return (Token) { TOKEN_EOF, "" };
+         ch == '_') return identifier();
 
     printf("Unexpected character: %c", ch);
     exit(1);
 }
 
-TokenList tokenize(const char *source)
+TokenList tokenize(char *source)
 {
     src = source;
     ch = src[pos];
+    next_ch = src[pos+1];
 
     TokenList list = { NULL, 0, 2 };
     list.data = (Token*) malloc(sizeof(Token) * list.capacity);
@@ -193,6 +173,8 @@ TokenList tokenize(const char *source)
     Token tk;
     do {
         tk = next_token();
+        advance();
+
         push(&list, tk);
     } while (tk.type != TOKEN_EOF);
 
