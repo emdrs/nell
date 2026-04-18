@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "lexer.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -16,19 +17,52 @@ void show_ast(AST* node, int indent)
 
     print_indent(indent);
 
-    if (node->type == AST_NUMBER) {
-        printf("NUMBER(%d)\n", node->number);
-    } else if(node->type == AST_VARIABLE) {
-        printf("VARIABLE(%s)\n", node->identifier);
-    } else if(node->type == AST_ASSIGN) {
-        printf("ASSIGN(%s)\n", node->assign.assignment);
-        show_ast(node->assign.to, indent + 1);
-        show_ast(node->assign.value, indent + 1);
-    } else if (node->type == AST_OPERATOR) {
-        printf("OPERATOR(%c)\n", node->op.sign);
+    switch (node->type) {
+        case AST_BLOCK:
+            printf("BLOCK(%d)\n", node->block.count);
+            for (int i = 0; i < node->block.count; i++) {
+                show_ast(node->block.statements[i], indent + 1);
+            }
+            break;
 
-        show_ast(node->op.left, indent + 1);
-        show_ast(node->op.right, indent + 1);
+        case AST_FUNC_DEF:
+            printf("FUNCTION_DEFINITION(%s -> %s)\n", 
+                    node->func_def.name, node->func_def.return_type);
+            
+            print_indent(indent + 1);
+            printf("PARAMS: ");
+            Parameter *p = node->func_def.params;
+            while (p) {
+                printf("[%s : %s] ", p->name, p->type);
+                p = p->next;
+            }
+            printf("\n");
+
+            show_ast(node->func_def.body, indent + 1);
+            break;
+
+        case AST_ASSIGN:
+            printf("ASSIGN(%s)\n", node->assign.assignment);
+            show_ast(node->assign.value, indent + 1);
+            break;
+
+        case AST_OPERATOR:
+            printf("OPERATOR(%c)\n", node->op.sign);
+            show_ast(node->op.left, indent + 1);
+            show_ast(node->op.right, indent + 1);
+            break;
+
+        case AST_NUMBER:
+            printf("NUMBER(%d)\n", node->number);
+            break;
+
+        case AST_VARIABLE:
+            printf("VARIABLE(%s)\n", node->identifier);
+            break;
+
+        default:
+            printf("UNKNOWN_NODE_TYPE\n");
+            break;
     }
 }
 
