@@ -124,7 +124,7 @@ Token next_token()
 
     switch (ch) {
         case '\n': return (Token) { TOKEN_EOL,         "\n" };
-        case ';':  return (Token) { TOKEN_SEMICOLON,   "\n" };
+        case ';':  return (Token) { TOKEN_SEMICOLON,    ";" };
         case '{':  return (Token) { TOKEN_OPENBRACE,    "{" };
         case '}':  return (Token) { TOKEN_CLOSEBRACE,   "}" };
         case '(':  return (Token) { TOKEN_OPENBRACKET,  "(" };
@@ -151,7 +151,7 @@ Token next_token()
 
     if (ch == '+') return (Token){ TOKEN_PLUS, "+" };
 
-    if (ch > '0' && ch < '9') return number();
+    if (ch >= '0' && ch <= '9') return number();
 
     if ((ch >= 'a' && ch <= 'z') ||
         (ch >= 'A' && ch <= 'Z') ||
