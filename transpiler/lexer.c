@@ -21,15 +21,20 @@ void push(TokenList *list, Token token)
 void show_token(Token token)
 {
     char *type_str;
+    char *simple = "%s ";
+    char *descritive = "%s(%s) ";
+    char *print_type = simple;
     switch (token.type) {
         case TOKEN_IDENTIFIER:
             type_str = "IDENTIFIER";
+            print_type = descritive;
             break;
         case TOKEN_EQUALS:
             type_str = "EQUALS";
             break;
         case TOKEN_NUMBER:
             type_str = "NUMBER";
+            print_type = descritive;
             break;
         case TOKEN_PLUS:
             type_str = "PLUS";
@@ -37,12 +42,30 @@ void show_token(Token token)
         case TOKEN_MINUS:
             type_str = "MINUS";
             break;
+        case TOKEN_OPENBRACE:
+            type_str = "OPENBRACE";
+            break;
+        case TOKEN_CLOSEBRACE:
+            type_str = "CLOSEBRACE";
+            break;
+        case TOKEN_OPENBRACKET:
+            type_str = "OPENBRACKET";
+            break;
+        case TOKEN_CLOSEBRACKET:
+            type_str = "CLOSEBRACKET";
+            break;
+        case TOKEN_SEMICOLON:
+            type_str = "SEMICOLON";
+            break;
+        case TOKEN_EOL:
+            type_str = "EOL";
+            break;
         case TOKEN_EOF:
             type_str = "EOF";
             break;
-    }
+        }
 
-    printf("%s(%s) ", type_str, token.text);
+    printf(print_type, type_str, token.text);
 }
 
 void show_token_list(TokenList list)
@@ -61,7 +84,7 @@ void advance()
     ch = src[pos];
 }
 
-void skip_whitespaces() { while (ch == ' ' || ch == '\n' || ch == '\t') advance(); }
+void skip_whitespaces() { while (ch == ' ' || ch == '\t') advance(); }
 
 Token number()
 {
@@ -76,9 +99,9 @@ Token identifier()
 {
     int start = pos;
 
-    while (ch >= 'a' && ch <= 'z' ||
-           ch >= 'A' && ch <= 'Z' ||
-           ch >= '0' && ch <= '9' ||
+    while ((ch >= 'a' && ch <= 'z') ||
+           (ch >= 'A' && ch <= 'Z') ||
+           (ch >= '0' && ch <= '9') ||
            ch == '_') advance();
 
     return (Token) {TOKEN_IDENTIFIER, strndup(src + start, pos - start) };
@@ -110,10 +133,40 @@ Token next_token()
 {
     skip_whitespaces();
 
+    if (ch == '\n') {
+        advance();
+        return (Token) { TOKEN_EOL, "\n" };
+    }
+
+    if (ch == ';') {
+        advance();
+        return (Token) { TOKEN_SEMICOLON, "\n" };
+    }
+
+    if (ch == '{') {
+        advance();
+        return (Token) { TOKEN_OPENBRACE, "{" };
+    }
+
+    if (ch == '}') {
+        advance();
+        return (Token) { TOKEN_CLOSEBRACE, "}" };
+    }
+
+    if (ch == '(') {
+        advance();
+        return (Token) { TOKEN_OPENBRACKET, "(" };
+    }
+
+    if (ch == ')') {
+        advance();
+        return (Token) { TOKEN_CLOSEBRACKET, ")" };
+    }
+
     if (ch > '0' && ch < '9') return number();
 
-    if (ch >= 'a' && ch <= 'z' ||
-        ch >= 'A' && ch <= 'Z' ||
+    if ((ch >= 'a' && ch <= 'z') ||
+        (ch >= 'A' && ch <= 'Z') ||
         ch == '_') return identifier();
 
     if (ch == '=') {
@@ -125,7 +178,7 @@ Token next_token()
 
     if (ch == '\0' ) return (Token) { TOKEN_EOF, "" };
 
-    printf("Unexpected character");
+    printf("Unexpected character: %c", ch);
     exit(1);
 }
 
