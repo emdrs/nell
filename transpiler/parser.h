@@ -4,6 +4,8 @@
 #include "lexer.h"
 
 typedef enum {
+    AST_VARIABLE,
+    AST_ASSIGN,
     AST_NUMBER,
     AST_OPERATOR
 } ASTType;
@@ -24,6 +26,14 @@ typedef struct AST {
             struct AST* left;
             struct AST* right;
         } op;
+
+        char *identifier;
+
+        struct {
+            char *assignment;
+            struct AST* to;
+            struct AST* value;
+        } assign;
     };
 } AST;
 
