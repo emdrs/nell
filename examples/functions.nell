@@ -4,3 +4,5 @@ commands :: () -> void {
     b := 10;
     c += a * b;
 }
+
+b :: (x: int) -> void { }

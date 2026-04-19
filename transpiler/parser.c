@@ -225,25 +225,72 @@ AST * parse_const_def(Parser *p)
 
 AST * parse_block(Parser *p, int main);
 
+void create_param(Parameter **params, char *name, char *type)
+{
+    Parameter *parameter = (Parameter*) malloc(sizeof(Parameter));
+
+    parameter->name = name;
+    parameter->type = type;
+
+    if (*params == NULL) {
+        *params = parameter;
+        return;
+    }
+
+    Parameter *p;
+    for (p = *params;p->next != NULL;p = p->next);
+    p->next = parameter;
+}
+
+int is_func_params(Parser *p, int offset)
+{
+    if (parser_peek(p, offset).type != TOKEN_IDENTIFIER) return 0;
+    if (parser_peek(p, offset + 1).type != TOKEN_COLON) return 0;
+    if (parser_peek(p, offset + 2).type != TOKEN_IDENTIFIER) return 0;
+
+    return 1;
+}
+
+void parse_func_params(Parser *p, AST *node)
+{
+    Parameter *params = NULL;
+    int count = 0;
+
+    if (is_func_params(p, 0)) {
+        while (1) {
+            count++;
+            create_param(&params, parser_peek(p, 0).text, parser_peek(p, 2).text);
+            advance_parser(p, 3);
+
+            if (parser_peek(p, 3).type != TOKEN_COMMA) break;
+            advance_parser(p, 1);
+        }
+    }
+
+    node->func_def.params = params;
+    node->func_def.param_count = count;
+}
+
 AST * parse_func_def(Parser *p)
 {
     Token name = parser_peek(p, 0);
-    Token return_type = parser_peek(p, 5);
 
     AST *node = malloc(sizeof(AST));
     node->type = AST_FUNC_DEF;
 
     node->func_def.name = name.text;
-    node->func_def.return_type = return_type.text;
-    node->func_def.params = NULL;
-    node->func_def.param_count = 0;
+    advance_parser(p, 3); // Identifier, Double colon, Lparen
+    parse_func_params(p, node);
 
-    advance_parser(p, 7);
+    advance_parser(p, 2); // Rparen, Arrow
+    Token return_type = parser_peek(p, 0);
+    node->func_def.return_type = return_type.text;
+
+    advance_parser(p, 2); // Return type, Lbrace
     node->func_def.body = parse_block(p, 0);
 
     return node;
 }
-
 
 int is_var_def(Parser *p, int *explicit_type)
 {
@@ -282,11 +329,15 @@ int is_assignment(Parser *p)
     return 1;
 }
 
+
 int is_func_def(Parser *p)
 {
     if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
     if (parser_peek(p, 1).type != TOKEN_DOUBLE_COLON) return 0;
     if (parser_peek(p, 2).type != TOKEN_LPAREN) return 0;
+
+    if (is_func_params(p, 3)) return 1;
+
     if (parser_peek(p, 3).type != TOKEN_RPAREN) return 0;
     if (parser_peek(p, 4).type != TOKEN_ARROW) return 0;
     if (parser_peek(p, 5).type != TOKEN_IDENTIFIER) return 0;
