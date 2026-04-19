@@ -37,6 +37,12 @@ void show_token(Token token)
             type_str = "NUMBER";
             print_type = descritive;
             break;
+        case TOKEN_STAR:
+            type_str = "STAR";
+            break;
+        case TOKEN_SLASH:
+            type_str = "SLASH";
+            break;
         case TOKEN_PLUS:
             type_str = "PLUS";
             break;
@@ -155,15 +161,41 @@ Token next_token()
         return (Token){ TOKEN_COLON, ":" };
     }
 
+    if (ch == '*') {
+        if (next_ch == '=') {
+            advance();
+            return (Token){ TOKEN_EQUALS, "*=" };
+        }
+        return (Token){ TOKEN_STAR, "*" };
+        
+        }
+    if (ch == '/') {
+        if (next_ch == '=') {
+            advance();
+            return (Token){ TOKEN_EQUALS, "/=" };
+        }
+        return (Token){ TOKEN_SLASH, "/" };
+    }
+
     if (ch == '-') {
         if (next_ch == '>') {
             advance();
             return (Token){ TOKEN_ARROW, "->" };
         }
+        if (next_ch == '=') {
+            advance();
+            return (Token){ TOKEN_EQUALS, "-=" };
+        }
         return (Token){ TOKEN_MINUS, "-" };
     }
 
-    if (ch == '+') return (Token){ TOKEN_PLUS, "+" };
+    if (ch == '+') {
+        if (next_ch == '=') {
+            advance();
+            return (Token){ TOKEN_EQUALS, "+=" };
+        }
+        return (Token){ TOKEN_PLUS, "+" };
+    }
 
     if (ch >= '0' && ch <= '9') return number();
 

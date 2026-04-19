@@ -160,7 +160,10 @@ AST * parse_expression(Parser *p)
     while (1) {
         Token t = parser_peek(p, 0);
 
-        if (t.type == TOKEN_PLUS || t.type == TOKEN_MINUS) {
+        if (t.type == TOKEN_PLUS  ||
+            t.type == TOKEN_MINUS ||
+            t.type == TOKEN_STAR  ||
+            t.type == TOKEN_SLASH) {
             advance_parser(p, 1);
 
             AST* right = parse_factor(p);
