@@ -222,6 +222,8 @@ AST * parse_function(Parser* p)
     while (parser_peek(p, 0).type != TOKEN_RPAREN) {
         parameter = create_parameter(parameter, parser_peek(p, 0).text, parser_peek(p, 2).text);
         advance_parser(p, 3);
+        if (parser_peek(p, 0).type == TOKEN_COMMA)
+            advance_parser(p, 1);
         params_count++;
     }
     advance_parser(p, 1);
