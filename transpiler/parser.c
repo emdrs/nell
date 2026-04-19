@@ -248,6 +248,17 @@ int is_const_def(Parser *p)
     return 1;
 }
 
+int is_assignment(Parser *p)
+{
+    if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
+    if (parser_peek(p, 1).type != TOKEN_EQUALS) return 0;
+
+    if (parser_peek(p, 2).type != TOKEN_IDENTIFIER &&
+        parser_peek(p, 2).type != TOKEN_NUMBER) return 0;
+
+    return 1;
+}
+
 AST * parse_statement(Parser* p)
 {
     Token t = parser_peek(p, 0);
@@ -260,6 +271,10 @@ AST * parse_statement(Parser* p)
         advance_parser(p, 1);
     } else if (is_const_def(p)) {
         node = parse_const_def(p);
+        match(p, TOKEN_SEMICOLON, "; needed to end a command");
+        advance_parser(p, 1);
+    } else if (is_assignment(p)) {
+        node = parse_assignment(p);
         match(p, TOKEN_SEMICOLON, "; needed to end a command");
         advance_parser(p, 1);
     } else {
