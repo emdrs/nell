@@ -43,6 +43,7 @@ void show_ast(AST* node, int indent)
 
         case AST_ASSIGN:
             printf("ASSIGN(%s)\n", node->assign.assignment);
+            show_ast(node->assign.to, indent + 1);
             show_ast(node->assign.value, indent + 1);
             break;
 
@@ -73,7 +74,7 @@ Token parser_peek(Parser* p, int offset) { return p->list.data[p->pos + offset];
 void match(Parser* p, TokenType type, const char* error_msg) {
     Token token = parser_peek(p, 0);
     if (token.type != type) {
-        fprintf(stderr, "Erro de Sintaxe: %s (Encontrado: %s)\n", 
+        fprintf(stderr, "Erro de Sintaxe: %s (Found: '%s')\n", 
                 error_msg, token.text);
         exit(1);
     }
@@ -116,11 +117,12 @@ AST * create_assignment(Token to, AST *value, Token sign)
     return node;
 }
 
-AST * create_block() {
+AST * create_block(int main) {
     AST* node = malloc(sizeof(AST));
     node->type = AST_BLOCK;
     node->block.count = 0;
-    node->block.capacity = 4; // Começa pequeno
+    node->block.main = main;
+    node->block.capacity = 1;
     node->block.statements = malloc(sizeof(AST*) * node->block.capacity);
     return node;
 }
@@ -132,7 +134,6 @@ void add_to_block(AST* block, AST* stmt) {
     }
     block->block.statements[block->block.count++] = stmt;
 }
-
 
 AST* parse_factor(Parser* p) {
     Token token = parser_peek(p, 0);
@@ -180,7 +181,73 @@ AST * parse_assignment(Parser *p)
     return node;
 }
 
-AST * parse_block(Parser *p);
+Parameter * create_parameter(Parameter *parameter, char *name, char *type)
+{
+    Parameter *new_parameter = (Parameter*) malloc(sizeof(Parameter));
+    new_parameter->name = name;
+    new_parameter->type = type;
+    new_parameter->next = NULL;
+
+    if (parameter == NULL) return new_parameter;
+
+    while (parameter->next != NULL) parameter = parameter->next;
+
+    parameter->next = new_parameter;
+
+    return parameter;
+}
+
+AST * create_function(char * name, char *return_type, AST *body, Parameter *params,
+                      int param_count) {
+    AST* node = malloc(sizeof(AST));
+    node->type = AST_FUNC_DEF;
+    node->func_def.name = name;
+    node->func_def.return_type = return_type;
+    node->func_def.body = body;
+    node->func_def.params = params;
+    node->func_def.param_count = param_count;
+    return node;
+}
+
+AST * parse_block(Parser *p, int main);
+
+AST * parse_function(Parser* p)
+{
+    p->in_function = true;
+    Token name = parser_peek(p, 0);
+    advance_parser(p, 3);
+
+    Parameter *parameter = NULL;
+    int params_count = 0;
+    while (parser_peek(p, 0).type != TOKEN_RPAREN) {
+        parameter = create_parameter(parameter, parser_peek(p, 0).text, parser_peek(p, 2).text);
+        advance_parser(p, 3);
+        params_count++;
+    }
+    advance_parser(p, 1);
+
+    match(p, TOKEN_ARROW, "Functions need '-> return type'");
+    Token return_type = parser_peek(p, 1);
+    advance_parser(p, 3);
+
+    AST *body = parse_block(p, 0);
+
+    p->in_function = false;
+    return create_function(name.text, return_type.text, body, parameter, params_count);
+}
+
+int is_function_definition(Parser* p) {
+    if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
+    if (parser_peek(p, 1).type != TOKEN_DOUBLE_COLON) return 0;
+    if (parser_peek(p, 2).type != TOKEN_LPAREN) return 0;
+
+    if (parser_peek(p, 3).type == TOKEN_RPAREN) return 1;
+
+    if (parser_peek(p, 3).type == TOKEN_IDENTIFIER && 
+        parser_peek(p, 4).type == TOKEN_COLON) return 1;
+
+    return 0;
+}
 
 AST * parse_statement(Parser* p)
 {
@@ -193,7 +260,13 @@ AST * parse_statement(Parser* p)
         match(p, TOKEN_SEMICOLON, "; needed to end a command");
         advance_parser(p, 1);
     } else if (t1.type == TOKEN_LBRACE) {
-        node = parse_block(p);
+        node = parse_block(p, 0);
+    } else if (is_function_definition(p)) {
+        if(p->in_function) {
+            printf("Function definition e not allowed here");
+            exit(1);
+        }
+        node = parse_function(p);
     } else {
         printf("Unknown syntax:"); 
         exit(1);
@@ -202,30 +275,34 @@ AST * parse_statement(Parser* p)
     return node;
 }
 
-AST * parse_block(Parser* p)
+int is_block_end(Parser *p, AST *node)
 {
-    AST* block = create_block();
+    Token token = parser_peek(p, 0);
+    return token.type == (node->block.main == 1 ? TOKEN_EOF : TOKEN_RBRACE);
+}
 
-    advance_parser(p, 1); // Consume {
+AST * parse_block(Parser* p, int main)
+{
+    AST* block = create_block(main);
 
-    while (parser_peek(p, 0).type != TOKEN_RBRACE)
+    while (!is_block_end(p, block))
         add_to_block(block, parse_statement(p));
 
-    advance_parser(p, 1); // Consume }
+    if(main == 0) advance_parser(p, 1); // Consume }
 
     return block;
 }
 
 AST * parse(TokenList list)
 {
-    Parser p = { list, 0 };
+    Parser p = { list, 0, false };
 
-    AST* ast = parse_block(&p);
+    AST* ast = parse_block(&p, 1);
 
     Token t = parser_peek(&p, 0);
     if (t.type != TOKEN_EOF) {
         printf("Erro: token inesperado após expressão\n");
-        printf("%s", t.text);
+        printf("Got: '%s'", t.text);
         exit(1);
     }
 

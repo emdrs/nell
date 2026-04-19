@@ -3,12 +3,16 @@
 
 #include "lexer.h"
 
+#define false 0
+#define true 1
+
 typedef enum {
     AST_VARIABLE,
     AST_ASSIGN,
     AST_NUMBER,
     AST_BLOCK,
     AST_FUNC_DEF,
+    AST_FUNC_EXE,
     AST_OPERATOR
 } ASTType;
 
@@ -42,6 +46,7 @@ typedef struct AST {
             struct AST **statements;
             int count;
             int capacity;
+            int main;
         } block;
 
         struct {
@@ -57,13 +62,11 @@ typedef struct AST {
 typedef struct {
     TokenList list;
     int pos;
+    int in_function;
 } Parser;
 
 
 void show_ast(AST* node, int indent);
-
-AST * create_number(Token token);
-AST * create_operator(Token token, AST *left, AST *right);
 
 AST * parse(TokenList list);
 
