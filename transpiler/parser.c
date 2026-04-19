@@ -203,6 +203,22 @@ AST * parse_var_def(Parser *p, int explicit_type)
     return node;
 }
 
+AST * parse_const_def(Parser *p)
+{
+    Token name = parser_peek(p, 0);
+    Token value = parser_peek(p, 2);
+
+    AST *node = malloc(sizeof(AST));
+    node->type = AST_CONST_DEF;
+    node->field.name = name.text;
+    node->field.type = NULL;
+
+    advance_parser(p, 2); // Consume identifier and double colon
+    node->field.value = parse_expression(p);
+
+    return node;
+}
+
 AST * parse_block(Parser *p, int main);
 
 int is_var_def(Parser *p, int *explicit_type)
@@ -220,6 +236,17 @@ int is_var_def(Parser *p, int *explicit_type)
     return 1;
 }
 
+int is_const_def(Parser *p)
+{
+    if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
+    if (parser_peek(p, 1).type != TOKEN_DOUBLE_COLON) return 0;
+
+    if (parser_peek(p, 2).type != TOKEN_IDENTIFIER &&
+        parser_peek(p, 2).type != TOKEN_NUMBER) return 0;
+
+    return 1;
+}
+
 AST * parse_statement(Parser* p)
 {
     Token t = parser_peek(p, 0);
@@ -228,6 +255,10 @@ AST * parse_statement(Parser* p)
     int explicit_type;
     if (is_var_def(p, &explicit_type)) {
         node = parse_var_def(p, explicit_type);
+        match(p, TOKEN_SEMICOLON, "; needed to end a command");
+        advance_parser(p, 1);
+    } else if (is_const_def(p)) {
+        node = parse_const_def(p);
         match(p, TOKEN_SEMICOLON, "; needed to end a command");
         advance_parser(p, 1);
     } else {
