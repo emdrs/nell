@@ -7,7 +7,9 @@
 #define true 1
 
 typedef enum {
-    AST_VARIABLE,
+    AST_IDENTIFIER,
+    AST_VAR_DEF,
+    AST_CONST_DEF,
     AST_ASSIGN,
     AST_NUMBER,
     AST_BLOCK,
@@ -34,6 +36,7 @@ typedef struct AST {
             struct AST *right;
         } op;
 
+
         char *identifier;
 
         struct {
@@ -41,6 +44,12 @@ typedef struct AST {
             struct AST *to;
             struct AST *value;
         } assign;
+
+        struct {
+            char *name;
+            char *type;
+            struct AST *value;
+        } field;
 
         struct {
             struct AST **statements;

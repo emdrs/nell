@@ -57,12 +57,17 @@ void show_ast(AST* node, int indent)
             printf("NUMBER(%d)\n", node->number);
             break;
 
-        case AST_VARIABLE:
-            printf("VARIABLE(%s)\n", node->identifier);
+        case AST_IDENTIFIER:
+            printf("IDENTIFIER(%s)\n", node->identifier);
             break;
 
-        default:
-            printf("UNKNOWN_NODE_TYPE\n");
+        case AST_VAR_DEF:
+            printf("VAR_DEF(%s:%s)\n", node->field.name, node->field.type);
+            if (node->field.value != NULL) show_ast(node->field.value, indent + 1);
+            break;
+
+        case AST_CONST_DEF:
+            printf("CONST_DEF(%s:%s)\n", node->field.name, node->field.type);
             break;
     }
 }
@@ -101,7 +106,7 @@ AST * create_operator(Token token, AST *left, AST *right)
 AST * create_identifier(Token token)
 {
     AST *node = malloc(sizeof(AST));
-    node->type = AST_VARIABLE;
+    node->type = AST_IDENTIFIER;
     node->identifier = token.text;
     return node;
 }
@@ -181,7 +186,36 @@ AST * parse_assignment(Parser *p)
     return node;
 }
 
+AST * parse_var_def(Parser *p, int explicit_type)
+{
+    Token name = parser_peek(p, 0);
+    Token type = parser_peek(p, 2);
+    Token value = parser_peek(p, 4);
+
+    AST *node = malloc(sizeof(AST));
+    node->type = AST_VAR_DEF;
+    node->field.name = name.text;
+    node->field.type = type.text;
+
+    advance_parser(p, 4); // Consume identifier and equals
+    node->field.value = parse_expression(p);
+
+    return node;
+}
+
 AST * parse_block(Parser *p, int main);
+
+int is_var_def(Parser *p)
+{
+    if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
+    if (parser_peek(p, 1).type != TOKEN_COLON) return 0;
+    if (parser_peek(p, 2).type != TOKEN_IDENTIFIER) return 0;
+    if (parser_peek(p, 3).type != TOKEN_EQUALS) return 0;
+    if (parser_peek(p, 4).type != TOKEN_IDENTIFIER &&
+        parser_peek(p, 4).type != TOKEN_NUMBER) return 0;
+
+    return 1;
+}
 
 AST * parse_statement(Parser* p)
 {
@@ -189,31 +223,23 @@ AST * parse_statement(Parser* p)
     Token t2 = parser_peek(p, 1);
 
     AST *node;
-    if (t1.type == TOKEN_IDENTIFIER && t2.type == TOKEN_EQUALS) {
-        node = parse_assignment(p);
+    if (is_var_def(p)) {
+        node = parse_var_def(p, 1);
         match(p, TOKEN_SEMICOLON, "; needed to end a command");
         advance_parser(p, 1);
-    } else if (t1.type == TOKEN_LBRACE) {
-        node = parse_block(p, 0);
     } else {
-        printf("Unknown syntax:"); 
+        printf("Unexpected token: '%s'\n", t1.text); 
         exit(1);
     }
 
     return node;
 }
 
-int is_block_end(Parser *p, AST *node)
-{
-    Token token = parser_peek(p, 0);
-    return token.type == (node->block.main == 1 ? TOKEN_EOF : TOKEN_RBRACE);
-}
-
 AST * parse_block(Parser* p, int main)
 {
     AST* block = create_block(main);
 
-    while (!is_block_end(p, block))
+    while (parser_peek(p, 0).type != TOKEN_EOF)
         add_to_block(block, parse_statement(p));
 
     if(main == 0) advance_parser(p, 1); // Consume }
@@ -225,7 +251,7 @@ AST * parse(TokenList list)
 {
     Parser p = { list, 0, false };
 
-    AST* ast = parse_statement(&p);
+    AST* ast = parse_block(&p, 1);
 
     Token t = parser_peek(&p, 0);
     if (t.type != TOKEN_EOF) {
