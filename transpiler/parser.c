@@ -116,6 +116,24 @@ AST * create_assignment(Token to, AST *value, Token sign)
     return node;
 }
 
+AST * create_block() {
+    AST* node = malloc(sizeof(AST));
+    node->type = AST_BLOCK;
+    node->block.count = 0;
+    node->block.capacity = 4; // Começa pequeno
+    node->block.statements = malloc(sizeof(AST*) * node->block.capacity);
+    return node;
+}
+
+void add_to_block(AST* block, AST* stmt) {
+    if (block->block.count >= block->block.capacity) {
+        block->block.capacity *= 2;
+        block->block.statements = realloc(block->block.statements, sizeof(AST*) * block->block.capacity);
+    }
+    block->block.statements[block->block.count++] = stmt;
+}
+
+
 AST* parse_factor(Parser* p) {
     Token token = parser_peek(p, 0);
 
@@ -162,49 +180,41 @@ AST * parse_assignment(Parser *p)
     return node;
 }
 
-AST * parse_statement(Parser* p) {
+AST * parse_block(Parser *p);
+
+AST * parse_statement(Parser* p)
+{
     Token t1 = parser_peek(p, 0);
     Token t2 = parser_peek(p, 1);
 
     AST *node;
-    if (t1.type == TOKEN_IDENTIFIER && t2.type == TOKEN_EQUALS)
+    if (t1.type == TOKEN_IDENTIFIER && t2.type == TOKEN_EQUALS) {
         node = parse_assignment(p);
-    else {
+        match(p, TOKEN_SEMICOLON, "; needed to end a command");
+        advance_parser(p, 1);
+    } else if (t1.type == TOKEN_LBRACE) {
+        node = parse_block(p);
+    } else {
         printf("Unknown syntax:"); 
         exit(1);
     }
 
-    match(p, TOKEN_SEMICOLON, "Semicolon needed to end a command");
-    advance_parser(p, 1);
     return node;
 }
 
-AST * create_block() {
-    AST* node = malloc(sizeof(AST));
-    node->type = AST_BLOCK;
-    node->block.count = 0;
-    node->block.capacity = 4; // Começa pequeno
-    node->block.statements = malloc(sizeof(AST*) * node->block.capacity);
-    return node;
-}
-
-void add_to_block(AST* block, AST* stmt) {
-    if (block->block.count >= block->block.capacity) {
-        block->block.capacity *= 2;
-        block->block.statements = realloc(block->block.statements, sizeof(AST*) * block->block.capacity);
-    }
-    block->block.statements[block->block.count++] = stmt;
-}
-
-AST * parse_block(Parser* p) {
+AST * parse_block(Parser* p)
+{
     AST* block = create_block();
 
-    while (parser_peek(p, 0).type != TOKEN_EOF)
+    advance_parser(p, 1); // Consume {
+
+    while (parser_peek(p, 0).type != TOKEN_RBRACE)
         add_to_block(block, parse_statement(p));
+
+    advance_parser(p, 1); // Consume }
 
     return block;
 }
-
 
 AST * parse(TokenList list)
 {
