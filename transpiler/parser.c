@@ -68,6 +68,7 @@ void show_ast(AST* node, int indent)
 
         case AST_CONST_DEF:
             printf("CONST_DEF(%s:%s)\n", node->field.name, node->field.type);
+            show_ast(node->field.value, indent + 1);
             break;
     }
 }
