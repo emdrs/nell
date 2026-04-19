@@ -70,6 +70,12 @@ void show_token(Token token)
         case TOKEN_DOUBLE_COLON:
             type_str = "DOUBLE_COLON";
             break;
+        case TOKEN_COMMA:
+            type_str = "COMMA";
+            break;
+        case TOKEN_DOT:
+            type_str = "DOT";
+            break;
         case TOKEN_ARROW:
             type_str = "ARROW";
             break;
@@ -136,6 +142,8 @@ Token next_token()
         case '(':  return (Token) { TOKEN_LPAREN,       "(" };
         case ')':  return (Token) { TOKEN_RPAREN,       ")" };
         case '=':  return (Token) { TOKEN_EQUALS,       "=" };
+        case ',':  return (Token) { TOKEN_COMMA,        "," };
+        case '.':  return (Token) { TOKEN_DOT,          "." };
         case '\0': return (Token) { TOKEN_EOF,           "" };
     }
 
