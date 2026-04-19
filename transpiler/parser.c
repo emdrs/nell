@@ -235,11 +235,11 @@ AST * parse_func_def(Parser *p)
 
     node->func_def.name = name.text;
     node->func_def.return_type = return_type.text;
-    node->func_def.body = NULL;
     node->func_def.params = NULL;
     node->func_def.param_count = 0;
 
-    advance_parser(p, 6); // Consume identifier and double colon
+    advance_parser(p, 7);
+    node->func_def.body = parse_block(p, 0);
 
     return node;
 }
@@ -291,6 +291,8 @@ int is_func_def(Parser *p)
     if (parser_peek(p, 4).type != TOKEN_ARROW) return 0;
     if (parser_peek(p, 5).type != TOKEN_IDENTIFIER) return 0;
 
+    if (parser_peek(p, 6).type != TOKEN_LBRACE) return 0;
+
     return 1;
 }
 
@@ -314,8 +316,6 @@ AST * parse_statement(Parser* p)
         advance_parser(p, 1);
     } else if (is_func_def(p)) {
         node = parse_func_def(p);
-        match(p, TOKEN_SEMICOLON, "; needed to end a command");
-        advance_parser(p, 1);
     } else {
         printf("Unexpected token: '%s'\n", t.text); 
         exit(1);
@@ -324,11 +324,16 @@ AST * parse_statement(Parser* p)
     return node;
 }
 
+int is_block_end(Parser *p, int is_main)
+{
+    return parser_peek(p, 0).type == ((is_main) ? TOKEN_EOF : TOKEN_RBRACE);
+}
+
 AST * parse_block(Parser* p, int main)
 {
     AST* block = create_block(main);
 
-    while (parser_peek(p, 0).type != TOKEN_EOF)
+    while (!is_block_end(p, main))
         add_to_block(block, parse_statement(p));
 
     if(main == 0) advance_parser(p, 1); // Consume }
