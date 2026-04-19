@@ -14,7 +14,6 @@ typedef enum {
     AST_NUMBER,
     AST_BLOCK,
     AST_FUNC_DEF,
-    AST_FUNC_EXE,
     AST_OPERATOR
 } ASTType;
 

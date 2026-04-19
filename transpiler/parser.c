@@ -189,15 +189,15 @@ AST * parse_assignment(Parser *p)
 AST * parse_var_def(Parser *p, int explicit_type)
 {
     Token name = parser_peek(p, 0);
-    Token type = parser_peek(p, 2);
-    Token value = parser_peek(p, 4);
+    Token value = parser_peek(p, 2);
 
     AST *node = malloc(sizeof(AST));
     node->type = AST_VAR_DEF;
     node->field.name = name.text;
-    node->field.type = type.text;
-
-    advance_parser(p, 4); // Consume identifier and equals
+    node->field.type = (explicit_type) ? value.text : NULL;
+    
+    // Consume identifier, colon, type(not explicit) and equals
+    advance_parser(p, 3 + explicit_type);
     node->field.value = parse_expression(p);
 
     return node;
@@ -205,30 +205,33 @@ AST * parse_var_def(Parser *p, int explicit_type)
 
 AST * parse_block(Parser *p, int main);
 
-int is_var_def(Parser *p)
+int is_var_def(Parser *p, int *explicit_type)
 {
     if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
     if (parser_peek(p, 1).type != TOKEN_COLON) return 0;
-    if (parser_peek(p, 2).type != TOKEN_IDENTIFIER) return 0;
-    if (parser_peek(p, 3).type != TOKEN_EQUALS) return 0;
-    if (parser_peek(p, 4).type != TOKEN_IDENTIFIER &&
-        parser_peek(p, 4).type != TOKEN_NUMBER) return 0;
+
+    *explicit_type = parser_peek(p, 2).type == TOKEN_IDENTIFIER;
+
+    if (parser_peek(p, 2 + (*explicit_type)).type != TOKEN_EQUALS) return 0;
+
+    if (parser_peek(p, 3 + (*explicit_type)).type != TOKEN_IDENTIFIER &&
+        parser_peek(p, 3 + (*explicit_type)).type != TOKEN_NUMBER) return 0;
 
     return 1;
 }
 
 AST * parse_statement(Parser* p)
 {
-    Token t1 = parser_peek(p, 0);
-    Token t2 = parser_peek(p, 1);
+    Token t = parser_peek(p, 0);
 
     AST *node;
-    if (is_var_def(p)) {
-        node = parse_var_def(p, 1);
+    int explicit_type;
+    if (is_var_def(p, &explicit_type)) {
+        node = parse_var_def(p, explicit_type);
         match(p, TOKEN_SEMICOLON, "; needed to end a command");
         advance_parser(p, 1);
     } else {
-        printf("Unexpected token: '%s'\n", t1.text); 
+        printf("Unexpected token: '%s'\n", t.text); 
         exit(1);
     }
 

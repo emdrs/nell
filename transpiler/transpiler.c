@@ -9,7 +9,6 @@ char * read_all_file(char *path)
     FILE *f;
     f = fopen(path, "r");
 
-
     fseek(f, 0, SEEK_END); 
     long size = ftell(f);
     fseek(f, 0, SEEK_SET); 
@@ -22,6 +21,13 @@ char * read_all_file(char *path)
 
 int main(int argc, char *argv[])
 {
+    printf("--- Debug de Argumentos ---\n");
+    printf("Total de args (argc): %d\n", argc);
+    for (int i = 0; i < argc; i++) {
+        printf("argv[%d]: %s\n", i, argv[i]);
+    }
+    printf("---------------------------\n");
+
     if (argc < 2) {
         printf("./transpiler file.nell");
         return 1;
