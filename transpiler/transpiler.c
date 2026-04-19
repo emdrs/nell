@@ -1,11 +1,35 @@
 #include "lexer.h"
 #include "parser.h"
 #include <stdio.h>
+#include <stdlib.h>
 
+
+char * read_all_file(char *path)
+{
+    FILE *f;
+    f = fopen(path, "r");
+
+
+    fseek(f, 0, SEEK_END); 
+    long size = ftell(f);
+    fseek(f, 0, SEEK_SET); 
+
+    char *content = (char*) malloc(size);
+    fread(content, 1, size, f);
+
+    return content;
+}
 
 int main(int argc, char *argv[])
 {
-    TokenList tokens = tokenize(argv[1]);
+    if (argc < 2) {
+        printf("./transpiler file.nell");
+        return 1;
+    }
+
+    char * source = read_all_file(argv[1]);
+
+    TokenList tokens = tokenize(source);
 
     show_token_list(tokens);
 
