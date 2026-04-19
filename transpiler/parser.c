@@ -72,9 +72,7 @@ Token parser_peek(Parser* p, int offset) { return p->list.data[p->pos + offset];
 
 void match(Parser* p, TokenType type, const char* error_msg) {
     Token token = parser_peek(p, 0);
-    if (token.type == type) {
-        advance_parser(p, 1);
-    } else {
+    if (token.type != type) {
         fprintf(stderr, "Erro de Sintaxe: %s (Encontrado: %s)\n", 
                 error_msg, token.text);
         exit(1);
@@ -164,21 +162,55 @@ AST * parse_assignment(Parser *p)
     return node;
 }
 
-AST* parse_statement(Parser* p) {
+AST * parse_statement(Parser* p) {
     Token t1 = parser_peek(p, 0);
     Token t2 = parser_peek(p, 1);
 
+    AST *node;
     if (t1.type == TOKEN_IDENTIFIER && t2.type == TOKEN_EQUALS)
-        return parse_assignment(p);
+        node = parse_assignment(p);
+    else {
+        printf("Unknown syntax:"); 
+        exit(1);
+    }
 
-    return parse_expression(p);
+    match(p, TOKEN_SEMICOLON, "Semicolon needed to end a command");
+    advance_parser(p, 1);
+    return node;
 }
+
+AST * create_block() {
+    AST* node = malloc(sizeof(AST));
+    node->type = AST_BLOCK;
+    node->block.count = 0;
+    node->block.capacity = 4; // Começa pequeno
+    node->block.statements = malloc(sizeof(AST*) * node->block.capacity);
+    return node;
+}
+
+void add_to_block(AST* block, AST* stmt) {
+    if (block->block.count >= block->block.capacity) {
+        block->block.capacity *= 2;
+        block->block.statements = realloc(block->block.statements, sizeof(AST*) * block->block.capacity);
+    }
+    block->block.statements[block->block.count++] = stmt;
+}
+
+AST * parse_block(Parser* p) {
+    AST* block = create_block();
+
+    while (parser_peek(p, 0).type != TOKEN_EOF)
+        add_to_block(block, parse_statement(p));
+
+    return block;
+}
+
 
 AST * parse(TokenList list)
 {
     Parser p = { list, 0 };
 
-    AST* ast = parse_statement(&p);
+    AST* ast = parse_block(&p);
 
     Token t = parser_peek(&p, 0);
     if (t.type != TOKEN_EOF) {
