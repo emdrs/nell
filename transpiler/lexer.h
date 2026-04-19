@@ -21,6 +21,7 @@ typedef enum {
     TOKEN_COMMA,
     TOKEN_DOT,
     TOKEN_ARROW,
+    TOKEN_RETURN,
     TOKEN_EOL,
     TOKEN_EOF
 } TokenType;

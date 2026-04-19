@@ -85,6 +85,9 @@ void show_token(Token token)
         case TOKEN_ARROW:
             type_str = "ARROW";
             break;
+        case TOKEN_RETURN:
+            type_str = "RETURN";
+            break;
         case TOKEN_EOL:
             type_str = "EOL";
             break;
@@ -151,6 +154,13 @@ Token next_token()
         case ',':  return (Token) { TOKEN_COMMA,        "," };
         case '.':  return (Token) { TOKEN_DOT,          "." };
         case '\0': return (Token) { TOKEN_EOF,           "" };
+    }
+
+    if (ch == 'r') {
+        if (strcmp("return", strndup(src + pos, 6)) == 0) {
+            for (int i = 0; i < 5; i++) advance();
+            return (Token) { TOKEN_RETURN, "return" };
+        }
     }
 
     if (ch == ':') {
