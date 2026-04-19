@@ -262,7 +262,7 @@ void parse_func_params(Parser *p, AST *node)
             create_param(&params, parser_peek(p, 0).text, parser_peek(p, 2).text);
             advance_parser(p, 3);
 
-            if (parser_peek(p, 3).type != TOKEN_COMMA) break;
+            if (parser_peek(p, 0).type != TOKEN_COMMA) break;
             advance_parser(p, 1);
         }
     }

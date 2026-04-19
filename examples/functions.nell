@@ -5,4 +5,4 @@ commands :: () -> void {
     c += a * b;
 }
 
-b :: (x: int) -> void { }
+soma :: (a: int, b: int) -> int { }
