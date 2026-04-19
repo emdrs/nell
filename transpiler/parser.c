@@ -149,7 +149,8 @@ AST* parse_factor(Parser* p) {
     if (token.type == TOKEN_NUMBER) return create_number(token);
     if (token.type == TOKEN_IDENTIFIER) return create_identifier(token);
 
-    fprintf(stderr, "Erro: esperado número ou variável, mas encontrou '%s'\n", token.text);
+    fprintf(stderr, "Erro: esperado número ou variável, mas encontrou '%s'\n",
+            token.text);
     exit(1);
 }
 
@@ -210,7 +211,6 @@ AST * parse_var_def(Parser *p, int explicit_type)
 AST * parse_const_def(Parser *p)
 {
     Token name = parser_peek(p, 0);
-    Token value = parser_peek(p, 2);
 
     AST *node = malloc(sizeof(AST));
     node->type = AST_CONST_DEF;
@@ -224,6 +224,26 @@ AST * parse_const_def(Parser *p)
 }
 
 AST * parse_block(Parser *p, int main);
+
+AST * parse_func_def(Parser *p)
+{
+    Token name = parser_peek(p, 0);
+    Token return_type = parser_peek(p, 5);
+
+    AST *node = malloc(sizeof(AST));
+    node->type = AST_FUNC_DEF;
+
+    node->func_def.name = name.text;
+    node->func_def.return_type = return_type.text;
+    node->func_def.body = NULL;
+    node->func_def.params = NULL;
+    node->func_def.param_count = 0;
+
+    advance_parser(p, 6); // Consume identifier and double colon
+
+    return node;
+}
+
 
 int is_var_def(Parser *p, int *explicit_type)
 {
@@ -262,6 +282,18 @@ int is_assignment(Parser *p)
     return 1;
 }
 
+int is_func_def(Parser *p)
+{
+    if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
+    if (parser_peek(p, 1).type != TOKEN_DOUBLE_COLON) return 0;
+    if (parser_peek(p, 2).type != TOKEN_LPAREN) return 0;
+    if (parser_peek(p, 3).type != TOKEN_RPAREN) return 0;
+    if (parser_peek(p, 4).type != TOKEN_ARROW) return 0;
+    if (parser_peek(p, 5).type != TOKEN_IDENTIFIER) return 0;
+
+    return 1;
+}
+
 AST * parse_statement(Parser* p)
 {
     Token t = parser_peek(p, 0);
@@ -278,6 +310,10 @@ AST * parse_statement(Parser* p)
         advance_parser(p, 1);
     } else if (is_assignment(p)) {
         node = parse_assignment(p);
+        match(p, TOKEN_SEMICOLON, "; needed to end a command");
+        advance_parser(p, 1);
+    } else if (is_func_def(p)) {
+        node = parse_func_def(p);
         match(p, TOKEN_SEMICOLON, "; needed to end a command");
         advance_parser(p, 1);
     } else {
