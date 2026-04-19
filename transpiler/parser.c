@@ -41,6 +41,11 @@ void show_ast(AST* node, int indent)
             show_ast(node->func_def.body, indent + 1);
             break;
 
+        case AST_FUNC_RETURN:
+            printf("FUNC_RETURN\n");
+            show_ast(node->func_return, indent + 1);
+            break;
+
         case AST_ASSIGN:
             printf("ASSIGN(%s)\n", node->assign.assignment);
             show_ast(node->assign.to, indent + 1);
@@ -123,7 +128,8 @@ AST * create_assignment(Token to, AST *value, Token sign)
     return node;
 }
 
-AST * create_block(int main) {
+AST * create_block(int main)
+{
     AST* node = malloc(sizeof(AST));
     node->type = AST_BLOCK;
     node->block.count = 0;
@@ -347,6 +353,16 @@ int is_func_def(Parser *p)
     return 1;
 }
 
+AST * parse_return(Parser *p) {
+    AST* node = malloc(sizeof(AST));
+    node->type = AST_FUNC_RETURN;
+
+    advance_parser(p, 1);
+
+    node->func_return = parse_expression(p);
+    return node;
+}
+
 AST * parse_statement(Parser* p)
 {
     Token t = parser_peek(p, 0);
@@ -367,6 +383,10 @@ AST * parse_statement(Parser* p)
         advance_parser(p, 1);
     } else if (is_func_def(p)) {
         node = parse_func_def(p);
+    } else if (parser_peek(p, 0).type == TOKEN_RETURN) {
+        node = parse_return(p);
+        match(p, TOKEN_SEMICOLON, "; needed to end a command");
+        advance_parser(p, 1);
     } else {
         printf("Unexpected token: '%s'\n", t.text); 
         exit(1);

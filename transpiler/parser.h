@@ -14,6 +14,7 @@ typedef enum {
     AST_NUMBER,
     AST_BLOCK,
     AST_FUNC_DEF,
+    AST_FUNC_RETURN,
     AST_OPERATOR
 } ASTType;
 
@@ -35,7 +36,6 @@ typedef struct AST {
             struct AST *right;
         } op;
 
-
         char *identifier;
 
         struct {
@@ -56,6 +56,8 @@ typedef struct AST {
             int capacity;
             int main;
         } block;
+
+        struct AST *func_return;
 
         struct {
             char* name;
