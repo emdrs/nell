@@ -107,7 +107,7 @@ void advance()
     if (next_ch != '\0') next_ch = src[pos+1];
 }
 
-void skip_whitespaces() { while (ch == ' ' || ch == '\t') advance(); }
+void skip_whitespaces() { while (ch == ' ' || ch == '\n' || ch == '\t') advance(); }
 
 Token number()
 {
@@ -135,7 +135,7 @@ Token next_token()
     skip_whitespaces();
 
     switch (ch) {
-        case '\n': return (Token) { TOKEN_EOL,         "\n" };
+        // case '\n': return (Token) { TOKEN_EOL,         "\n" };
         case ';':  return (Token) { TOKEN_SEMICOLON,    ";" };
         case '{':  return (Token) { TOKEN_LBRACE,       "{" };
         case '}':  return (Token) { TOKEN_RBRACE,       "}" };
