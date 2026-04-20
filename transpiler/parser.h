@@ -14,6 +14,7 @@ typedef enum {
     AST_NUMBER,
     AST_BLOCK,
     AST_FUNC_DEF,
+    AST_FUNC_EXEC,
     AST_FUNC_RETURN,
     AST_OPERATOR
 } ASTType;
@@ -23,6 +24,13 @@ typedef struct parameter {
     char *type;
     struct parameter *next;
 } Parameter;
+
+struct AST;
+
+typedef struct exec_parameter {
+    struct AST *expression;
+    struct exec_parameter *next;
+} ExecParameter;
 
 typedef struct AST {
     ASTType type;
@@ -60,12 +68,18 @@ typedef struct AST {
         struct AST *func_return;
 
         struct {
-            char* name;
+            char *name;
             Parameter *params;
             int param_count;
             char *return_type;
             struct AST *body;
         } func_def;
+
+        struct {
+            char *name;
+            ExecParameter *params;
+            int param_count;
+        } func_exec;
     };
 } AST;
 
