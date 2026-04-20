@@ -44,8 +44,6 @@ void show_ast(AST* node, int indent)
         case AST_FUNC_EXEC:
             printf("FUNCTION_EXECUTION(%s)\n", node->func_exec.name);
             
-            print_indent(indent + 1);
-            printf("PARAMS: ");
             ExecParameter *p2 = node->func_exec.params;
             while (p2) {
                 show_ast(p2->expression, indent + 1);
@@ -151,7 +149,8 @@ AST * create_block(int main)
     return node;
 }
 
-void add_to_block(AST* block, AST* stmt) {
+void add_to_block(AST* block, AST* stmt)
+{
     if (block->block.count >= block->block.capacity) {
         block->block.capacity *= 2;
         block->block.statements = realloc(block->block.statements, sizeof(AST*) * block->block.capacity);
@@ -159,11 +158,71 @@ void add_to_block(AST* block, AST* stmt) {
     block->block.statements[block->block.count++] = stmt;
 }
 
-AST* parse_factor(Parser* p) {
-    Token token = parser_peek(p, 0);
+AST * create_func_exec(char *func_name, ExecParameter *params)
+{
+    AST* node = malloc(sizeof(AST));
+    node->type = AST_FUNC_EXEC;
+    node->func_exec.name= func_name;
+    node->func_exec.params = params;
+    
+    int count = 0;
+    while (params != NULL) {
+        count++;
+        params = params->next;
+    }
+    node->func_exec.param_count = count;
+    return node;
+}
 
+void create_exec_param(ExecParameter **params, char *name, AST *expression)
+{
+    ExecParameter *parameter = (ExecParameter*) malloc(sizeof(ExecParameter));
+
+    parameter->expression = expression;
+    parameter->next = NULL;
+
+    if (*params == NULL) {
+        *params = parameter;
+        return;
+    }
+
+    ExecParameter *p;
+    for (p = *params;p->next != NULL;p = p->next);
+    p->next = parameter;
+}
+
+AST * parse_expression(Parser *p);
+
+AST * parse_func_exec(Parser* p)
+{
+    Token func_name = parser_peek(p, 0);
+    advance_parser(p, 2); // identifier, lparen
+
+    ExecParameter *params = NULL;
+    if (parser_peek(p, 0).type != TOKEN_RPAREN) {
+        while (1) {
+            create_exec_param(&params, parser_peek(p, 0).text, parse_expression(p));
+            if (parser_peek(p, 0).type != TOKEN_COMMA) break;
+
+            advance_parser(p, 1);
+        }
+
+    }
+
+    match(p, TOKEN_RPAREN, ") needed to end a function execution");
     advance_parser(p, 1);
 
+    return create_func_exec(func_name.text, params);
+}
+
+AST * parse_factor(Parser* p)
+{
+    Token token = parser_peek(p, 0);
+
+    if (token.type == TOKEN_IDENTIFIER && parser_peek(p, 1).type == TOKEN_LPAREN)
+        return parse_func_exec(p);
+
+    advance_parser(p, 1);
     if (token.type == TOKEN_NUMBER) return create_number(token);
     if (token.type == TOKEN_IDENTIFIER) return create_identifier(token);
 
@@ -346,7 +405,6 @@ int is_assignment(Parser *p)
 
     return 1;
 }
-
 
 int is_func_def(Parser *p)
 {
