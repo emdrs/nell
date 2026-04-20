@@ -41,6 +41,18 @@ void show_ast(AST* node, int indent)
             show_ast(node->func_def.body, indent + 1);
             break;
 
+        case AST_FUNC_EXEC:
+            printf("FUNCTION_EXECUTION(%s)\n", node->func_exec.name);
+            
+            print_indent(indent + 1);
+            printf("PARAMS: ");
+            ExecParameter *p2 = node->func_exec.params;
+            while (p2) {
+                show_ast(p2->expression, indent + 1);
+                p2 = p2->next;
+            }
+            break;
+
         case AST_FUNC_RETURN:
             printf("FUNC_RETURN\n");
             show_ast(node->func_return, indent + 1);
