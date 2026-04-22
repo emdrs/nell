@@ -31,24 +31,33 @@ void show_ast(AST* node, int indent)
             
             print_indent(indent + 1);
             printf("PARAMS: ");
-            Parameter *p = node->func_def.params;
-            while (p) {
-                printf("[%s : %s] ", p->name, p->type);
-                p = p->next;
+            AST *def_param = node->func_def.params;
+            while (def_param) {
+                show_ast(def_param, 0);
+                def_param = def_param->func_def_param.next;
             }
             printf("\n");
 
             show_ast(node->func_def.body, indent + 1);
             break;
 
+        case AST_FUNC_DEF_PARAM:
+            printf("[%s : %s] ", node->func_def_param.name, node->func_def_param.type);
+            break;
+
         case AST_FUNC_EXEC:
             printf("FUNCTION_EXECUTION(%s)\n", node->func_exec.name);
             
-            ExecParameter *p2 = node->func_exec.params;
-            while (p2) {
-                show_ast(p2->expression, indent + 1);
-                p2 = p2->next;
+            AST *exec_param = node->func_exec.params;
+            while (exec_param) {
+                show_ast(exec_param->func_exec_param.expression, indent + 1);
+                exec_param = exec_param->func_exec_param.next;
             }
+            break;
+
+        case AST_FUNC_EXEC_PARAM:
+            printf("PARAM(%s)\n", node->func_exec_param.name);
+            show_ast(node->func_exec_param.expression, indent + 1);
             break;
 
         case AST_FUNC_RETURN:
@@ -158,7 +167,7 @@ void add_to_block(AST* block, AST* stmt)
     block->block.statements[block->block.count++] = stmt;
 }
 
-AST * create_func_exec(char *func_name, ExecParameter *params)
+AST * create_func_exec(char *func_name, AST *params)
 {
     AST* node = malloc(sizeof(AST));
     node->type = AST_FUNC_EXEC;
@@ -168,27 +177,28 @@ AST * create_func_exec(char *func_name, ExecParameter *params)
     int count = 0;
     while (params != NULL) {
         count++;
-        params = params->next;
+        params = params->func_exec_param.next;
     }
     node->func_exec.param_count = count;
     return node;
 }
 
-void create_exec_param(ExecParameter **params, char *name, AST *expression)
+void create_exec_param(AST **params, char *name, AST *expression)
 {
-    ExecParameter *parameter = (ExecParameter*) malloc(sizeof(ExecParameter));
+    AST *parameter = (AST*) malloc(sizeof(AST));
 
-    parameter->expression = expression;
-    parameter->next = NULL;
+    parameter->type = AST_FUNC_EXEC_PARAM;
+    parameter->func_exec_param.expression = expression;
+    parameter->func_exec_param.next = NULL;
 
     if (*params == NULL) {
         *params = parameter;
         return;
     }
 
-    ExecParameter *p;
-    for (p = *params;p->next != NULL;p = p->next);
-    p->next = parameter;
+    AST *p;
+    for (p = *params;p->func_exec_param.next != NULL;p = p->func_exec_param.next);
+    p->func_exec_param.next = parameter;
 }
 
 AST * parse_expression(Parser *p);
@@ -198,7 +208,7 @@ AST * parse_func_exec(Parser* p)
     Token func_name = parser_peek(p, 0);
     advance_parser(p, 2); // identifier, lparen
 
-    ExecParameter *params = NULL;
+    AST *params = NULL;
     if (parser_peek(p, 0).type != TOKEN_RPAREN) {
         while (1) {
             create_exec_param(&params, parser_peek(p, 0).text, parse_expression(p));
@@ -302,21 +312,22 @@ AST * parse_const_def(Parser *p)
 
 AST * parse_block(Parser *p, int main);
 
-void create_param(Parameter **params, char *name, char *type)
+void create_param(AST **params, char *name, char *type)
 {
-    Parameter *parameter = (Parameter*) malloc(sizeof(Parameter));
+    AST *parameter = (AST*) malloc(sizeof(AST));
 
-    parameter->name = name;
-    parameter->type = type;
+    parameter->type = AST_FUNC_DEF_PARAM;
+    parameter->func_def_param.name = name;
+    parameter->func_def_param.type = type;
 
     if (*params == NULL) {
         *params = parameter;
         return;
     }
 
-    Parameter *p;
-    for (p = *params;p->next != NULL;p = p->next);
-    p->next = parameter;
+    AST *p;
+    for (p = *params;p->func_def_param.next != NULL;p = p->func_def_param.next);
+    p->func_def_param.next = parameter;
 }
 
 int is_func_params(Parser *p, int offset)
@@ -330,7 +341,7 @@ int is_func_params(Parser *p, int offset)
 
 void parse_func_params(Parser *p, AST *node)
 {
-    Parameter *params = NULL;
+    AST *params = NULL;
     int count = 0;
 
     if (is_func_params(p, 0)) {
