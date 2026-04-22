@@ -31,15 +31,16 @@ char * read_all_file(char *path) {
 char * generate_code(AST *ast)
 {
     char *result = strdup("");
-    char *temp = strdup("");
 
     switch (ast->type) {
-        case AST_BLOCK:
+        case AST_BLOCK: {
+            char *temp = strdup("");
             for (int i = 0; i < ast->block.count; i++) {
                  sprintf(temp, "%s%s", temp, generate_code(ast->block.statements[i]));
             }
             sprintf(result, ast->block.main ? "%s" : "{ %s }", temp);
             break;
+        }
         case AST_FUNC_DEF: {
             char *params = strdup("");
             for (AST *p = ast->func_def.params; p != NULL; p = p->func_def_param.next) {
@@ -73,16 +74,30 @@ char * generate_code(AST *ast)
         case AST_NUMBER:
             sprintf(result, "%d", ast->number);
             break;
+
         case AST_VAR_DEF:
-            sprintf(result, "%s %s", ast->field.type, ast->field.name);
+            if (ast->field.type == NULL) { // Implicit type
+                if(ast->field.value->type == AST_NUMBER)
+                    ast->field.type = "int";
+            }
+          
+            sprintf(result, "%s %s = %s;", ast->field.type, ast->field.name,
+                    generate_code(ast->field.value));
           break;
+
         case AST_CONST_DEF:
+            if (ast->field.type == NULL) { // Implicit type
+                if(ast->field.value->type == AST_NUMBER)
+                    ast->field.type = "int";
+            }
             sprintf(result, "const %s %s", ast->field.type, ast->field.name);
           break;
+
         case AST_ASSIGN:
             sprintf(result, "%s %s %s", generate_code(ast->assign.to),
                     ast->assign.assignment, generate_code(ast->assign.value));
           break;
+
         case AST_FUNC_EXEC: {
             char *params = strdup("");
             AST *p = ast->func_exec.params;
