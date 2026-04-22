@@ -90,7 +90,8 @@ char * generate_code(AST *ast)
                 if(ast->field.value->type == AST_NUMBER)
                     ast->field.type = "int";
             }
-            sprintf(result, "const %s %s", ast->field.type, ast->field.name);
+            sprintf(result, "const %s %s = %s;", ast->field.type, ast->field.name,
+                    generate_code(ast->field.value));
           break;
 
         case AST_ASSIGN:
