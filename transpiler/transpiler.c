@@ -36,7 +36,10 @@ char * generate_code(AST *ast)
 
     switch (ast->type) {
         case AST_VAR_DEF: {
-            sprintf(result, "%s %s;", ast->var_def.type, ast->var_def.name);
+            if(ast->var_def.initialized)
+                sprintf(result, "%s %s", ast->var_def.type, ast->var_def.name);
+            else
+                sprintf(result, "%s %s;", ast->var_def.type, ast->var_def.name);
             break;
         }
         case AST_NUMBER: {

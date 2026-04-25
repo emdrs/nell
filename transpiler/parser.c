@@ -66,6 +66,7 @@ AST * parse_var_def(Parser *p)
     AST *node = create_ast_node(AST_VAR_DEF);
     node->var_def.name = parser_peek(p, 0).text;
     node->var_def.type = parser_peek(p, 2).text;
+    node->var_def.initialized = 0;
 
     parser_advance(p, 3);
 
@@ -95,6 +96,7 @@ AST * parse_assign(Parser *p)
 {
     AST *node = create_ast_node(AST_ASSIGN);
     node->assign.left = parse_var_def(p); // TODO: Handle identifier here
+    node->assign.left->var_def.initialized = 1;
     node->assign.type = parser_peek(p, 0).text;
     parser_advance(p, 1);
     node->assign.right = parse_number(p);

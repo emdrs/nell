@@ -18,6 +18,7 @@ typedef struct AST {
         struct {
             char *name;
             char *type;
+            int initialized;
         } var_def;
 
         struct {
