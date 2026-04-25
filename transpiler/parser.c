@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define create_ast_node() ((AST *) malloc(sizeof(AST)))
 
 void print_indent(int level) { for (int i = 0; i < level; i++) printf("  "); }
 
@@ -41,11 +42,37 @@ void match(Parser* p, TokenType type, const char* error_msg) {
     }
 }
 
+int is_var_def(Parser *p)
+{
+    if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
+    if (parser_peek(p, 1).type != TOKEN_COLON) return 0;
+    if (parser_peek(p, 2).type != TOKEN_IDENTIFIER) return 0;
+
+    return 1;
+}
+
+AST * parse_var_def(Parser *p)
+{
+    AST *node = create_ast_node();
+    node->type = AST_VAR_DEF;
+    node->var_def.name = parser_peek(p, 0).text;
+    node->var_def.type = parser_peek(p, 2).text;
+
+    parser_advance(p, 3);
+
+    return node;
+}
+
 AST * parse(TokenList list)
 {
-    Parser p = { list, 0, false };
+    Parser p = { list, 0 };
 
-    AST *ast = parse_block(&p, 1);
+    AST *ast;
+    if (is_var_def(&p)) {
+        ast = parse_var_def(&p);
+        match(&p, TOKEN_SEMICOLON, "; expected to define variable");
+        parser_advance(&p, 1);
+    }
 
     Token t = parser_peek(&p, 0);
     if (t.type != TOKEN_EOF) {
