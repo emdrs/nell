@@ -5,7 +5,8 @@
 #include <stdlib.h>
 
 
-char * read_all_file(char *path) {
+char * read_all_file(char *path)
+{
     FILE *f = fopen(path, "rb");
 
     if (!f) {
@@ -34,6 +35,10 @@ char * generate_code(AST *ast)
     char *result = strdup("");
 
     switch (ast->type) {
+        case AST_VAR_DEF: {
+            sprintf(result, "%s %s;", ast->var_def.type, ast->var_def.name);
+            break;
+        }
     }
     return result;
 }
@@ -58,13 +63,13 @@ int main(int argc, char *argv[])
     AST *ast = parse(tokens);
     show_ast(ast, 0);
 
-    // char *code = generate_code(ast);
-    //
-    // printf("\n");
-    //
-    // printf("source: %s\n", source);
-    //
-    // printf("Ccode:  %s\n", code);
+    char *code = generate_code(ast);
+
+    printf("\n");
+
+    printf("source: %s\n", source);
+
+    printf("Ccode:  %s\n", code);
 
     return 0;
 }
