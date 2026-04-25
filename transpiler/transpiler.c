@@ -51,7 +51,13 @@ char * generate_code(AST *ast)
                     ast->assign.type, generate_code(ast->assign.right));
             break;
         }
+        case AST_IDENTIFIER: {
+            sprintf(result, "%s", ast->identifier);
+
+          break;
+        }
     }
+
     return result;
 }
 
