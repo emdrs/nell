@@ -30,6 +30,14 @@ void show_token(Token token)
             type_str = "IDENTIFIER";
             print_type = descritive;
             break;
+        case TOKEN_NUMBER:
+            type_str = "NUMBER";
+            print_type = descritive;
+            break;
+        case TOKEN_ASSIGN:
+            type_str = "ASSIGN";
+            print_type = descritive;
+            break;
         case TOKEN_SEMICOLON:
             type_str = "SEMICOLON";
             break;
@@ -39,9 +47,6 @@ void show_token(Token token)
         case TOKEN_EOF:
             type_str = "EOF";
             break;
-          break;
-        default:
-          type_str = "UNEXPECTED";
           break;
         }
 
@@ -81,6 +86,18 @@ Token identifier(Lexer *l)
     };
 }
 
+Token number(Lexer *l)
+{
+    int start = l->pos;
+
+    while (l->next_ch >= '0' && l->next_ch <= '9') advance(l);
+
+    return (Token) {
+        TOKEN_NUMBER,
+        strndup(l->source + start, (l->pos - start) + 1)
+    };
+}
+
 Token next_token(Lexer *l)
 {
     skip_whitespaces(l);
@@ -88,6 +105,7 @@ Token next_token(Lexer *l)
 
     switch (l->ch) {
         case ';':  return (Token) { TOKEN_SEMICOLON,    ";" };
+        case '=':  return (Token) { TOKEN_ASSIGN,       "=" };
         case '\0': return (Token) { TOKEN_EOF,           "" };
     }
 
@@ -95,11 +113,13 @@ Token next_token(Lexer *l)
         return (Token){ TOKEN_COLON, ":" };
     }
 
+    if (l->ch >= '0' && l->ch <= '9') return number(l);
+
     if ((l->ch >= 'a' && l->ch <= 'z') ||
         (l->ch >= 'A' && l->ch <= 'Z') ||
          l->ch == '_') return identifier(l);
 
-    printf("Unexpected l->character: %c", l->ch);
+    printf("Unexpected character: %c", l->ch);
     exit(1);
 }
 
