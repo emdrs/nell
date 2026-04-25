@@ -117,6 +117,13 @@ void advance()
 }
 
 void skip_whitespaces() { while (ch == ' ' || ch == '\n' || ch == '\t') advance(); }
+void skip_comment()
+{
+    if (ch == '/' && next_ch == '/') {
+        while (ch != '\n' && ch != '\0') advance();
+        skip_whitespaces();
+    }
+}
 
 Token number()
 {
@@ -142,6 +149,7 @@ Token identifier()
 Token next_token()
 {
     skip_whitespaces();
+    skip_comment();
 
     switch (ch) {
         // case '\n': return (Token) { TOKEN_EOL,         "\n" };
