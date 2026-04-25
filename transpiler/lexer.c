@@ -239,7 +239,7 @@ TokenList tokenize(char *source)
     lexer.next_ch = source[1];
 
     Token tk;
-    do{
+    do {
         tk = next_token(&lexer);
         push(&list, tk);
 
