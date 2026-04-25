@@ -72,6 +72,14 @@ AST * parse_var_def(Parser *p)
     return node;
 }
 
+AST * parse_number(Parser *p)
+{
+    AST *node = create_ast_node(AST_NUMBER);
+    node->number = atoi(parser_peek(p, 0).text);
+    parser_advance(p, 1);
+
+    return node;
+}
 AST * parse(TokenList list)
 {
     Parser p = { list, 0 };
