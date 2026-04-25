@@ -102,6 +102,15 @@ AST * parse_number(Parser *p)
     return node;
 }
 
+AST * parse_identifier(Parser *p)
+{
+    AST *node = create_ast_node(AST_IDENTIFIER);
+    node->identifier = parser_peek(p, 0).text;
+    parser_advance(p, 1);
+
+    return node;
+}
+
 AST * parse_assign(Parser *p)
 {
     AST *node = create_ast_node(AST_ASSIGN);
