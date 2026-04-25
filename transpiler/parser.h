@@ -4,6 +4,7 @@
 #include "lexer.h"
 
 typedef enum {
+    AST_IDENTIFIER,
     AST_NUMBER,
     AST_VAR_DEF,
     AST_ASSIGN
@@ -14,6 +15,7 @@ typedef struct AST {
 
     union {
         int number;
+        char *identifier;
 
         struct {
             char *name;
