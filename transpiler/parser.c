@@ -72,6 +72,16 @@ AST * parse_var_def(Parser *p)
     return node;
 }
 
+int is_assign(Parser *p)
+{
+    int offset = is_var_def(p) * 3;
+
+    if (parser_peek(p, 0 + offset).type != TOKEN_ASSIGN) return 0;
+    if (parser_peek(p, 1 + offset).type != TOKEN_NUMBER) return 0;
+
+    return 1;
+}
+
 AST * parse_number(Parser *p)
 {
     AST *node = create_ast_node(AST_NUMBER);
@@ -80,12 +90,28 @@ AST * parse_number(Parser *p)
 
     return node;
 }
+
+AST * parse_assign(Parser *p)
+{
+    AST *node = create_ast_node(AST_ASSIGN);
+    node->assign.left = parse_var_def(p); // TODO: Handle identifier here
+    node->assign.type = parser_peek(p, 0).text;
+    parser_advance(p, 1);
+    node->assign.right = parse_number(p);
+
+    return node;
+}
+
 AST * parse(TokenList list)
 {
     Parser p = { list, 0 };
 
     AST *ast;
-    if (is_var_def(&p)) {
+    if (is_assign(&p)) {
+        ast = parse_assign(&p);
+        match(&p, TOKEN_SEMICOLON, "; expected to define variable");
+        parser_advance(&p, 1);
+    } else if (is_var_def(&p)) {
         ast = parse_var_def(&p);
         match(&p, TOKEN_SEMICOLON, "; expected to define variable");
         parser_advance(&p, 1);
