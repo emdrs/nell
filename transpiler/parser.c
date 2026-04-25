@@ -34,6 +34,10 @@ void show_ast(AST* node, int indent)
             show_ast(node->assign.right, indent + 1);
             break;
         }
+        case AST_IDENTIFIER: {
+            printf("IDENTIFIER(%s)\n", node->identifier);
+          break;
+        }
     }
 }
 
