@@ -2,34 +2,17 @@
 #define LEXER_H
 
 typedef enum {
-    TOKEN_NUMBER,
-    TOKEN_STAR,
-    TOKEN_SLASH,
-    TOKEN_PLUS,
-    TOKEN_MINUS,
     TOKEN_IDENTIFIER,
-    TOKEN_EQUALS,
-    TOKEN_LBRACE,
-    TOKEN_RBRACE,
-    TOKEN_LPAREN,
-    TOKEN_RPAREN,
-    TOKEN_LBRACKET,
-    TOKEN_RBRACKET,
     TOKEN_SEMICOLON,
     TOKEN_COLON,
-    TOKEN_DOUBLE_COLON,
-    TOKEN_COMMA,
-    TOKEN_DOT,
-    TOKEN_ARROW,
-    TOKEN_RETURN,
-    TOKEN_EOL,
     TOKEN_EOF
 } TokenType;
 
 typedef struct {
     TokenType type;
-
     char *text;
+    unsigned int line;
+    unsigned int column;
 } Token;
 
 typedef struct {
