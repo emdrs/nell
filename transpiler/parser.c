@@ -28,6 +28,12 @@ void show_ast(AST* node, int indent)
             printf("NUMBER(%d)\n", node->number);
             break;
         }
+        case AST_ASSIGN: {
+            printf("ASSIGN(%s)\n", node->assign.type);
+            show_ast(node->assign.left, indent + 1);
+            show_ast(node->assign.right, indent + 1);
+            break;
+        }
     }
 }
 
