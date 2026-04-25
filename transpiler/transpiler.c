@@ -30,6 +30,7 @@ char * read_all_file(char *path) {
 
 char * generate_code(AST *ast)
 {
+    if(ast == NULL) return NULL;
     char *result = strdup("");
 
     switch (ast->type) {
@@ -76,13 +77,13 @@ char * generate_code(AST *ast)
             break;
 
         case AST_VAR_DEF:
-            if (ast->field.type == NULL) { // Implicit type
-                if(ast->field.value->type == AST_NUMBER)
-                    ast->field.type = "int";
-            }
+            if (ast->field.type == NULL) ast->field.type = "int"; // Implicit type
           
-            sprintf(result, "%s %s = %s;", ast->field.type, ast->field.name,
-                    generate_code(ast->field.value));
+            if (ast->field.value == NULL)
+                sprintf(result, "%s %s;", ast->field.type, ast->field.name);
+            else
+                sprintf(result, "%s %s = %s;", ast->field.type, ast->field.name,
+                        generate_code(ast->field.value));
           break;
 
         case AST_CONST_DEF:

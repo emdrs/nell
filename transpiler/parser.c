@@ -280,13 +280,19 @@ AST * parse_assignment(Parser *p)
 
 AST * parse_var_def(Parser *p, int explicit_type)
 {
-    Token name = parser_peek(p, 0);
-    Token value = parser_peek(p, 2);
-
     AST *node = malloc(sizeof(AST));
     node->type = AST_VAR_DEF;
-    node->field.name = name.text;
-    node->field.type = (explicit_type) ? value.text : NULL;
+    node->field.name = parser_peek(p, 0).text;
+
+    Token token = parser_peek(p, 2);
+    if (token.type == TOKEN_IDENTIFIER && parser_peek(p, 3).type == TOKEN_SEMICOLON) {
+        advance_parser(p, 3);
+        node->field.type = token.text;
+        return node;
+
+    }
+
+    node->field.type = (explicit_type) ? token.text : NULL;
     
     // Consume identifier, colon, type(not explicit) and equals
     advance_parser(p, 3 + explicit_type);
@@ -386,6 +392,8 @@ int is_var_def(Parser *p, int *explicit_type)
     if (parser_peek(p, 1).type != TOKEN_COLON) return 0;
 
     *explicit_type = parser_peek(p, 2).type == TOKEN_IDENTIFIER;
+
+    if (*explicit_type && parser_peek(p, 3).type == TOKEN_SEMICOLON) return 1;
 
     if (parser_peek(p, 2 + (*explicit_type)).type != TOKEN_EQUALS) return 0;
 
