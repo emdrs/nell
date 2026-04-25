@@ -24,6 +24,10 @@ void show_ast(AST* node, int indent)
             printf("VAR_DEF(%s:%s)\n", node->var_def.name, node->var_def.type);
             break;
         }
+        case AST_NUMBER: {
+            printf("NUMBER(%d)\n", node->number);
+            break;
+        }
     }
 }
 
