@@ -3,7 +3,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define create_ast_node() ((AST *) malloc(sizeof(AST)))
+
+AST * create_ast_node(ASTType type)
+{
+    AST *node = (AST *) malloc(sizeof(AST));
+    node->type = type;
+    return node;
+}
 
 void print_indent(int level) { for (int i = 0; i < level; i++) printf("  "); }
 
@@ -57,8 +63,7 @@ int is_var_def(Parser *p)
 
 AST * parse_var_def(Parser *p)
 {
-    AST *node = create_ast_node();
-    node->type = AST_VAR_DEF;
+    AST *node = create_ast_node(AST_VAR_DEF);
     node->var_def.name = parser_peek(p, 0).text;
     node->var_def.type = parser_peek(p, 2).text;
 
