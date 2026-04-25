@@ -25,7 +25,12 @@ void parser_advance(Parser *p, int amount) {
     exit(1);
 }
 
-Token parser_peek(Parser *p, int offset) { return p->list.data[p->pos + offset]; }
+Token parser_peek(Parser *p, int offset) {
+    if (p->pos + offset < p->list.size) return p->list.data[p->pos + offset];
+
+    printf("Trying to peek a token after EOF\n");
+    exit(1);
+}
 
 void match(Parser* p, TokenType type, const char* error_msg) {
     Token token = parser_peek(p, 0);
