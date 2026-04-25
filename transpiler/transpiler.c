@@ -39,6 +39,10 @@ char * generate_code(AST *ast)
             sprintf(result, "%s %s;", ast->var_def.type, ast->var_def.name);
             break;
         }
+        case AST_NUMBER: {
+            sprintf(result, "%d", ast->number);
+            break;
+        }
     }
     return result;
 }
