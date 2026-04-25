@@ -89,10 +89,15 @@ AST * parse_var_def(Parser *p)
 
 int is_assign(Parser *p)
 {
-    int offset = is_var_def(p) * 3;
-
-    if (parser_peek(p, 0 + offset).type != TOKEN_ASSIGN) return 0;
-    if (parser_peek(p, 1 + offset).type != TOKEN_NUMBER) return 0;
+    if(is_var_def(p)) {
+        int offset = 3;
+        if (parser_peek(p, 0 + offset).type != TOKEN_ASSIGN) return 0;
+        if (parser_peek(p, 1 + offset).type != TOKEN_NUMBER) return 0;
+    } else {
+        if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
+        if (parser_peek(p, 1).type != TOKEN_ASSIGN) return 0;
+        if (parser_peek(p, 2).type != TOKEN_NUMBER) return 0;
+    }
 
     return 1;
 }
@@ -118,8 +123,12 @@ AST * parse_identifier(Parser *p)
 AST * parse_assign(Parser *p)
 {
     AST *node = create_ast_node(AST_ASSIGN);
-    node->assign.left = parse_var_def(p); // TODO: Handle identifier here
-    node->assign.left->var_def.initialized = 1;
+    if (is_var_def(p)) {
+        node->assign.left = parse_var_def(p);
+        node->assign.left->var_def.initialized = 1;
+    } else {
+        node->assign.left = parse_identifier(p);
+    }
     node->assign.type = parser_peek(p, 0).text;
     parser_advance(p, 1);
     node->assign.right = parse_number(p);
