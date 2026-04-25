@@ -43,6 +43,11 @@ char * generate_code(AST *ast)
             sprintf(result, "%d", ast->number);
             break;
         }
+        case AST_ASSIGN: {
+            sprintf(result, "%s %s %s;", generate_code(ast->assign.left),
+                    ast->assign.type, generate_code(ast->assign.right));
+            break;
+        }
     }
     return result;
 }
