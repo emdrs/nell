@@ -1,13 +1,13 @@
 #include "lexer.h"
-#include <_string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-char *src;
-unsigned int pos = 0;
-char ch;
-char next_ch;
+void advance(Lexer *lexer)
+{
+    lexer->ch = lexer->source[++lexer->pos];
+    if (lexer->next_ch != '\0') lexer->next_ch = lexer->source[lexer->pos+1];
+}
 
 void push(TokenList *list, Token token)
 {
@@ -95,6 +95,9 @@ void show_token(Token token)
             type_str = "EOF";
             break;
           break;
+        default:
+          type_str = "UNEXPECTED";
+          break;
         }
 
     printf(print_type, type_str, token.text);
@@ -102,56 +105,52 @@ void show_token(Token token)
 
 void show_token_list(TokenList list)
 {
-    for (int i = 0; i < list.size; i++) {
-        Token token = list.data[i];
-
-        show_token(token);
-    }
+    for (int i = 0; i < list.size; i++) show_token(list.data[i]);
     printf("\n");
 }
 
-void advance()
-{
-    ch = src[++pos];
-    if (next_ch != '\0') next_ch = src[pos+1];
+void skip_whitespaces(Lexer *lexer) {
+    while (lexer->ch == ' ' || lexer->ch == '\n' || lexer->ch == '\t') advance(lexer);
 }
 
-void skip_whitespaces() { while (ch == ' ' || ch == '\n' || ch == '\t') advance(); }
-void skip_comment()
+void skip_comment(Lexer *lexer)
 {
-    if (ch == '/' && next_ch == '/') {
-        while (ch != '\n' && ch != '\0') advance();
-        skip_whitespaces();
+    if (lexer->ch == '/' && lexer->next_ch == '/') {
+        while (lexer->ch != '\n' && lexer->ch != '\0') advance(lexer);
+        skip_whitespaces(lexer);
     }
 }
 
-Token number()
+Token number(Lexer *lexer)
 {
-    int start = pos;
+    int start = lexer->pos;
 
-    while (next_ch >= '0' && next_ch <= '9') advance();
+    while (lexer->next_ch >= '0' && lexer->next_ch <= '9') advance(lexer);
 
-    return (Token) {TOKEN_NUMBER, strndup(src + start, (pos - start) + 1) };
+    return (Token) {TOKEN_NUMBER, strndup(lexer->source + start, (lexer->pos - start) + 1) };
 }
 
-Token identifier()
+Token identifier(Lexer *lexer)
 {
-    int start = pos;
+    int start = lexer->pos;
 
-    while ((next_ch >= 'a' && next_ch <= 'z') ||
-           (next_ch >= 'A' && next_ch <= 'Z') ||
-           (next_ch >= '0' && next_ch <= '9') ||
-            next_ch == '_') advance();
+    while ((lexer->next_ch >= 'a' && lexer->next_ch <= 'z') ||
+           (lexer->next_ch >= 'A' && lexer->next_ch <= 'Z') ||
+           (lexer->next_ch >= '0' && lexer->next_ch <= '9') ||
+            lexer->next_ch == '_') advance(lexer);
 
-    return (Token) {TOKEN_IDENTIFIER, strndup(src + start, (pos - start) + 1) };
+    return (Token) {
+        TOKEN_IDENTIFIER,
+        strndup(lexer->source + start, (lexer->pos - start) + 1)
+    };
 }
 
-Token next_token()
+Token next_token(Lexer *lexer)
 {
-    skip_whitespaces();
-    skip_comment();
+    skip_whitespaces(lexer);
+    skip_comment(lexer);
 
-    switch (ch) {
+    switch (lexer->ch) {
         // case '\n': return (Token) { TOKEN_EOL,         "\n" };
         case ';':  return (Token) { TOKEN_SEMICOLON,    ";" };
         case '{':  return (Token) { TOKEN_LBRACE,       "{" };
@@ -164,83 +163,88 @@ Token next_token()
         case '\0': return (Token) { TOKEN_EOF,           "" };
     }
 
-    if (ch == 'r') {
-        if (strcmp("return", strndup(src + pos, 6)) == 0) {
-            for (int i = 0; i < 5; i++) advance();
+    if (lexer->ch == 'r') {
+        if (strcmp("return", strndup(lexer->source + lexer->pos, 6)) == 0) {
+            for (int i = 0; i < 5; i++) advance(lexer);
             return (Token) { TOKEN_RETURN, "return" };
         }
     }
 
-    if (ch == ':') {
-        if(next_ch == ':') {
-            advance();
+    if (lexer->ch == ':') {
+        if(lexer->next_ch == ':') {
+            advance(lexer);
             return (Token){ TOKEN_DOUBLE_COLON, "::" }; 
         }
         return (Token){ TOKEN_COLON, ":" };
     }
 
-    if (ch == '*') {
-        if (next_ch == '=') {
-            advance();
+    if (lexer->ch == '*') {
+        if (lexer->next_ch == '=') {
+            advance(lexer);
             return (Token){ TOKEN_EQUALS, "*=" };
         }
         return (Token){ TOKEN_STAR, "*" };
         
         }
-    if (ch == '/') {
-        if (next_ch == '=') {
-            advance();
+    if (lexer->ch == '/') {
+        if (lexer->next_ch == '=') {
+            advance(lexer);
             return (Token){ TOKEN_EQUALS, "/=" };
         }
         return (Token){ TOKEN_SLASH, "/" };
     }
 
-    if (ch == '-') {
-        if (next_ch == '>') {
-            advance();
+    if (lexer->ch == '-') {
+        if (lexer->next_ch == '>') {
+            advance(lexer);
             return (Token){ TOKEN_ARROW, "->" };
         }
-        if (next_ch == '=') {
-            advance();
+        if (lexer->next_ch == '=') {
+            advance(lexer);
             return (Token){ TOKEN_EQUALS, "-=" };
         }
         return (Token){ TOKEN_MINUS, "-" };
     }
 
-    if (ch == '+') {
-        if (next_ch == '=') {
-            advance();
+    if (lexer->ch == '+') {
+        if (lexer->next_ch == '=') {
+            advance(lexer);
             return (Token){ TOKEN_EQUALS, "+=" };
         }
         return (Token){ TOKEN_PLUS, "+" };
     }
 
-    if (ch >= '0' && ch <= '9') return number();
+    if (lexer->ch >= '0' && lexer->ch <= '9') return number(lexer);
 
-    if ((ch >= 'a' && ch <= 'z') ||
-        (ch >= 'A' && ch <= 'Z') ||
-         ch == '_') return identifier();
+    if ((lexer->ch >= 'a' && lexer->ch <= 'z') ||
+        (lexer->ch >= 'A' && lexer->ch <= 'Z') ||
+         lexer->ch == '_') return identifier(lexer);
 
-    printf("Unexpected character: %c", ch);
+    printf("Unexpected lexer->character: %c", lexer->ch);
     exit(1);
 }
 
 TokenList tokenize(char *source)
 {
-    src = source;
-    ch = src[pos];
-    next_ch = src[pos+1];
-
     TokenList list = { NULL, 0, 2 };
     list.data = (Token*) malloc(sizeof(Token) * list.capacity);
 
-    Token tk;
-    do {
-        tk = next_token();
-        advance();
+    Lexer lexer;
+    lexer.source = source;
+    lexer.pos = 0;
+    lexer.line = 1;
+    lexer.column = 1;
+    lexer.ch = source[0];
+    if (lexer.ch == '\0') return list;
+    lexer.next_ch = source[1];
 
+    Token tk;
+    do{
+        tk = next_token(&lexer);
         push(&list, tk);
-    } while (tk.type != TOKEN_EOF);
+
+        advance(&lexer);
+    } while(tk.type != TOKEN_EOF);
 
     return list;
 }

@@ -38,6 +38,15 @@ typedef struct {
     int capacity;
 } TokenList;
 
+typedef struct {
+    char *source;
+    unsigned int pos;
+    unsigned int line;
+    unsigned int column;
+    char ch;
+    char next_ch;
+} Lexer;
+
 void push(TokenList* list, Token token);
 
 void show_token(Token token);

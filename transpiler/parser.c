@@ -505,7 +505,7 @@ AST * parse(TokenList list)
 {
     Parser p = { list, 0, false };
 
-    AST* ast = parse_block(&p, 1);
+    AST *ast = parse_block(&p, 1);
 
     Token t = parser_peek(&p, 0);
     if (t.type != TOKEN_EOF) {
