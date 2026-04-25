@@ -16,12 +16,12 @@ void show_ast(AST* node, int indent)
     }
 }
 
-void parser_seek(Parser *p, int offset) {
-    p->pos += offset;
+void parser_advance(Parser *p, int amount) {
+    p->pos += amount;
 
     if (p->pos < p->list.size) return;
 
-    printf("Trying to get a token after EOF\n");
+    printf("Trying to advance to a token after EOF\n");
     exit(1);
 }
 
