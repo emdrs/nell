@@ -64,7 +64,11 @@ char * generate_code(AST *ast)
             char *code = strdup("");
             for (int i = 0; i < ast->block.size; i++)
                 sprintf(code, "%s %s", code, generate_code(ast->block.statements[i]));
-            sprintf(result, "{ %s }", code);
+            sprintf(result, "{%s }", code);
+            break;
+        }
+        case AST_CONST_DEF: {
+            sprintf(result, "const %s %s;", ast->const_def.type, ast->const_def.name);
             break;
         }
     }
