@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 
     printf("\n");
 
-    AST *ast = parse(tokens, source);
+    AST *ast = parse(tokens, source, argv[1]);
     show_ast(ast, 0);
 
     char *code = generate_code(ast);

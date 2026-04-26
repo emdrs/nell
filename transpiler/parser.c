@@ -12,6 +12,28 @@ AST * create_ast_node(ASTType type)
     return node;
 }
 
+char * get_token_source_line(Parser *p, Token token)
+{
+    int pos = 0;
+    int line = 1;
+    char ch;
+    while (1) {
+        ch = p->source[pos];
+        if (ch == '\n') {
+            line++;
+            pos++;
+            continue;
+        }
+
+        if (line == token.line) {
+            int start = pos;
+            while(p->source[pos++] != '\n');
+            return strndup(p->source + start, (pos - start) + 1);
+        }
+        pos++;
+    }
+}
+
 void print_indent(int level) { for (int i = 0; i < level; i++) printf("  "); }
 
 void show_ast(AST* node, int indent)
@@ -78,8 +100,9 @@ Token parser_peek(Parser *p, int offset) {
 void match(Parser* p, TokenType type, const char* error_msg) {
     Token token = parser_peek(p, 0);
     if (token.type != type) {
-        fprintf(stderr, "Erro de Sintaxe: %s (Found: '%s')\n", 
-                error_msg, token.text);
+        fprintf(stderr, "Syntax error: %s (Found: '%s')\n", error_msg, token.text);
+        printf("%s:%d:%d | %s\n", p->file, token.line, token.column, error_msg);
+        printf("Line: %d | %s\n", token.line, get_token_source_line(p, token));
         exit(1);
     }
 }
@@ -224,27 +247,6 @@ void push_statement(AST *block, AST *statement)
     block->block.statements[block->block.size++] = statement;
 }
 
-char * get_token_source_line(Parser *p, Token token)
-{
-    int pos = 0;
-    int line = 1;
-    char ch;
-    while (1) {
-        ch = p->source[pos];
-        if (ch == '\n') {
-            line++;
-            continue;
-        }
-
-        if (line == token.line) {
-            int start = pos;
-            while(p->source[++pos] != '\n');
-            return strndup(p->source + start, (pos-1 - start) + 1);
-        }
-        pos++;
-    }
-}
-
 // TODO make this more specific
 int is_block(Parser *p, int level)
 {
@@ -318,9 +320,9 @@ AST * parse_block(Parser *p, int level)
     return block;
 }
 
-AST * parse(TokenList list, char *source)
+AST * parse(TokenList list, char *source, char *file)
 {
-    Parser p = { list, 0, source };
+    Parser p = { list, 0, source, file };
 
     AST *ast = parse_block(&p, 0);
 
