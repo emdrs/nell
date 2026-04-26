@@ -213,6 +213,30 @@ void push_statement(AST *block, AST *statement)
 
     block->block.statements[block->block.size++] = statement;
 }
+// TODO make this more specific
+int is_block(Parser *p)
+{
+    if (parser_peek(p, 0).type != TOKEN_LBRACE) return 0;
+
+    return 1;
+}
+
+AST * parse_block(Parser *p)
+{
+    AST *node = create_ast_node(AST_BLOCK);
+    node->block.statements = (AST **) malloc(sizeof(AST *));
+    node->block.size = 0;
+    node->block.capacity = 1;
+    parser_advance(p, 1);
+
+    while (parser_peek(p, 0).type != TOKEN_RBRACE) {
+        push_statement(node, parse_assign(p));
+        match(p, TOKEN_SEMICOLON, "; expected to define a assignment");
+        parser_advance(p, 1);
+    }
+
+    return node;
+}
 
 AST * parse(TokenList list)
 {
@@ -226,6 +250,10 @@ AST * parse(TokenList list)
     } else if (is_var_def(&p)) {
         ast = parse_var_def(&p);
         match(&p, TOKEN_SEMICOLON, "; expected to define variable");
+        parser_advance(&p, 1);
+    } else if (is_block(&p)) {
+        ast = parse_block(&p);
+        match(&p, TOKEN_RBRACE, "} expected to define a block");
         parser_advance(&p, 1);
     }
 
