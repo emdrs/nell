@@ -203,6 +203,17 @@ AST * parse_assign(Parser *p)
     return node;
 }
 
+void push_statement(AST *block, AST *statement)
+{
+    if (block->block.size >= block->block.capacity) {
+        block->block.capacity *= 2;
+        block->block.statements =
+            realloc(block->block.statements, sizeof(AST *) * block->block.capacity);
+    }
+
+    block->block.statements[block->block.size++] = statement;
+}
+
 AST * parse(TokenList list)
 {
     Parser p = { list, 0 };
