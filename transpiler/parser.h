@@ -8,6 +8,7 @@ typedef enum {
     AST_NUMBER,
     AST_OPERATOR,
     AST_VAR_DEF,
+    AST_CONST_DEF,
     AST_BLOCK,
     AST_ASSIGN
 } ASTType;
@@ -30,6 +31,11 @@ typedef struct AST {
             char *type;
             int initialized;
         } var_def;
+
+        struct {
+            char *name;
+            char *type;
+        } const_def;
 
         struct {
             struct AST *left;

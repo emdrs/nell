@@ -51,6 +51,10 @@ void show_ast(AST* node, int indent)
                 show_ast(node->block.statements[i], indent + 1);
             break;
         }
+        case AST_CONST_DEF: {
+            printf("CONST_DEF(%s:%s)\n", node->const_def.name, node->const_def.type);
+            break;
+        }
     }
 }
 
@@ -105,8 +109,7 @@ AST * parse_var_def(Parser *p)
 
 int is_factor(Token token)
 {
-    return (token.type == TOKEN_IDENTIFIER ||
-            token.type == TOKEN_NUMBER);
+    return (token.type == TOKEN_IDENTIFIER || token.type == TOKEN_NUMBER);
 }
 
 int is_assign(Parser *p)
@@ -213,15 +216,6 @@ void push_statement(AST *block, AST *statement)
 
     block->block.statements[block->block.size++] = statement;
 }
-// TODO make this more specific
-int is_block(Parser *p, int level)
-{
-    if (level == 0) return 1;
-
-    if (parser_peek(p, 0).type != TOKEN_LBRACE) return 0;
-
-    return 1;
-}
 
 char * get_token_source_line(Parser *p, Token token)
 {
@@ -244,6 +238,37 @@ char * get_token_source_line(Parser *p, Token token)
     }
 }
 
+// TODO make this more specific
+int is_block(Parser *p, int level)
+{
+    if (level == 0) return 1;
+
+    if (parser_peek(p, 0).type != TOKEN_LBRACE) return 0;
+
+    return 1;
+}
+
+int is_const_def(Parser *p)
+{
+    if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
+    if (parser_peek(p, 1).type != TOKEN_COLON) return 0;
+    if (parser_peek(p, 2).type != TOKEN_COLON) return 0;
+    if (!is_factor(parser_peek(p, 3))) return 0;
+
+    return 1;
+}
+
+AST * parse_const_def(Parser *p)
+{
+    AST *node = create_ast_node(AST_CONST_DEF);
+    node->const_def.name = parser_peek(p, 0).text;
+    node->const_def.type = strdup("int");
+
+    parser_advance(p, 4);
+
+    return node;
+}
+
 AST * parse_block(Parser *p, int level)
 {
     AST *block = create_ast_node(AST_BLOCK);
@@ -262,7 +287,11 @@ AST * parse_block(Parser *p, int level)
             parser_advance(p, 1);
         } else if (is_var_def(p)) {
             ast = parse_var_def(p);
-            match(p, TOKEN_SEMICOLON, "; expected to define variable");
+            match(p, TOKEN_SEMICOLON, "; expected to define a variable");
+            parser_advance(p, 1);
+        } else if (is_const_def(p)) {
+            ast = parse_const_def(p);
+            match(p, TOKEN_SEMICOLON, "; expected to define a const");
             parser_advance(p, 1);
         } else if (is_block(p, level + 1)) {
             ast = parse_block(p, level + 1);
