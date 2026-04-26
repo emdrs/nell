@@ -87,6 +87,12 @@ AST * parse_var_def(Parser *p)
     return node;
 }
 
+int is_factor(Token token)
+{
+    return (token.type == TOKEN_IDENTIFIER ||
+            token.type == TOKEN_NUMBER);
+}
+
 int is_assign(Parser *p)
 {
     if(is_var_def(p)) {
@@ -96,8 +102,7 @@ int is_assign(Parser *p)
     } else {
         if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
         if (parser_peek(p, 1).type != TOKEN_ASSIGN) return 0;
-        if (parser_peek(p, 2).type != TOKEN_NUMBER &&
-            parser_peek(p, 2).type != TOKEN_IDENTIFIER) return 0;
+        if (!is_factor(parser_peek(p, 2))) return 0;
     }
 
     return 1;
