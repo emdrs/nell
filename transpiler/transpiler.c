@@ -53,11 +53,19 @@ char * generate_code(AST *ast)
         }
         case AST_IDENTIFIER: {
             sprintf(result, "%s", ast->identifier);
-          break;
+            break;
         }
         case AST_OPERATOR: {
-            sprintf(result, "%s %s %s", generate_code(ast->op.left), ast->op.type, generate_code(ast->op.right));
-          break;
+            sprintf(result, "%s %s %s", generate_code(ast->op.left), ast->op.type,
+                    generate_code(ast->op.right));
+            break;
+        }
+        case AST_BLOCK: {
+            char *code = strdup("");
+            for (int i = 0; i < ast->block.size; i++)
+                sprintf(code, "%s %s", code, generate_code(ast->block.statements[i]));
+            sprintf(result, "{ %s }", code);
+            break;
         }
     }
 
