@@ -53,7 +53,7 @@ char * generate_code(AST *ast)
         }
         case AST_ASSIGN: {
             char *left_code = generate_code(ast->assign.left);
-            char *right_code = generate_code(ast->assign.left);
+            char *right_code = generate_code(ast->assign.right);
 
             asprintf(&result, "%s %s %s;", left_code, ast->assign.type, right_code);
 
