@@ -31,7 +31,7 @@ char * read_all_file(char *path)
 
 char * generate_code(AST *ast)
 {
-    if(ast == NULL) return NULL;
+    if(ast == NULL) return strdup("");
     char *result = strdup("");
 
     switch (ast->type) {
@@ -43,7 +43,7 @@ char * generate_code(AST *ast)
             break;
         }
         case AST_CONST_DEF: {
-            sprintf(result, "const %s %s = %s;", ast->const_def.type,
+            asprintf(&result, "const %s %s = %s;", ast->const_def.type,
                     ast->const_def.name, generate_code(ast->const_def.value));
             break;
         }
