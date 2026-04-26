@@ -100,9 +100,8 @@ Token parser_peek(Parser *p, int offset) {
 void match(Parser* p, TokenType type, const char* error_msg) {
     Token token = parser_peek(p, 0);
     if (token.type != type) {
-        fprintf(stderr, "Syntax error: %s (Found: '%s')\n", error_msg, token.text);
-        printf("%s:%d:%d | %s\n", p->file, token.line, token.column, error_msg);
-        printf("Line: %d | %s\n", token.line, get_token_source_line(p, token));
+        printf("%s:%d:%d error: %s\n", p->file, token.line, token.column, error_msg);
+        printf("%4d | %s\n", token.line, get_token_source_line(p, token));
         exit(1);
     }
 }
@@ -130,7 +129,6 @@ AST * parse_var_def(Parser *p)
 
     return node;
 }
-
 
 int is_number(Token token)
 {
