@@ -140,26 +140,6 @@ int is_factor(Token token)
     return (token.type == TOKEN_IDENTIFIER || is_number(token));
 }
 
-int is_assign(Parser *p)
-{
-    if(is_var_def(p)) {
-        int offset = 3;
-        int implicit_type = parser_peek(p, 0 + offset-1).type == TOKEN_ASSIGN;
-        if (!implicit_type && parser_peek(p, 0 + offset).type != TOKEN_ASSIGN)
-            return 0;
-
-        // If implicit_type, var_def consume 2 tokens (name and ':')
-        offset -= implicit_type; 
-
-        if (!is_factor(parser_peek(p, 1 + offset))) return 0;
-    } else {
-        if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
-        if (parser_peek(p, 1).type != TOKEN_ASSIGN) return 0;
-        if (!is_factor(parser_peek(p, 2))) return 0;
-    }
-
-    return 1;
-}
 
 AST * parse_number(Parser *p)
 {
@@ -218,6 +198,30 @@ AST * parse_expression(Parser *p)
     return op;
 }
 
+int is_assign(Parser *p)
+{
+    if(is_var_def(p)) {
+        int offset = 3;
+        int implicit_type = parser_peek(p, 0 + offset-1).type == TOKEN_ASSIGN;
+        if (!implicit_type && parser_peek(p, 0 + offset).type != TOKEN_ASSIGN)
+            return 0;
+
+        // If implicit_type, var_def consume 2 tokens (name and ':')
+        offset -= implicit_type; 
+
+        if (!is_factor(parser_peek(p, 1 + offset))) return 0;
+    } else {
+        if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
+        int simple_assign = parser_peek(p, 1).type == TOKEN_ASSIGN;
+        if (!simple_assign                  &&
+            !is_operator(parser_peek(p, 1)) &&
+            parser_peek(p, 2).type != TOKEN_ASSIGN) return 0;
+        if (!is_factor(parser_peek(p, 3 - simple_assign))) return 0;
+    }
+
+    return 1;
+}
+
 AST * parse_assign(Parser *p)
 {
     AST *node = create_ast_node(AST_ASSIGN);
@@ -227,8 +231,18 @@ AST * parse_assign(Parser *p)
     } else {
         node->assign.left = parse_identifier(p);
     }
-    node->assign.type = parser_peek(p, 0).text;
-    parser_advance(p, 1);
+
+    Token token = parser_peek(p, 0);
+
+    node->assign.type = strdup("");
+
+    if (token.type == TOKEN_ASSIGN) {
+        node->assign.type = token.text;
+        parser_advance(p, 1);
+    } else {
+        sprintf(node->assign.type, "%s%s", token.text, parser_peek(p, 1).text);
+        parser_advance(p, 2);
+    }
     node->assign.right = parse_expression(p);
 
     return node;
@@ -272,7 +286,41 @@ AST * parse_const_def(Parser *p)
     parser_advance(p, 3);
 
     node->const_def.value = parse_expression(p);
-    node->const_def.type = node->const_def.value->number.type;
+    if (node->const_def.value->type == AST_NUMBER)
+        node->const_def.type = node->const_def.value->number.type;
+    else
+        node->const_def.type = node->const_def.value->op.left->number.type;
+
+    return node;
+}
+
+AST * parse_block(Parser *p, int level);
+
+AST * parse_statement(Parser *p, int level)
+{
+    AST *node;
+
+    if (is_assign(p)) {
+        node = parse_assign(p);
+        match(p, TOKEN_SEMICOLON, "; expected to define a assignment");
+        parser_advance(p, 1);
+    } else if (is_var_def(p)) {
+        node = parse_var_def(p);
+        match(p, TOKEN_SEMICOLON, "; expected to define a variable");
+        parser_advance(p, 1);
+    } else if (is_const_def(p)) {
+        node = parse_const_def(p);
+        match(p, TOKEN_SEMICOLON, "; expected to define a const");
+        parser_advance(p, 1);
+    } else if (is_block(p, level + 1)) {
+        node = parse_block(p, level + 1);
+        match(p, TOKEN_RBRACE, "} expected to define a block");
+        parser_advance(p, 1);
+    } else {
+        printf("Syntax error\n");
+        printf("Line: %s\n", get_token_source_line(p, parser_peek(p, 0)));
+        exit(1);
+    }
 
     return node;
 }
@@ -287,33 +335,8 @@ AST * parse_block(Parser *p, int level)
     
     if (level > 0) parser_advance(p, 1);
 
-    AST *ast;
-
-    while (parser_peek(p, 0).type != ((level > 0) ? TOKEN_RBRACE : TOKEN_EOF)) {
-        if (is_assign(p)) {
-            ast = parse_assign(p);
-            match(p, TOKEN_SEMICOLON, "; expected to define a assignment");
-            parser_advance(p, 1);
-        } else if (is_var_def(p)) {
-            ast = parse_var_def(p);
-            match(p, TOKEN_SEMICOLON, "; expected to define a variable");
-            parser_advance(p, 1);
-        } else if (is_const_def(p)) {
-            ast = parse_const_def(p);
-            match(p, TOKEN_SEMICOLON, "; expected to define a const");
-            parser_advance(p, 1);
-        } else if (is_block(p, level + 1)) {
-            ast = parse_block(p, level + 1);
-            match(p, TOKEN_RBRACE, "} expected to define a block");
-            parser_advance(p, 1);
-        } else {
-            printf("Syntax error\n");
-            printf("Line: %s\n", get_token_source_line(p, parser_peek(p, 0)));
-            exit(1);
-        }
-
-        push_statement(block, ast);
-    }
+    while (parser_peek(p, 0).type != ((level > 0) ? TOKEN_RBRACE : TOKEN_EOF))
+        push_statement(block, parse_statement(p, level));
 
     return block;
 }
