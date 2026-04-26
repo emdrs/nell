@@ -45,6 +45,12 @@ void show_ast(AST* node, int indent)
             show_ast(node->op.right, indent + 1);
             break;
         }
+        case AST_BLOCK: {
+            printf("BLOCK(%d)\n", node->block.size);
+            for (int i = 0; i < node->block.size; i++)
+                show_ast(node->block.statements[i], indent + 1);
+            break;
+        }
     }
 }
 
