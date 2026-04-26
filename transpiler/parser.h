@@ -48,11 +48,12 @@ typedef struct AST {
 typedef struct {
     TokenList list;
     int pos;
+    char *source;
 } Parser;
 
 void show_ast(AST* node, int indent);
 
-AST * parse(TokenList list);
+AST * parse(TokenList list, char *source);
 AST * create_ast_node(ASTType type);
 
 #endif

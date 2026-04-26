@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 
     printf("\n");
 
-    AST *ast = parse(tokens);
+    AST *ast = parse(tokens, source);
     show_ast(ast, 0);
 
     char *code = generate_code(ast);

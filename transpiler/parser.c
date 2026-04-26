@@ -223,6 +223,27 @@ int is_block(Parser *p, int level)
     return 1;
 }
 
+char * get_token_source_line(Parser *p, Token token)
+{
+    int pos = 0;
+    int line = 1;
+    char ch;
+    while (1) {
+        ch = p->source[pos];
+        if (ch == '\n') {
+            line++;
+            continue;
+        }
+
+        if (line == token.line) {
+            int start = pos;
+            while(p->source[++pos] != '\n');
+            return strndup(p->source + start, (pos-1 - start) + 1);
+        }
+        pos++;
+    }
+}
+
 AST * parse_block(Parser *p, int level)
 {
     AST *block = create_ast_node(AST_BLOCK);
@@ -247,6 +268,10 @@ AST * parse_block(Parser *p, int level)
             ast = parse_block(p, level + 1);
             match(p, TOKEN_RBRACE, "} expected to define a block");
             parser_advance(p, 1);
+        } else {
+            printf("Syntax error\n");
+            printf("Line: %s\n", get_token_source_line(p, parser_peek(p, 0)));
+            exit(1);
         }
 
         push_statement(block, ast);
@@ -255,9 +280,9 @@ AST * parse_block(Parser *p, int level)
     return block;
 }
 
-AST * parse(TokenList list)
+AST * parse(TokenList list, char *source)
 {
-    Parser p = { list, 0 };
+    Parser p = { list, 0, source };
 
     AST *ast = parse_block(&p, 0);
 
