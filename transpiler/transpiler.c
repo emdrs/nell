@@ -42,8 +42,13 @@ char * generate_code(AST *ast)
                 sprintf(result, "%s %s;", ast->var_def.type, ast->var_def.name);
             break;
         }
+        case AST_CONST_DEF: {
+            sprintf(result, "const %s %s = %s;", ast->const_def.type,
+                    ast->const_def.name, generate_code(ast->const_def.value));
+            break;
+        }
         case AST_NUMBER: {
-            sprintf(result, "%d", ast->number);
+            sprintf(result, "%s", ast->number.value);
             break;
         }
         case AST_ASSIGN: {
@@ -65,10 +70,6 @@ char * generate_code(AST *ast)
             for (int i = 0; i < ast->block.size; i++)
                 sprintf(code, "%s %s", code, generate_code(ast->block.statements[i]));
             sprintf(result, "{%s }", code);
-            break;
-        }
-        case AST_CONST_DEF: {
-            sprintf(result, "const %s %s;", ast->const_def.type, ast->const_def.name);
             break;
         }
     }
