@@ -25,8 +25,13 @@ void show_ast(AST* node, int indent)
             printf("VAR_DEF(%s:%s)\n", node->var_def.name, node->var_def.type);
             break;
         }
+        case AST_CONST_DEF: {
+            printf("CONST_DEF(%s:%s)\n", node->const_def.name, node->const_def.type);
+            show_ast(node->const_def.value, indent + 1);
+            break;
+        }
         case AST_NUMBER: {
-            printf("NUMBER(%d)\n", node->number);
+            printf("NUMBER(%s)\n", node->number.value);
             break;
         }
         case AST_ASSIGN: {
@@ -49,10 +54,6 @@ void show_ast(AST* node, int indent)
             printf("BLOCK(%d)\n", node->block.size);
             for (int i = 0; i < node->block.size; i++)
                 show_ast(node->block.statements[i], indent + 1);
-            break;
-        }
-        case AST_CONST_DEF: {
-            printf("CONST_DEF(%s:%s)\n", node->const_def.name, node->const_def.type);
             break;
         }
     }
@@ -107,9 +108,15 @@ AST * parse_var_def(Parser *p)
     return node;
 }
 
+
+int is_number(Token token)
+{
+    return token.type == TOKEN_INT || token.type == TOKEN_FLOAT;
+}
+
 int is_factor(Token token)
 {
-    return (token.type == TOKEN_IDENTIFIER || token.type == TOKEN_NUMBER);
+    return (token.type == TOKEN_IDENTIFIER || is_number(token));
 }
 
 int is_assign(Parser *p)
@@ -136,7 +143,9 @@ int is_assign(Parser *p)
 AST * parse_number(Parser *p)
 {
     AST *node = create_ast_node(AST_NUMBER);
-    node->number = atoi(parser_peek(p, 0).text);
+    Token number = parser_peek(p, 0);
+    node->number.type = strdup(number.type == TOKEN_INT ? "int" : "float");
+    node->number.value = number.text;
     parser_advance(p, 1);
 
     return node;
@@ -153,9 +162,7 @@ AST * parse_identifier(Parser *p)
 
 AST * parse_factor(Parser *p)
 {
-    Token factor = parser_peek(p, 0);
-
-    if (factor.type == TOKEN_NUMBER) return parse_number(p);
+    if (is_number(parser_peek(p, 0))) return parse_number(p);
 
     return parse_identifier(p);
 }
@@ -262,9 +269,10 @@ AST * parse_const_def(Parser *p)
 {
     AST *node = create_ast_node(AST_CONST_DEF);
     node->const_def.name = parser_peek(p, 0).text;
-    node->const_def.type = strdup("int");
+    parser_advance(p, 3);
 
-    parser_advance(p, 4);
+    node->const_def.value = parse_expression(p);
+    node->const_def.type = node->const_def.value->number.type;
 
     return node;
 }

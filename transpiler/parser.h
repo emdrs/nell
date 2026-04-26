@@ -17,8 +17,12 @@ typedef struct AST {
     ASTType type;
 
     union {
-        int number;
         char *identifier;
+
+        struct {
+            char *value;
+            char *type;
+        } number;
 
         struct {
             struct AST *left;
@@ -35,6 +39,7 @@ typedef struct AST {
         struct {
             char *name;
             char *type;
+            struct AST *value;
         } const_def;
 
         struct {
