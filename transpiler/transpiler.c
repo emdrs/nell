@@ -76,15 +76,17 @@ char * generate_code(AST *ast)
             break;
         }
         case AST_BLOCK: {
-            char *code = strdup("");
+            char *code = NULL;
             for (int i = 0; i < ast->block.size; i++) {
                 char *statement_code = generate_code(ast->block.statements[i]);
 
-                asprintf(&code, "%s %s", code, statement_code);
+                if (code) asprintf(&code, "%s %s", code, statement_code);
+                else      asprintf(&code, "%s", statement_code);
 
                 free(statement_code);
             }
-            asprintf(&result, "{%s }", code);
+            if (ast->block.level == 0) asprintf(&result, "%s", code);
+            else                       asprintf(&result, "{ %s }", code);
             break;
         }
     }
