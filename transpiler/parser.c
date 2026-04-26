@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "lexer.h"
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -76,7 +77,8 @@ int is_var_def(Parser *p)
 {
     if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
     if (parser_peek(p, 1).type != TOKEN_COLON) return 0;
-    if (parser_peek(p, 2).type != TOKEN_IDENTIFIER) return 0;
+    if (parser_peek(p, 2).type != TOKEN_IDENTIFIER &&
+        parser_peek(p, 2).type != TOKEN_ASSIGN /*Implicit type*/) return 0;
 
     return 1;
 }
@@ -84,11 +86,13 @@ int is_var_def(Parser *p)
 AST * parse_var_def(Parser *p)
 {
     AST *node = create_ast_node(AST_VAR_DEF);
-    node->var_def.name = parser_peek(p, 0).text;
-    node->var_def.type = parser_peek(p, 2).text;
     node->var_def.initialized = 0;
+    node->var_def.name = parser_peek(p, 0).text;
 
-    parser_advance(p, 3);
+    int implicit_type = parser_peek(p, 2).type == TOKEN_ASSIGN;
+    node->var_def.type = implicit_type ? strdup("int") : parser_peek(p, 2).text;
+
+    parser_advance(p, 3 - implicit_type);
 
     return node;
 }
@@ -103,7 +107,13 @@ int is_assign(Parser *p)
 {
     if(is_var_def(p)) {
         int offset = 3;
-        if (parser_peek(p, 0 + offset).type != TOKEN_ASSIGN) return 0;
+        int implicit_type = parser_peek(p, 0 + offset-1).type == TOKEN_ASSIGN;
+        if (!implicit_type && parser_peek(p, 0 + offset).type != TOKEN_ASSIGN)
+            return 0;
+
+        // If implicit_type, var_def consume 2 tokens (name and ':')
+        offset -= implicit_type; 
+
         if (!is_factor(parser_peek(p, 1 + offset))) return 0;
     } else {
         if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
