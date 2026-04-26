@@ -6,6 +6,7 @@
 typedef enum {
     AST_IDENTIFIER,
     AST_NUMBER,
+    AST_OPERATOR,
     AST_VAR_DEF,
     AST_ASSIGN
 } ASTType;
@@ -16,6 +17,12 @@ typedef struct AST {
     union {
         int number;
         char *identifier;
+
+        struct {
+            struct AST *left;
+            struct AST *right;
+            char *type;
+        } op;
 
         struct {
             char *name;
