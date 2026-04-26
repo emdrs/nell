@@ -36,7 +36,13 @@ void show_ast(AST* node, int indent)
         }
         case AST_IDENTIFIER: {
             printf("IDENTIFIER(%s)\n", node->identifier);
-          break;
+            break;
+        }
+        case AST_OPERATOR: {
+            printf("OPERATOR(%s)\n", node->op.type);
+            show_ast(node->op.left, indent + 1);
+            show_ast(node->op.right, indent + 1);
+            break;
         }
     }
 }
@@ -133,6 +139,18 @@ AST * parse_factor(Parser *p)
     if (factor.type == TOKEN_NUMBER) return parse_number(p);
 
     return parse_identifier(p);
+}
+
+inline int is_expression(Parser *p) { return is_factor(parser_peek(p, 0)); }
+
+int is_operator(Token token)
+{
+    if (token.type != TOKEN_PLUS  &&
+        token.type != TOKEN_MINUS &&
+        token.type != TOKEN_STAR  &&
+        token.type != TOKEN_SLASH) return 0;
+
+    return 1;
 }
 
 AST * parse_expression(Parser *p)
