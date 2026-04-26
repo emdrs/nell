@@ -31,8 +31,11 @@ void show_token(Token token)
         case TOKEN_IDENTIFIER:
             printf("IDENTIFIER(%s) ", token.text);
             break;
-        case TOKEN_NUMBER:
-            printf("NUMBER(%s) ", token.text);
+        case TOKEN_INT:
+            printf("INT(%s) ", token.text);
+            break;
+        case TOKEN_FLOAT:
+            printf("FLOAT(%s) ", token.text);
             break;
         case TOKEN_ASSIGN:
             printf("ASSIGN(%s) ", token.text);
@@ -100,14 +103,29 @@ Token identifier(Lexer *l)
     };
 }
 
+int is_digit(Lexer *l) { return l->next_ch >= '0' && l->next_ch <= '9'; }
+
 Token number(Lexer *l)
 {
     int start = l->pos;
+    int is_float = 0;
 
-    while (l->next_ch >= '0' && l->next_ch <= '9') advance(l);
+    while (is_digit(l)) advance(l);
+
+    if (l->next_ch == '.') {
+        is_float = 1;
+        advance(l);
+
+        if (!is_digit(l)) {
+            printf("Expected a digit after '.'\n");
+            exit(1);
+        }
+
+        while (is_digit(l)) advance(l);
+    }
 
     return (Token) {
-        TOKEN_NUMBER,
+        is_float ? TOKEN_FLOAT : TOKEN_INT,
         strndup(l->source + start, (l->pos - start) + 1)
     };
 }

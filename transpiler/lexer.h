@@ -3,7 +3,8 @@
 
 typedef enum {
     TOKEN_IDENTIFIER,
-    TOKEN_NUMBER,
+    TOKEN_INT,
+    TOKEN_FLOAT,
     TOKEN_SEMICOLON,
     TOKEN_COLON,
     TOKEN_ASSIGN,
