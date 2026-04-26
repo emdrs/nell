@@ -214,48 +214,52 @@ void push_statement(AST *block, AST *statement)
     block->block.statements[block->block.size++] = statement;
 }
 // TODO make this more specific
-int is_block(Parser *p)
+int is_block(Parser *p, int level)
 {
+    if (level == 0) return 1;
+
     if (parser_peek(p, 0).type != TOKEN_LBRACE) return 0;
 
     return 1;
 }
 
-AST * parse_block(Parser *p)
+AST * parse_block(Parser *p, int level)
 {
-    AST *node = create_ast_node(AST_BLOCK);
-    node->block.statements = (AST **) malloc(sizeof(AST *));
-    node->block.size = 0;
-    node->block.capacity = 1;
-    parser_advance(p, 1);
+    AST *block = create_ast_node(AST_BLOCK);
+    block->block.statements = (AST **) malloc(sizeof(AST *));
+    block->block.size = 0;
+    block->block.capacity = 1;
+    
+    if (level > 0) parser_advance(p, 1);
 
-    while (parser_peek(p, 0).type != TOKEN_RBRACE) {
-        push_statement(node, parse_assign(p));
-        match(p, TOKEN_SEMICOLON, "; expected to define a assignment");
-        parser_advance(p, 1);
+    AST *ast;
+
+    while (parser_peek(p, 0).type != ((level > 0) ? TOKEN_RBRACE : TOKEN_EOF)) {
+        if (is_assign(p)) {
+            ast = parse_assign(p);
+            match(p, TOKEN_SEMICOLON, "; expected to define a assignment");
+            parser_advance(p, 1);
+        } else if (is_var_def(p)) {
+            ast = parse_var_def(p);
+            match(p, TOKEN_SEMICOLON, "; expected to define variable");
+            parser_advance(p, 1);
+        } else if (is_block(p, level + 1)) {
+            ast = parse_block(p, level + 1);
+            match(p, TOKEN_RBRACE, "} expected to define a block");
+            parser_advance(p, 1);
+        }
+
+        push_statement(block, ast);
     }
 
-    return node;
+    return block;
 }
 
 AST * parse(TokenList list)
 {
     Parser p = { list, 0 };
 
-    AST *ast;
-    if (is_assign(&p)) {
-        ast = parse_assign(&p);
-        match(&p, TOKEN_SEMICOLON, "; expected to define a assignment");
-        parser_advance(&p, 1);
-    } else if (is_var_def(&p)) {
-        ast = parse_var_def(&p);
-        match(&p, TOKEN_SEMICOLON, "; expected to define variable");
-        parser_advance(&p, 1);
-    } else if (is_block(&p)) {
-        ast = parse_block(&p);
-        match(&p, TOKEN_RBRACE, "} expected to define a block");
-        parser_advance(&p, 1);
-    }
+    AST *ast = parse_block(&p, 0);
 
     Token t = parser_peek(&p, 0);
     if (t.type != TOKEN_EOF) {
