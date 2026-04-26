@@ -113,6 +113,8 @@ Token next_token(Lexer *l)
 
     switch (l->ch) {
         case ';':  return (Token) { TOKEN_SEMICOLON,    ";" };
+        case '{':  return (Token) { TOKEN_LBRACE,       "{" };
+        case '}':  return (Token) { TOKEN_RBRACE,       "}" };
         case '=':  return (Token) { TOKEN_ASSIGN,       "=" };
         case '\0': return (Token) { TOKEN_EOF,           "" };
     }
