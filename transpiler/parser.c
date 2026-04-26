@@ -135,6 +135,24 @@ AST * parse_factor(Parser *p)
     return parse_identifier(p);
 }
 
+AST * parse_expression(Parser *p)
+{
+    AST *left = parse_factor(p);
+
+    Token operator = parser_peek(p, 0);
+
+    if (!is_operator(operator)) return left;
+    
+    parser_advance(p, 1);
+
+    AST *op = create_ast_node(AST_OPERATOR);
+    op->op.left = left;
+    op->op.right = parse_expression(p);
+    op->op.type = operator.text;
+
+    return op;
+}
+
 AST * parse_assign(Parser *p)
 {
     AST *node = create_ast_node(AST_ASSIGN);
@@ -146,7 +164,7 @@ AST * parse_assign(Parser *p)
     }
     node->assign.type = parser_peek(p, 0).text;
     parser_advance(p, 1);
-    node->assign.right = parse_factor(p);
+    node->assign.right = parse_expression(p);
 
     return node;
 }
