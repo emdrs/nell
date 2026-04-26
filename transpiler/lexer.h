@@ -11,6 +11,8 @@ typedef enum {
     TOKEN_MINUS,
     TOKEN_STAR,
     TOKEN_SLASH,
+    TOKEN_LBRACE,
+    TOKEN_RBRACE,
     TOKEN_EOF
 } TokenType;
 
