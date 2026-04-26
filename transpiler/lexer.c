@@ -8,7 +8,7 @@ void advance(Lexer *l)
     l->ch = l->source[++l->pos];
     if (l->ch == '\n'){
         l->line++;
-        l->column = 1;
+        l->column = 0;
     } else {
         l->column++;
     }
@@ -76,7 +76,8 @@ void show_token_list(TokenList list)
     printf("\n");
 }
 
-void skip_whitespaces(Lexer *l) {
+void skip_whitespaces(Lexer *l)
+{
     while (l->ch == ' ' || l->ch == '\n' || l->ch == '\t') advance(l);
 }
 
@@ -190,8 +191,10 @@ TokenList tokenize(char *source)
     Token tk;
     do {
         tk = next_token(&l);
+
         tk.line = l.line;
         tk.column = l.column;
+
         push(&list, tk);
 
         advance(&l);
