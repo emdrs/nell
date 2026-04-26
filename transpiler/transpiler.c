@@ -53,7 +53,10 @@ char * generate_code(AST *ast)
         }
         case AST_IDENTIFIER: {
             sprintf(result, "%s", ast->identifier);
-
+          break;
+        }
+        case AST_OPERATOR: {
+            sprintf(result, "%s %s %s", generate_code(ast->op.left), ast->op.type, generate_code(ast->op.right));
           break;
         }
     }
