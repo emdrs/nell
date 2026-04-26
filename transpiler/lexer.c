@@ -6,6 +6,12 @@
 void advance(Lexer *l)
 {
     l->ch = l->source[++l->pos];
+    if (l->ch == '\n'){
+        l->line++;
+        l->column = 1;
+    } else {
+        l->column++;
+    }
     if (l->next_ch != '\0') l->next_ch = l->source[l->pos+1];
 }
 
@@ -166,6 +172,8 @@ TokenList tokenize(char *source)
     Token tk;
     do {
         tk = next_token(&l);
+        tk.line = l.line;
+        tk.column = l.column;
         push(&list, tk);
 
         advance(&l);
