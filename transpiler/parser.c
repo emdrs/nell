@@ -96,7 +96,8 @@ int is_assign(Parser *p)
     } else {
         if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
         if (parser_peek(p, 1).type != TOKEN_ASSIGN) return 0;
-        if (parser_peek(p, 2).type != TOKEN_NUMBER) return 0;
+        if (parser_peek(p, 2).type != TOKEN_NUMBER &&
+            parser_peek(p, 2).type != TOKEN_IDENTIFIER) return 0;
     }
 
     return 1;
@@ -140,7 +141,7 @@ AST * parse_assign(Parser *p)
     }
     node->assign.type = parser_peek(p, 0).text;
     parser_advance(p, 1);
-    node->assign.right = parse_number(p);
+    node->assign.right = parse_factor(p);
 
     return node;
 }
@@ -152,7 +153,7 @@ AST * parse(TokenList list)
     AST *ast;
     if (is_assign(&p)) {
         ast = parse_assign(&p);
-        match(&p, TOKEN_SEMICOLON, "; expected to define variable");
+        match(&p, TOKEN_SEMICOLON, "; expected to define a assignment");
         parser_advance(&p, 1);
     } else if (is_var_def(&p)) {
         ast = parse_var_def(&p);
