@@ -21,48 +21,44 @@ void push(TokenList *list, Token token)
 
 void show_token(Token token)
 {
-    char *type_str;
-    char *simple = "%s ";
-    char *descritive = "%s(%s) ";
-    char *print_type = simple;
     switch (token.type) {
         case TOKEN_IDENTIFIER:
-            type_str = "IDENTIFIER";
-            print_type = descritive;
+            printf("IDENTIFIER(%s) ", token.text);
             break;
         case TOKEN_NUMBER:
-            type_str = "NUMBER";
-            print_type = descritive;
+            printf("NUMBER(%s) ", token.text);
             break;
         case TOKEN_ASSIGN:
-            type_str = "ASSIGN";
-            print_type = descritive;
+            printf("ASSIGN(%s) ", token.text);
             break;
         case TOKEN_SEMICOLON:
-            type_str = "SEMICOLON";
+            printf("SEMICOLON ");
             break;
         case TOKEN_COLON:
-            type_str = "COLON";
+            printf("COLON ");
             break;
         case TOKEN_EOF:
-            type_str = "EOF";
+            printf("EOF ");
             break;
-          break;
         case TOKEN_PLUS:
-            type_str = "PLUS";
+            printf("PLUS ");
             break;
         case TOKEN_MINUS:
-            type_str = "MINUS";
+            printf("MINUS ");
             break;
         case TOKEN_STAR:
-            type_str = "STAR";
+            printf("STAR ");
             break;
         case TOKEN_SLASH:
-            type_str = "SLASH";
+            printf("SLASH ");
             break;
-        }
-
-    printf(print_type, type_str, token.text);
+        case TOKEN_LBRACE:
+            printf("LBRACE ");
+            break;
+        case TOKEN_RBRACE:
+            printf("RBRACE ");
+            break;
+    }
 }
 
 void show_token_list(TokenList list)
