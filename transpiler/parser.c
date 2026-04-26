@@ -140,7 +140,6 @@ int is_factor(Token token)
     return (token.type == TOKEN_IDENTIFIER || is_number(token));
 }
 
-
 AST * parse_number(Parser *p)
 {
     AST *node = create_ast_node(AST_NUMBER);

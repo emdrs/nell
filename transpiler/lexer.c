@@ -76,9 +76,12 @@ void show_token_list(TokenList list)
     printf("\n");
 }
 
+void skip_comment(Lexer *l);
+
 void skip_whitespaces(Lexer *l)
 {
     while (l->ch == ' ' || l->ch == '\n' || l->ch == '\t') advance(l);
+    skip_comment(l);
 }
 
 void skip_comment(Lexer *l)

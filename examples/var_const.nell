@@ -1,11 +1,14 @@
+// Var definition
 a: int = 10;
-b: int = a;
+b := a; // Implicit type (int)
 
+// Operators
 c := a * b;
 d := a / b;
 e := a + b;
 f := a - b;
 
+// Assign operators
 f *= 1;
 f /= a;
 f += b + 5;
