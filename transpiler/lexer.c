@@ -48,6 +48,18 @@ void show_token(Token token)
             type_str = "EOF";
             break;
           break;
+        case TOKEN_PLUS:
+            type_str = "PLUS";
+            break;
+        case TOKEN_MINUS:
+            type_str = "MINUS";
+            break;
+        case TOKEN_STAR:
+            type_str = "STAR";
+            break;
+        case TOKEN_SLASH:
+            type_str = "SLASH";
+            break;
         }
 
     printf(print_type, type_str, token.text);
@@ -111,6 +123,22 @@ Token next_token(Lexer *l)
 
     if (l->ch == ':') {
         return (Token){ TOKEN_COLON, ":" };
+    }
+
+    if (l->ch == '+') {
+        return (Token){ TOKEN_PLUS, "+" };
+    }
+
+    if (l->ch == '-') {
+        return (Token){ TOKEN_MINUS, "-" };
+    }
+
+    if (l->ch == '*') {
+        return (Token){ TOKEN_STAR, "*" };
+    }
+
+    if (l->ch == '/') {
+        return (Token){ TOKEN_SLASH, "/" };
     }
 
     if (l->ch >= '0' && l->ch <= '9') return number(l);
