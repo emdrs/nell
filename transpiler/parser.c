@@ -98,7 +98,7 @@ int is_assign(Parser *p)
     if(is_var_def(p)) {
         int offset = 3;
         if (parser_peek(p, 0 + offset).type != TOKEN_ASSIGN) return 0;
-        if (parser_peek(p, 1 + offset).type != TOKEN_NUMBER) return 0;
+        if (!is_factor(parser_peek(p, 1 + offset))) return 0;
     } else {
         if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
         if (parser_peek(p, 1).type != TOKEN_ASSIGN) return 0;
