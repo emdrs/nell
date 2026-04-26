@@ -52,6 +52,7 @@ typedef struct AST {
             struct AST **statements;
             int size;
             int capacity;
+            int level;
         } block;
     };
 } AST;

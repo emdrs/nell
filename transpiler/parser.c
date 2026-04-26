@@ -283,6 +283,7 @@ AST * parse_block(Parser *p, int level)
     block->block.statements = (AST **) malloc(sizeof(AST *));
     block->block.size = 0;
     block->block.capacity = 1;
+    block->block.level = level;
     
     if (level > 0) parser_advance(p, 1);
 
