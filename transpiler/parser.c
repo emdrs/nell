@@ -120,6 +120,15 @@ AST * parse_identifier(Parser *p)
     return node;
 }
 
+AST * parse_factor(Parser *p)
+{
+    Token factor = parser_peek(p, 0);
+
+    if (factor.type == TOKEN_NUMBER) return parse_number(p);
+
+    return parse_identifier(p);
+}
+
 AST * parse_assign(Parser *p)
 {
     AST *node = create_ast_node(AST_ASSIGN);
