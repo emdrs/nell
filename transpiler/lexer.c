@@ -32,59 +32,71 @@ void show_token(Token token)
             printf("IDENTIFIER(%s) ", token.text);
             break;
         case TOKEN_INT:
-            printf("INT(%s) ", token.text);
+            printf("INT(%s)", token.text);
             break;
         case TOKEN_FLOAT:
-            printf("FLOAT(%s) ", token.text);
+            printf("FLOAT(%s)", token.text);
             break;
         case TOKEN_EQUALS:
-            printf("EQUALS ");
+            printf("EQUALS");
             break;
         case TOKEN_PLUS_EQUALS:
-            printf("PLUS_EQUALS ");
+            printf("PLUS_EQUALS");
             break;
         case TOKEN_MINUS_EQUALS:
-            printf("MINUS_EQUALS ");
+            printf("MINUS_EQUALS");
             break;
         case TOKEN_STAR_EQUALS:
-            printf("STAR_EQUALS ");
+            printf("STAR_EQUALS");
             break;
         case TOKEN_SLASH_EQUALS:
-            printf("SLASH_EQUALS ");
+            printf("SLASH_EQUALS");
             break;
         case TOKEN_SEMICOLON:
-            printf("SEMICOLON ");
+            printf("SEMICOLON");
             break;
         case TOKEN_COLON:
-            printf("COLON ");
+            printf("COLON");
             break;
         case TOKEN_EOF:
-            printf("EOF ");
+            printf("EOF");
             break;
         case TOKEN_PLUS:
-            printf("PLUS ");
+            printf("PLUS");
             break;
         case TOKEN_MINUS:
-            printf("MINUS ");
+            printf("MINUS");
             break;
         case TOKEN_STAR:
-            printf("STAR ");
+            printf("STAR");
             break;
         case TOKEN_SLASH:
-            printf("SLASH ");
+            printf("SLASH");
             break;
         case TOKEN_LBRACE:
-            printf("LBRACE ");
+            printf("LBRACE");
             break;
         case TOKEN_RBRACE:
-            printf("RBRACE ");
+            printf("RBRACE");
+            break;
+        case TOKEN_DOUBLE_COLON:
+            printf("DOUBLE_COLON");
+            break;
+        case TOKEN_DOUBLE_PLUS:
+            printf("DOUBLE_PLUS");
+            break;
+        case TOKEN_DOUBLE_MINUS:
+            printf("DOUBLE_MINUS");
             break;
         }
 }
 
 void show_token_list(TokenList list)
 {
-    for (int i = 0; i < list.size; i++) show_token(list.data[i]);
+    for (int i = 0; i < list.size; i++) {
+        show_token(list.data[i]);
+        printf(" ");
+    }
     printf("\n");
 }
 
@@ -160,10 +172,18 @@ Token next_token(Lexer *l)
     }
 
     if (l->ch == ':') {
+        if (l->next_ch == ':') {
+            advance(l);
+            return (Token){ TOKEN_DOUBLE_COLON, "::" };
+        }
         return (Token){ TOKEN_COLON, ":" };
     }
 
     if (l->ch == '+') {
+        if (l->next_ch == '+') {
+            advance(l);
+            return (Token){ TOKEN_DOUBLE_PLUS, "++" };
+        }
         if (l->next_ch == '=') {
             advance(l);
             return (Token){ TOKEN_PLUS_EQUALS, "+=" };
@@ -172,6 +192,10 @@ Token next_token(Lexer *l)
     }
 
     if (l->ch == '-') {
+        if (l->next_ch == '-') {
+            advance(l);
+            return (Token){ TOKEN_DOUBLE_MINUS, "--" };
+        }
         if (l->next_ch == '=') {
             advance(l);
             return (Token){ TOKEN_MINUS_EQUALS, "-=" };
