@@ -273,6 +273,7 @@ int is_assignment(Parser *p)
 {
     if(is_var_def(p)) {
         int offset = is_var_def_implicit(p) ? 3 : 4;
+        if (parser_peek(p, offset-1).type == TOKEN_SEMICOLON) return 0;
         if (is_factor(p, offset)) return 1;
     } else {
         if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
