@@ -108,6 +108,7 @@ void match(Parser* p, TokenType type, const char* error_msg) {
     if (token.type != type) {
         printf("%s:%d:%d error: %s\n", p->file, token.line, token.column, error_msg);
         printf("%4d | %s\n", token.line, get_token_source_line(p, token));
+        printf("Got: %s\n", token.text);
         exit(1);
     }
 }
@@ -348,7 +349,11 @@ AST * parse_statement(Parser *p, int level)
 {
     AST *node;
 
-    if (is_assignment(p)) {
+    if (is_identifier_update(p)) {
+        node = parse_identifier_update(p);
+        match(p, TOKEN_SEMICOLON, "; expected to define a identifier updater");
+        parser_advance(p, 1);
+    } else if (is_assignment(p)) {
         node = parse_assignment(p);
         match(p, TOKEN_SEMICOLON, "; expected to define a assignment");
         parser_advance(p, 1);

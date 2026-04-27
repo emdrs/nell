@@ -15,7 +15,7 @@ f += b + 5;
 f -= 1 + 2;
 
 // Increment and decrement
-// f++;
+f++;
 g = f++;
 g := --f - 5;
 
