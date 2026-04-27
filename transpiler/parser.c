@@ -106,15 +106,25 @@ void match(Parser* p, TokenType type, const char* error_msg) {
     }
 }
 
-int is_var_def(Parser *p)
+int is_var_def_explicit(Parser *p)
 {
     if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
     if (parser_peek(p, 1).type != TOKEN_COLON) return 0;
-    if (parser_peek(p, 2).type != TOKEN_IDENTIFIER &&
-        parser_peek(p, 2).type != TOKEN_ASSIGN /*Implicit type*/) return 0;
+    if (parser_peek(p, 2).type != TOKEN_IDENTIFIER) return 0;
 
     return 1;
 }
+
+int is_var_def_implicit(Parser *p)
+{
+    if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
+    if (parser_peek(p, 1).type != TOKEN_COLON) return 0;
+    if (parser_peek(p, 2).type != TOKEN_ASSIGN) return 0;
+
+    return 1;
+}
+
+int is_var_def(Parser *p) { return is_var_def_explicit(p) || is_var_def_implicit(p); }
 
 AST * parse_var_def(Parser *p)
 {
@@ -200,22 +210,18 @@ AST * parse_expression(Parser *p)
 int is_assign(Parser *p)
 {
     if(is_var_def(p)) {
-        int offset = 3;
-        int implicit_type = parser_peek(p, 0 + offset-1).type == TOKEN_ASSIGN;
-        if (!implicit_type && parser_peek(p, 0 + offset).type != TOKEN_ASSIGN)
-            return 0;
-
-        // If implicit_type, var_def consume 2 tokens (name and ':')
-        offset -= implicit_type; 
-
-        if (!is_factor(parser_peek(p, 1 + offset))) return 0;
+        Token value = parser_peek(p, is_var_def_implicit(p) ? 3 : 4);
+        if (is_factor(value)) return 1;
     } else {
+        // Simple assign
         if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
-        int simple_assign = parser_peek(p, 1).type == TOKEN_ASSIGN;
-        if (!simple_assign                  &&
-            !is_operator(parser_peek(p, 1)) &&
-            parser_peek(p, 2).type != TOKEN_ASSIGN) return 0;
-        if (!is_factor(parser_peek(p, 3 - simple_assign))) return 0;
+        if (parser_peek(p, 1).type == TOKEN_ASSIGN &&
+            is_factor(parser_peek(p, 2))) return 1;
+
+        // Assign with operator
+        if (!is_operator(parser_peek(p, 1))) return 0;
+        if (parser_peek(p, 2).type != TOKEN_ASSIGN) return 0;
+        if (!is_factor(parser_peek(p, 3))) return 0;
     }
 
     return 1;
