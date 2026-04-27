@@ -5,16 +5,20 @@ typedef enum {
     TOKEN_IDENTIFIER,
     TOKEN_INT,
     TOKEN_FLOAT,
-    TOKEN_SEMICOLON,
-    TOKEN_COLON,
-    TOKEN_ASSIGN,
-    TOKEN_PLUS,
-    TOKEN_MINUS,
-    TOKEN_STAR,
-    TOKEN_SLASH,
-    TOKEN_LBRACE,
-    TOKEN_RBRACE,
-    TOKEN_EOF
+    TOKEN_SEMICOLON,    // ;
+    TOKEN_COLON,        // :
+    TOKEN_EQUALS,       // =
+    TOKEN_PLUS_EQUALS,  // +=
+    TOKEN_MINUS_EQUALS, // -=
+    TOKEN_STAR_EQUALS,  // *=
+    TOKEN_SLASH_EQUALS, // /=
+    TOKEN_PLUS,         // +
+    TOKEN_MINUS,        // -
+    TOKEN_STAR,         // *
+    TOKEN_SLASH,        // /
+    TOKEN_LBRACE,       // {
+    TOKEN_RBRACE,       // }
+    TOKEN_EOF          
 } TokenType;
 
 typedef struct {

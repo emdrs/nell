@@ -37,8 +37,20 @@ void show_token(Token token)
         case TOKEN_FLOAT:
             printf("FLOAT(%s) ", token.text);
             break;
-        case TOKEN_ASSIGN:
-            printf("ASSIGN(%s) ", token.text);
+        case TOKEN_EQUALS:
+            printf("EQUALS ");
+            break;
+        case TOKEN_PLUS_EQUALS:
+            printf("PLUS_EQUALS ");
+            break;
+        case TOKEN_MINUS_EQUALS:
+            printf("MINUS_EQUALS ");
+            break;
+        case TOKEN_STAR_EQUALS:
+            printf("STAR_EQUALS ");
+            break;
+        case TOKEN_SLASH_EQUALS:
+            printf("SLASH_EQUALS ");
             break;
         case TOKEN_SEMICOLON:
             printf("SEMICOLON ");
@@ -67,7 +79,7 @@ void show_token(Token token)
         case TOKEN_RBRACE:
             printf("RBRACE ");
             break;
-    }
+        }
 }
 
 void show_token_list(TokenList list)
@@ -143,7 +155,7 @@ Token next_token(Lexer *l)
         case ';':  return (Token) { TOKEN_SEMICOLON,    ";" };
         case '{':  return (Token) { TOKEN_LBRACE,       "{" };
         case '}':  return (Token) { TOKEN_RBRACE,       "}" };
-        case '=':  return (Token) { TOKEN_ASSIGN,       "=" };
+        case '=':  return (Token) { TOKEN_EQUALS,       "=" };
         case '\0': return (Token) { TOKEN_EOF,           "" };
     }
 
@@ -152,18 +164,26 @@ Token next_token(Lexer *l)
     }
 
     if (l->ch == '+') {
+        if (l->next_ch == '=')
+            return (Token){ TOKEN_PLUS_EQUALS, "+=" };
         return (Token){ TOKEN_PLUS, "+" };
     }
 
     if (l->ch == '-') {
+        if (l->next_ch == '=')
+            return (Token){ TOKEN_MINUS_EQUALS, "-=" };
         return (Token){ TOKEN_MINUS, "-" };
     }
 
     if (l->ch == '*') {
+        if (l->next_ch == '=')
+            return (Token){ TOKEN_STAR_EQUALS, "*=" };
         return (Token){ TOKEN_STAR, "*" };
     }
 
     if (l->ch == '/') {
+        if (l->next_ch == '=')
+            return (Token){ TOKEN_SLASH_EQUALS, "/=" };
         return (Token){ TOKEN_SLASH, "/" };
     }
 
