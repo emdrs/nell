@@ -14,6 +14,12 @@ f /= a;
 f += b + 5;
 f -= 1 + 2;
 
+// Increment and decrement
+// f++;
+g = f++;
+g := --f - 5;
+
+// Constants
 PI :: 3.1415;
 YEAR :: 2026;
 NEXT_YEAR :: 2026 + 1;

@@ -29,7 +29,7 @@ void show_token(Token token)
 {
     switch (token.type) {
         case TOKEN_IDENTIFIER:
-            printf("IDENTIFIER(%s) ", token.text);
+            printf("IDENTIFIER(%s)", token.text);
             break;
         case TOKEN_INT:
             printf("INT(%s)", token.text);
