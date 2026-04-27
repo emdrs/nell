@@ -246,13 +246,9 @@ AST * parse_assignment(Parser *p)
 
     node->assign.type = strdup("");
 
-    if (token.type == TOKEN_EQUALS) {
-        node->assign.type = token.text;
-        parser_advance(p, 1);
-    } else {
-        sprintf(node->assign.type, "%s%s", token.text, parser_peek(p, 1).text);
-        parser_advance(p, 2);
-    }
+    node->assign.type = token.text;
+    parser_advance(p, 1);
+
     node->assign.right = parse_expression(p);
 
     return node;
