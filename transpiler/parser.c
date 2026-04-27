@@ -132,10 +132,13 @@ AST * parse_var_def(Parser *p)
     node->var_def.initialized = 0;
     node->var_def.name = parser_peek(p, 0).text;
 
-    int implicit_type = parser_peek(p, 2).type == TOKEN_ASSIGN;
-    node->var_def.type = implicit_type ? strdup("int") : parser_peek(p, 2).text;
-
-    parser_advance(p, 3 - implicit_type);
+    if (is_var_def_implicit(p)) {
+        node->var_def.type = strdup("int");
+        parser_advance(p, 2);
+    } else {
+        node->var_def.type = parser_peek(p, 2).text;
+        parser_advance(p, 3);
+    }
 
     return node;
 }
