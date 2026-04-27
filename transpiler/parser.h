@@ -9,7 +9,7 @@ typedef enum {
     AST_OPERATOR,
     AST_VAR_DEF,
     AST_CONST_DEF,
-    AST_UPDATE_EXPRESSION,
+    AST_UPDATE_IDENTIFIER,
     AST_BLOCK,
     AST_ASSIGN
 } ASTType;
@@ -35,7 +35,7 @@ typedef struct AST {
             int is_increment;
             int is_prefix;
             struct AST *target;
-        } update_expression;
+        } update_identifier;
 
         struct {
             char *name;
