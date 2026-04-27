@@ -164,26 +164,34 @@ Token next_token(Lexer *l)
     }
 
     if (l->ch == '+') {
-        if (l->next_ch == '=')
+        if (l->next_ch == '=') {
+            advance(l);
             return (Token){ TOKEN_PLUS_EQUALS, "+=" };
+        }
         return (Token){ TOKEN_PLUS, "+" };
     }
 
     if (l->ch == '-') {
-        if (l->next_ch == '=')
+        if (l->next_ch == '=') {
+            advance(l);
             return (Token){ TOKEN_MINUS_EQUALS, "-=" };
+        }
         return (Token){ TOKEN_MINUS, "-" };
     }
 
     if (l->ch == '*') {
-        if (l->next_ch == '=')
+        if (l->next_ch == '=') {
+            advance(l);
             return (Token){ TOKEN_STAR_EQUALS, "*=" };
+        }
         return (Token){ TOKEN_STAR, "*" };
     }
 
     if (l->ch == '/') {
-        if (l->next_ch == '=')
+        if (l->next_ch == '=') {
+            advance(l);
             return (Token){ TOKEN_SLASH_EQUALS, "/=" };
+        }
         return (Token){ TOKEN_SLASH, "/" };
     }
 
