@@ -329,9 +329,8 @@ int is_block(Parser *p, int level)
 int is_const_def(Parser *p)
 {
     if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
-    if (parser_peek(p, 1).type != TOKEN_COLON) return 0;
-    if (parser_peek(p, 2).type != TOKEN_COLON) return 0;
-    if (!is_factor(p, 3)) return 0;
+    if (parser_peek(p, 1).type != TOKEN_DOUBLE_COLON) return 0;
+    if (!is_factor(p, 2)) return 0;
 
     return 1;
 }
@@ -340,7 +339,7 @@ AST * parse_const_def(Parser *p)
 {
     AST *node = create_ast_node(AST_CONST_DEF);
     node->const_def.name = parser_peek(p, 0).text;
-    parser_advance(p, 3);
+    parser_advance(p, 2);
 
     node->const_def.value = parse_expression(p);
     if (node->const_def.value->type == AST_NUMBER)
@@ -367,6 +366,10 @@ AST * parse_command(Parser *p)
         node->command = parse_identifier_update(p);
         match(p, TOKEN_SEMICOLON, "; expected to define a identifier updater");
         parser_advance(p, 1);
+    } else if (is_const_def(p)) {
+        node->command = parse_const_def(p);
+        match(p, TOKEN_SEMICOLON, "; expected to define a const");
+        parser_advance(p, 1);
     } else if (is_assignment(p)) {
         node->command = parse_assignment(p);
         match(p, TOKEN_SEMICOLON, "; expected to define a assignment");
@@ -374,10 +377,6 @@ AST * parse_command(Parser *p)
     } else if (is_var_def(p)) {
         node->command = parse_var_def(p);
         match(p, TOKEN_SEMICOLON, "; expected to define a variable");
-        parser_advance(p, 1);
-    } else if (is_const_def(p)) {
-        node->command = parse_const_def(p);
-        match(p, TOKEN_SEMICOLON, "; expected to define a const");
         parser_advance(p, 1);
     }
 
