@@ -11,6 +11,7 @@ typedef enum {
     AST_CONST_DEF,
     AST_UPDATE_IDENTIFIER,
     AST_BLOCK,
+    AST_COMMAND,
     AST_ASSIGN
 } ASTType;
 
@@ -19,6 +20,7 @@ typedef struct AST {
 
     union {
         char *identifier;
+        struct AST *command;
 
         struct {
             char *value;

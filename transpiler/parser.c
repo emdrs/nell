@@ -78,13 +78,20 @@ void show_ast(AST* node, int indent)
                 show_ast(node->block.statements[i], indent + 1);
             break;
         }
-        case AST_UPDATE_IDENTIFIER:
+        case AST_UPDATE_IDENTIFIER: {
             printf("UPDATE_IDENTIFIER(%s) %s\n",
                    node->update_identifier.is_increment ? "++" : "--",
                    node->update_identifier.is_prefix ? "PRE" : "POST");
             show_ast(node->update_identifier.target, indent + 1);
           break;
         }
+        case AST_COMMAND: {
+            printf("COMMAND\n");
+            show_ast(node->command, indent + 1);
+
+            break;
+        }
+    }
 }
 
 void parser_advance(Parser *p, int amount) {
@@ -343,28 +350,47 @@ AST * parse_const_def(Parser *p)
     return node;
 }
 
+int is_command(Parser *p)
+{
+    return is_identifier_update(p) ||
+           is_assignment(p)        ||
+           is_var_def(p)           ||
+           is_const_def(p);
+}
+
+AST * parse_command(Parser *p)
+{
+    AST *node = create_ast_node(AST_COMMAND);
+
+    if (is_identifier_update(p)) {
+        node->command = parse_identifier_update(p);
+        match(p, TOKEN_SEMICOLON, "; expected to define a identifier updater");
+        parser_advance(p, 1);
+    } else if (is_assignment(p)) {
+        node->command = parse_assignment(p);
+        match(p, TOKEN_SEMICOLON, "; expected to define a assignment");
+        parser_advance(p, 1);
+    } else if (is_var_def(p)) {
+        node->command = parse_var_def(p);
+        match(p, TOKEN_SEMICOLON, "; expected to define a variable");
+        parser_advance(p, 1);
+    } else if (is_const_def(p)) {
+        node->command = parse_const_def(p);
+        match(p, TOKEN_SEMICOLON, "; expected to define a const");
+        parser_advance(p, 1);
+    }
+
+    return node;
+}
+
 AST * parse_block(Parser *p, int level);
 
 AST * parse_statement(Parser *p, int level)
 {
     AST *node;
 
-    if (is_identifier_update(p)) {
-        node = parse_identifier_update(p);
-        match(p, TOKEN_SEMICOLON, "; expected to define a identifier updater");
-        parser_advance(p, 1);
-    } else if (is_assignment(p)) {
-        node = parse_assignment(p);
-        match(p, TOKEN_SEMICOLON, "; expected to define a assignment");
-        parser_advance(p, 1);
-    } else if (is_var_def(p)) {
-        node = parse_var_def(p);
-        match(p, TOKEN_SEMICOLON, "; expected to define a variable");
-        parser_advance(p, 1);
-    } else if (is_const_def(p)) {
-        node = parse_const_def(p);
-        match(p, TOKEN_SEMICOLON, "; expected to define a const");
-        parser_advance(p, 1);
+    if (is_command(p)) {
+        node = parse_command(p);
     } else if (is_block(p, level + 1)) {
         node = parse_block(p, level + 1);
         match(p, TOKEN_RBRACE, "} expected to define a block");

@@ -36,14 +36,11 @@ char * generate_code(AST *ast)
 
     switch (ast->type) {
         case AST_VAR_DEF: {
-            if(ast->var_def.initialized)
-                asprintf(&result, "%s %s", ast->var_def.type, ast->var_def.name);
-            else
-                asprintf(&result, "%s %s;", ast->var_def.type, ast->var_def.name);
+            asprintf(&result, "%s %s", ast->var_def.type, ast->var_def.name);
             break;
         }
         case AST_CONST_DEF: {
-            asprintf(&result, "const %s %s = %s;", ast->const_def.type,
+            asprintf(&result, "const %s %s = %s", ast->const_def.type,
                     ast->const_def.name, generate_code(ast->const_def.value));
             break;
         }
@@ -55,7 +52,7 @@ char * generate_code(AST *ast)
             char *left_code = generate_code(ast->assign.left);
             char *right_code = generate_code(ast->assign.right);
 
-            asprintf(&result, "%s %s %s;", left_code, ast->assign.type, right_code);
+            asprintf(&result, "%s %s %s", left_code, ast->assign.type, right_code);
 
             free(left_code);
             free(right_code);
@@ -96,6 +93,11 @@ char * generate_code(AST *ast)
                 asprintf(&result, "%s%s", updater, code);
             else
                 asprintf(&result, "%s%s", code, updater);
+            break;
+        }
+        case AST_COMMAND: {
+            char *code = generate_code(ast->command);
+            asprintf(&result, "%s;", code);
             break;
         }
     }
