@@ -154,9 +154,26 @@ int is_number(Token token)
     return token.type == TOKEN_INT || token.type == TOKEN_FLOAT;
 }
 
-int is_factor(Token token)
+int is_identifier_updater(Token token)
 {
-    return (token.type == TOKEN_IDENTIFIER || is_number(token));
+    return token.type == TOKEN_DOUBLE_PLUS || token.type == TOKEN_DOUBLE_MINUS;
+}
+
+int is_identifier_update(Parser *p)
+{
+    Token token1 = parser_peek(p, 0);
+    Token token2 = parser_peek(p, 1);
+
+    return (is_identifier_updater(token1) && token2.type == TOKEN_IDENTIFIER) ||
+           (is_identifier_updater(token2) && token1.type == TOKEN_IDENTIFIER);
+}
+
+int is_factor(Parser *p, int offset)
+{
+    Token token = parser_peek(p, offset);
+    return (token.type == TOKEN_IDENTIFIER ||
+            is_number(token)               ||
+            is_identifier_update(p));
 }
 
 AST * parse_number(Parser *p)
@@ -179,14 +196,33 @@ AST * parse_identifier(Parser *p)
     return node;
 }
 
+AST * parse_identifier_update(Parser *p)
+{
+    AST *update = create_ast_node(AST_UPDATE_IDENTIFIER);
+
+    int is_prefix = is_identifier_updater(parser_peek(p, 0));
+    update->update_identifier.is_prefix = is_prefix;
+
+    if (is_prefix) parser_advance(p, 1); // Consume -- or ++
+
+    update->update_identifier.target = parse_identifier(p);
+    update->update_identifier.is_increment =
+        parser_peek(p, is_prefix).type == TOKEN_DOUBLE_PLUS;
+
+    if (!is_prefix) parser_advance(p, 1); // Consume -- or ++
+
+    return update;
+}
+
 AST * parse_factor(Parser *p)
 {
     if (is_number(parser_peek(p, 0))) return parse_number(p);
+    if (is_identifier_update(p)) return parse_identifier_update(p);
 
     return parse_identifier(p);
 }
 
-inline int is_expression(Parser *p) { return is_factor(parser_peek(p, 0)); }
+inline int is_expression(Parser *p) { return is_factor(p, 0); }
 
 int is_operator(Token token)
 {
@@ -218,21 +254,21 @@ AST * parse_expression(Parser *p)
 
 int is_assign(Token token)
 {
-    return token.type == TOKEN_EQUALS ||
-           token.type == TOKEN_PLUS_EQUALS ||
+    return token.type == TOKEN_EQUALS       ||
+           token.type == TOKEN_PLUS_EQUALS  ||
            token.type == TOKEN_MINUS_EQUALS ||
-           token.type == TOKEN_STAR_EQUALS ||
+           token.type == TOKEN_STAR_EQUALS  ||
            token.type == TOKEN_SLASH_EQUALS;
 }
 
 int is_assignment(Parser *p)
 {
     if(is_var_def(p)) {
-        Token value = parser_peek(p, is_var_def_implicit(p) ? 3 : 4);
-        if (is_factor(value)) return 1;
+        int offset = is_var_def_implicit(p) ? 3 : 4;
+        if (is_factor(p, offset)) return 1;
     } else {
         if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
-        if (!is_assign(parser_peek(p, 1)) && !is_factor(parser_peek(p, 2))) return 0;
+        if (!is_assign(parser_peek(p, 1)) && !is_factor(p, 2)) return 0;
     }
 
     return 1;
@@ -286,7 +322,7 @@ int is_const_def(Parser *p)
     if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
     if (parser_peek(p, 1).type != TOKEN_COLON) return 0;
     if (parser_peek(p, 2).type != TOKEN_COLON) return 0;
-    if (!is_factor(parser_peek(p, 3))) return 0;
+    if (!is_factor(p, 3)) return 0;
 
     return 1;
 }
