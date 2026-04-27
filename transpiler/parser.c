@@ -78,11 +78,11 @@ void show_ast(AST* node, int indent)
                 show_ast(node->block.statements[i], indent + 1);
             break;
         }
-        case AST_UPDATE_EXPRESSION:
+        case AST_UPDATE_IDENTIFIER:
             printf("UPDATE_IDENTIFIER(%s) %s\n",
-                   node->update_expression.is_increment ? "++" : "--",
-                   node->update_expression.is_prefix ? "PRE" : "POST");
-            show_ast(node->update_expression.target, indent + 1);
+                   node->update_identifier.is_increment ? "++" : "--",
+                   node->update_identifier.is_prefix ? "PRE" : "POST");
+            show_ast(node->update_identifier.target, indent + 1);
           break;
         }
 }
