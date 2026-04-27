@@ -89,6 +89,15 @@ char * generate_code(AST *ast)
             else                       asprintf(&result, "{ %s }", code);
             break;
         }
+        case AST_UPDATE_IDENTIFIER: {
+            char *updater = ast->update_identifier.is_increment ? "++" : "--";
+            char *code = generate_code(ast->update_identifier.target);
+            if (ast->update_identifier.is_prefix)
+                asprintf(&result, "%s%s", updater, code);
+            else
+                asprintf(&result, "%s%s", code, updater);
+            break;
+        }
     }
 
     return result;
