@@ -119,7 +119,7 @@ int is_var_def_implicit(Parser *p)
 {
     if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
     if (parser_peek(p, 1).type != TOKEN_COLON) return 0;
-    if (parser_peek(p, 2).type != TOKEN_ASSIGN) return 0;
+    if (parser_peek(p, 2).type != TOKEN_EQUALS) return 0;
 
     return 1;
 }
@@ -207,27 +207,29 @@ AST * parse_expression(Parser *p)
     return op;
 }
 
-int is_assign(Parser *p)
+int is_assign(Token token)
+{
+    return token.type == TOKEN_EQUALS ||
+           token.type == TOKEN_PLUS_EQUALS ||
+           token.type == TOKEN_MINUS_EQUALS ||
+           token.type == TOKEN_STAR_EQUALS ||
+           token.type == TOKEN_SLASH_EQUALS;
+}
+
+int is_assignment(Parser *p)
 {
     if(is_var_def(p)) {
         Token value = parser_peek(p, is_var_def_implicit(p) ? 3 : 4);
         if (is_factor(value)) return 1;
     } else {
-        // Simple assign
         if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
-        if (parser_peek(p, 1).type == TOKEN_ASSIGN &&
-            is_factor(parser_peek(p, 2))) return 1;
-
-        // Assign with operator
-        if (!is_operator(parser_peek(p, 1))) return 0;
-        if (parser_peek(p, 2).type != TOKEN_ASSIGN) return 0;
-        if (!is_factor(parser_peek(p, 3))) return 0;
+        if (!is_assign(parser_peek(p, 1)) && !is_factor(parser_peek(p, 2))) return 0;
     }
 
     return 1;
 }
 
-AST * parse_assign(Parser *p)
+AST * parse_assignment(Parser *p)
 {
     AST *node = create_ast_node(AST_ASSIGN);
     if (is_var_def(p)) {
@@ -241,7 +243,7 @@ AST * parse_assign(Parser *p)
 
     node->assign.type = strdup("");
 
-    if (token.type == TOKEN_ASSIGN) {
+    if (token.type == TOKEN_EQUALS) {
         node->assign.type = token.text;
         parser_advance(p, 1);
     } else {
@@ -305,8 +307,8 @@ AST * parse_statement(Parser *p, int level)
 {
     AST *node;
 
-    if (is_assign(p)) {
-        node = parse_assign(p);
+    if (is_assignment(p)) {
+        node = parse_assignment(p);
         match(p, TOKEN_SEMICOLON, "; expected to define a assignment");
         parser_advance(p, 1);
     } else if (is_var_def(p)) {
