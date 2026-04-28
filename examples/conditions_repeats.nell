@@ -1,2 +1,19 @@
 if a >= ++b - 5 { a++; }
+if a >= 5 {
+    if b < a {
+        b += 88;
+    }
+    a++;
+}
+
 while a >= ++b - 5 { a++; }
+while a >= 5 {
+    while b < a {
+        b += 88;
+    }
+    a++;
+}
+
+for 0..10 {
+    a: int = it + 2;
+}
