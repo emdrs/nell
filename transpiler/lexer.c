@@ -300,6 +300,7 @@ Token next_token(Lexer *l)
     }
 
     if (is_keyword(l, "if")) return (Token){ TOKEN_IF, "if" };
+    if (is_keyword(l, "while")) return (Token){ TOKEN_WHILE, "while" };
 
     if (l->ch >= '0' && l->ch < '9') return number(l);
 

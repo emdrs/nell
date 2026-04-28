@@ -30,6 +30,7 @@ typedef enum {
     TOKEN_LPAREN,         // (
     TOKEN_RPAREN,         // )
     TOKEN_IF,             // if
+    TOKEN_WHILE,          // while
     TOKEN_EOF          
 } TokenType;
 
