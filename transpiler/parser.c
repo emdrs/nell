@@ -67,9 +67,9 @@ void show_ast(AST* node, int indent)
             break;
         }
         case AST_OPERATOR: {
-            printf("OPERATOR(%s)\n", node->op.type);
-            show_ast(node->op.left, indent + 1);
-            show_ast(node->op.right, indent + 1);
+            printf("OPERATOR(%s)\n", node->expression.type);
+            show_ast(node->expression.left, indent + 1);
+            show_ast(node->expression.right, indent + 1);
             break;
         }
         case AST_BLOCK: {
@@ -237,7 +237,12 @@ int is_operator(Token token)
     if (token.type != TOKEN_PLUS  &&
         token.type != TOKEN_MINUS &&
         token.type != TOKEN_STAR  &&
-        token.type != TOKEN_SLASH) return 0;
+        token.type != TOKEN_SLASH &&
+        token.type != TOKEN_GREATER &&
+        token.type != TOKEN_GREATER_EQUALS &&
+        token.type != TOKEN_LESS &&
+        token.type != TOKEN_LESS_EQUALS &&
+        token.type != TOKEN_EQUALS) return 0;
 
     return 1;
 }
@@ -253,9 +258,9 @@ AST * parse_expression(Parser *p)
     parser_advance(p, 1);
 
     AST *op = create_ast_node(AST_OPERATOR);
-    op->op.left = left;
-    op->op.right = parse_expression(p);
-    op->op.type = operator.text;
+    op->expression.left = left;
+    op->expression.right = parse_expression(p);
+    op->expression.type = operator.text;
 
     return op;
 }
@@ -345,7 +350,7 @@ AST * parse_const_def(Parser *p)
     if (node->const_def.value->type == AST_NUMBER)
         node->const_def.type = node->const_def.value->number.type;
     else
-        node->const_def.type = node->const_def.value->op.left->number.type;
+        node->const_def.type = strdup("int");
 
     return node;
 }

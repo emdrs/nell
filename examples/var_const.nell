@@ -27,4 +27,7 @@ YEAR :: 2026;
 NEXT_YEAR :: 2026 + 1;
 
 // Comparisons
-IS_ADULT :: idade >= 18;
+IS_TEEN :: idade < 18;
+is_adult := idade >= 18;
+is_old: bool = idade > 65;
+IS_CENTENARY :: idade == 100;

@@ -63,10 +63,10 @@ char * generate_code(AST *ast)
             break;
         }
         case AST_OPERATOR: {
-            char *left_code = generate_code(ast->op.left);
-            char *right_code = generate_code(ast->op.right);
+            char *left_code = generate_code(ast->expression.left);
+            char *right_code = generate_code(ast->expression.right);
 
-            asprintf(&result, "%s %s %s", left_code, ast->op.type, right_code);
+            asprintf(&result, "%s %s %s", left_code, ast->expression.type, right_code);
 
             free(left_code);
             free(right_code);

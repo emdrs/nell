@@ -31,7 +31,7 @@ typedef struct AST {
             struct AST *left;
             struct AST *right;
             char *type;
-        } op;
+        } expression;
 
         struct {
             int is_increment;
