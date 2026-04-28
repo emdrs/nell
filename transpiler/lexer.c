@@ -185,7 +185,6 @@ Token next_token(Lexer *l)
         case ';':  return (Token) { TOKEN_SEMICOLON,    ";" };
         case '{':  return (Token) { TOKEN_LBRACE,       "{" };
         case '}':  return (Token) { TOKEN_RBRACE,       "}" };
-        case '=':  return (Token) { TOKEN_ASSIGN,       "=" };
         case '\0': return (Token) { TOKEN_EOF,           "" };
     }
 
@@ -235,6 +234,30 @@ Token next_token(Lexer *l)
             return (Token){ TOKEN_SLASH_ASSIGN, "/=" };
         }
         return (Token){ TOKEN_SLASH, "/" };
+    }
+
+    if (l->ch == '>') {
+        if (l->next_ch == '=') {
+            advance(l);
+            return (Token){ TOKEN_GREATER_EQUALS, ">=" };
+        }
+        return (Token){ TOKEN_GREATER, ">" };
+    }
+    
+    if (l->ch == '<') {
+        if (l->next_ch == '=') {
+            advance(l);
+            return (Token){ TOKEN_LESS_EQUALS, "<=" };
+        }
+        return (Token){ TOKEN_LESS, "<" };
+    }
+
+    if (l->ch == '=') {
+        if (l->next_ch == '=') {
+            advance(l);
+            return (Token){ TOKEN_EQUALS, "==" };
+        }
+        return (Token){ TOKEN_ASSIGN, "=" };
     }
 
     if (l->ch >= '0' && l->ch <= '9') return number(l);
