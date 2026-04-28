@@ -101,8 +101,8 @@ char * generate_code(AST *ast)
             break;
         }
         case AST_IF: {
-            char *expression = generate_code(ast->condition.expression);
-            char *block = generate_code(ast->condition.block);
+            char *expression = generate_code(ast->if_statement.expression);
+            char *block = generate_code(ast->if_statement.if_block);
             asprintf(&result, "if (%s) %s", expression, block);
 
             free(expression);
@@ -110,11 +110,22 @@ char * generate_code(AST *ast)
             break;
         }
         case AST_WHILE: {
-            char *expression = generate_code(ast->repeat.expression);
-            char *block = generate_code(ast->repeat.block);
+            char *expression = generate_code(ast->while_statement.expression);
+            char *block = generate_code(ast->while_statement.block);
             asprintf(&result, "while (%s) %s", expression, block);
 
             free(expression);
+            free(block);
+            break;
+        }
+        case AST_FOR: {
+            char *start = generate_code(ast->for_statement.start);
+            char *end = generate_code(ast->for_statement.end);
+            char *block = generate_code(ast->for_statement.block);
+            asprintf(&result, "for (int it = %s; it <= %s; it++) %s", start, end, block);
+
+            free(start);
+            free(end);
             free(block);
             break;
         }
