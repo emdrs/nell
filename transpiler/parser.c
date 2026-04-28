@@ -97,6 +97,12 @@ void show_ast(AST* node, int indent)
             show_ast(node->condition.block, indent + 1);
             break;
         }
+        case AST_WHILE: {
+            printf("WHILE\n");
+            show_ast(node->repeat.expression, indent + 1);
+            show_ast(node->repeat.block, indent + 1);
+            break;
+        }
     }
 }
 
@@ -404,6 +410,16 @@ AST * parse_if(Parser *p, int level)
     return node;
 }
 
+AST * parse_while(Parser *p, int level)
+{
+    AST *node = create_ast_node(AST_WHILE);
+    parser_advance(p, 1);
+    node->repeat.expression = parse_expression(p);
+    node->repeat.block = parse_block(p, level);
+
+    return node;
+}
+
 AST * parse_statement(Parser *p, int level)
 {
     AST *node;
@@ -416,7 +432,11 @@ AST * parse_statement(Parser *p, int level)
         parser_advance(p, 1);
     } else if (parser_peek(p, 0).type == TOKEN_IF) {
         node = parse_if(p,  level + 1);
-        match(p, TOKEN_RBRACE, "} expected to define a block");
+        match(p, TOKEN_RBRACE, "} expected to define a if block");
+        parser_advance(p, 1);
+    } else if (parser_peek(p, 0).type == TOKEN_WHILE) {
+        node = parse_while(p,  level + 1);
+        match(p, TOKEN_RBRACE, "} expected to define a while block");
         parser_advance(p, 1);
     } else {
         printf("Syntax error\n");
