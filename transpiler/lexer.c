@@ -82,11 +82,11 @@ void show_token(Token token)
         case TOKEN_DOUBLE_COLON:
             printf("DOUBLE_COLON");
             break;
-        case TOKEN_DOUBLE_PLUS:
-            printf("DOUBLE_PLUS");
+        case TOKEN_INCREMENT:
+            printf("INCREMENT");
             break;
-        case TOKEN_DOUBLE_MINUS:
-            printf("DOUBLE_MINUS");
+        case TOKEN_DECREMENT:
+            printf("DECREMENT");
             break;
         case TOKEN_EQUALS:
             printf("EQUALS");
@@ -200,7 +200,7 @@ Token next_token(Lexer *l)
     if (l->ch == '+') {
         if (l->next_ch == '+') {
             advance(l);
-            return (Token){ TOKEN_DOUBLE_PLUS, "++" };
+            return (Token){ TOKEN_INCREMENT, "++" };
         }
         if (l->next_ch == '=') {
             advance(l);
@@ -212,7 +212,7 @@ Token next_token(Lexer *l)
     if (l->ch == '-') {
         if (l->next_ch == '-') {
             advance(l);
-            return (Token){ TOKEN_DOUBLE_MINUS, "--" };
+            return (Token){ TOKEN_DECREMENT, "--" };
         }
         if (l->next_ch == '=') {
             advance(l);

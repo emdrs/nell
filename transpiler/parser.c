@@ -164,7 +164,7 @@ int is_number(Token token)
 
 int is_identifier_updater(Token token)
 {
-    return token.type == TOKEN_DOUBLE_PLUS || token.type == TOKEN_DOUBLE_MINUS;
+    return token.type == TOKEN_INCREMENT || token.type == TOKEN_DECREMENT;
 }
 
 int is_identifier_update(Parser *p)
@@ -215,7 +215,7 @@ AST * parse_identifier_update(Parser *p)
 
     update->update_identifier.target = parse_identifier(p);
     update->update_identifier.is_increment =
-        parser_peek(p, is_prefix).type == TOKEN_DOUBLE_PLUS;
+        parser_peek(p, is_prefix).type == TOKEN_INCREMENT;
 
     if (!is_prefix) parser_advance(p, 1); // Consume -- or ++
 

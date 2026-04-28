@@ -5,17 +5,9 @@ typedef enum {
     TOKEN_IDENTIFIER,
     TOKEN_INT,
     TOKEN_FLOAT,
-    TOKEN_SEMICOLON,    // ;
-    TOKEN_COLON,        // :
     TOKEN_DOUBLE_COLON, // ::
-    TOKEN_PLUS,         // +
-    TOKEN_DOUBLE_PLUS,  // ++
-    TOKEN_MINUS,        // -
-    TOKEN_DOUBLE_MINUS, // --
-    TOKEN_STAR,         // *
-    TOKEN_SLASH,        // /
-    TOKEN_LBRACE,       // {
-    TOKEN_RBRACE,       // }
+    TOKEN_SEMICOLON,      // ;
+    TOKEN_COLON,          // :
     TOKEN_ASSIGN,         // =
     TOKEN_EQUALS,         // ==
     TOKEN_NOT_EQUALS,     // !=
@@ -27,6 +19,14 @@ typedef enum {
     TOKEN_MINUS_ASSIGN,   // -=
     TOKEN_STAR_ASSIGN,    // *=
     TOKEN_SLASH_ASSIGN,   // /=
+    TOKEN_PLUS,           // +
+    TOKEN_INCREMENT,      // ++
+    TOKEN_MINUS,          // -
+    TOKEN_DECREMENT,      // --
+    TOKEN_STAR,           // *
+    TOKEN_SLASH,          // /
+    TOKEN_LBRACE,         // {
+    TOKEN_RBRACE,         // }
     TOKEN_EOF          
 } TokenType;
 
