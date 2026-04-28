@@ -109,6 +109,15 @@ char * generate_code(AST *ast)
             free(block);
             break;
         }
+        case AST_WHILE: {
+            char *expression = generate_code(ast->repeat.expression);
+            char *block = generate_code(ast->repeat.block);
+            asprintf(&result, "while (%s) %s", expression, block);
+
+            free(expression);
+            free(block);
+            break;
+        }
     }
 
     return result;
