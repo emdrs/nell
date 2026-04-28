@@ -123,8 +123,14 @@ void show_token(Token token)
             break;
         case TOKEN_WHILE:
             printf("WHILE");
-          break;
-    }
+            break;
+        case TOKEN_FOR:
+            printf("FOR");
+            break;
+        case TOKEN_DOUBLE_DOT:
+            printf("DOUBLE_DOT");
+            break;
+        }
 }
 
 void show_token_list(TokenList list)
@@ -177,15 +183,18 @@ Token number(Lexer *l)
     while (is_digit(l)) advance(l);
 
     if (l->next_ch == '.') {
-        is_float = 1;
         advance(l);
+        if (l->next_ch == '.') {
+            rollback(l, l->pos - 1);
+        } else {
+            is_float = 1;
+            if (!is_digit(l)) {
+                printf("Expected a digit after '.'\n");
+                exit(1);
+            }
 
-        if (!is_digit(l)) {
-            printf("Expected a digit after '.'\n");
-            exit(1);
+            while (is_digit(l)) advance(l);
         }
-
-        while (is_digit(l)) advance(l);
     }
 
     return (Token) {
@@ -302,8 +311,16 @@ Token next_token(Lexer *l)
         return (Token){ TOKEN_ASSIGN, "=" };
     }
 
+    if (l->ch == '.') {
+        if (l->next_ch == '.') {
+            advance(l);
+            return (Token){ TOKEN_DOUBLE_DOT, ".." };
+        }
+    }
+
     if (is_keyword(l, "if")) return (Token){ TOKEN_IF, "if" };
     if (is_keyword(l, "while")) return (Token){ TOKEN_WHILE, "while" };
+    if (is_keyword(l, "for")) return (Token){ TOKEN_FOR, "for" };
 
     if (l->ch >= '0' && l->ch < '9') return number(l);
 

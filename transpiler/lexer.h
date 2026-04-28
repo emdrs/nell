@@ -31,6 +31,8 @@ typedef enum {
     TOKEN_RPAREN,         // )
     TOKEN_IF,             // if
     TOKEN_WHILE,          // while
+    TOKEN_FOR,            // for
+    TOKEN_DOUBLE_DOT,     // ..
     TOKEN_EOF          
 } TokenType;
 
