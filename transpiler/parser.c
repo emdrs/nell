@@ -448,7 +448,29 @@ AST * parse_for(Parser *p, int level)
     }
     node->for_statement.start = parse_expression(p);
 
-    match(p, TOKEN_DOUBLE_DOT, "Need .. in for range");
+    Token token = parser_peek(p, 0);
+    
+    switch (token.type) {
+        case TOKEN_DOUBLE_DOT:
+            node->for_statement.is_start_inclusive = 1;
+            node->for_statement.is_end_inclusive = 1;
+            break;
+        case TOKEN_GREATER_DOT:
+            node->for_statement.is_start_inclusive = 0;
+            node->for_statement.is_end_inclusive = 1;
+            break;
+        case TOKEN_DOT_LESS:
+            node->for_statement.is_start_inclusive = 1;
+            node->for_statement.is_end_inclusive = 0;
+            break;
+        case TOKEN_GREATER_LESS:
+            node->for_statement.is_start_inclusive = 0;
+            node->for_statement.is_end_inclusive = 0;
+            break;
+        default:
+            report_error(p, token, "Need '..|>.|.<|><' to define a for range");
+    }
+
     parser_advance(p, 1);
 
     node->for_statement.end = parse_expression(p);

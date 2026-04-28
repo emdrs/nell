@@ -73,6 +73,8 @@ typedef struct AST {
 
         struct {
             struct AST *start;
+            int is_start_inclusive;
+            int is_end_inclusive;
             struct AST *end;
             struct AST *block;
         } for_statement;

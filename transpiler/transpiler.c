@@ -122,7 +122,10 @@ char * generate_code(AST *ast)
             char *start = generate_code(ast->for_statement.start);
             char *end = generate_code(ast->for_statement.end);
             char *block = generate_code(ast->for_statement.block);
-            asprintf(&result, "for (int it = %s; it <= %s; it++) %s", start, end, block);
+            int start_increment = !ast->for_statement.is_start_inclusive;
+            int end_increment = ast->for_statement.is_end_inclusive;
+            asprintf(&result, "for (int it = %s; it < %s; it++) %s", start,
+                    end, block);
 
             free(start);
             free(end);
