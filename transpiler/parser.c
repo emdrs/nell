@@ -300,8 +300,6 @@ AST * parse_assignment(Parser *p)
 
     Token token = parser_peek(p, 0);
 
-    node->assign.type = strdup("");
-
     node->assign.type = token.text;
     parser_advance(p, 1);
 
