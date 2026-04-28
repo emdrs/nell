@@ -17,6 +17,12 @@ typedef enum {
     TOKEN_LBRACE,       // {
     TOKEN_RBRACE,       // }
     TOKEN_ASSIGN,         // =
+    TOKEN_EQUALS,         // ==
+    TOKEN_NOT_EQUALS,     // !=
+    TOKEN_GREATER,        // >
+    TOKEN_LESS,           // <
+    TOKEN_GREATER_EQUALS, // >=
+    TOKEN_LESS_EQUALS,    // <=
     TOKEN_PLUS_ASSIGN,    // +=
     TOKEN_MINUS_ASSIGN,   // -=
     TOKEN_STAR_ASSIGN,    // *=

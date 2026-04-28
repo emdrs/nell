@@ -88,7 +88,25 @@ void show_token(Token token)
         case TOKEN_DOUBLE_MINUS:
             printf("DOUBLE_MINUS");
             break;
-        }
+        case TOKEN_EQUALS:
+            printf("EQUALS");
+            break;
+        case TOKEN_NOT_EQUALS:
+            printf("NOT_EQUALS");
+            break;
+        case TOKEN_GREATER:
+            printf("GREATER");
+            break;
+        case TOKEN_LESS:
+            printf("LESS");
+            break;
+        case TOKEN_GREATER_EQUALS:
+            printf("GREATER_EQUALS");
+            break;
+        case TOKEN_LESS_EQUALS:
+            printf("LESS_EQUALS");
+            break;
+    }
 }
 
 void show_token_list(TokenList list)
