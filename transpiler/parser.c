@@ -93,14 +93,26 @@ void show_ast(AST* node, int indent)
         }
         case AST_IF: {
             printf("IF\n");
-            show_ast(node->condition.expression, indent + 1);
-            show_ast(node->condition.block, indent + 1);
+            show_ast(node->if_statement.expression, indent + 1);
+            show_ast(node->if_statement.if_block, indent + 1);
+
+            if (node->if_statement.else_block == NULL) return;
+
+            printf("ELSE\n");
+            show_ast(node->if_statement.else_block, indent + 1);
             break;
         }
         case AST_WHILE: {
             printf("WHILE\n");
-            show_ast(node->repeat.expression, indent + 1);
-            show_ast(node->repeat.block, indent + 1);
+            show_ast(node->while_statement.expression, indent + 1);
+            show_ast(node->while_statement.block, indent + 1);
+            break;
+        }
+        case AST_FOR: {
+            printf("FOR\n");
+            show_ast(node->for_statement.start, indent + 1);
+            show_ast(node->for_statement.end, indent + 1);
+            show_ast(node->for_statement.block, indent + 1);
             break;
         }
     }
@@ -122,12 +134,17 @@ Token parser_peek(Parser *p, int offset) {
     exit(1);
 }
 
-void match(Parser* p, TokenType type, const char* error_msg) {
+void report_error(Parser *p, Token token, char *error_msg)
+{
+    printf("%s:%d:%d error: %s\n", p->file, token.line, token.column, error_msg);
+    printf("%4d | %s\n", token.line, get_token_source_line(p, token));
+    printf("Got: %s\n", token.text);
+}
+
+void match(Parser* p, TokenType type, char* error_msg) {
     Token token = parser_peek(p, 0);
     if (token.type != type) {
-        printf("%s:%d:%d error: %s\n", p->file, token.line, token.column, error_msg);
-        printf("%4d | %s\n", token.line, get_token_source_line(p, token));
-        printf("Got: %s\n", token.text);
+        report_error(p, token, error_msg);
         exit(1);
     }
 }
@@ -242,7 +259,7 @@ AST * parse_factor(Parser *p)
     return parse_identifier(p);
 }
 
-inline int is_expression(Parser *p) { return is_factor(p, 0); }
+int is_expression(Parser *p) { return is_factor(p, 0); }
 
 int is_operator(Token token)
 {
@@ -404,8 +421,8 @@ AST * parse_if(Parser *p, int level)
 {
     AST *node = create_ast_node(AST_IF);
     parser_advance(p, 1);
-    node->condition.expression = parse_expression(p);
-    node->condition.block = parse_block(p, level);
+    node->if_statement.expression = parse_expression(p);
+    node->if_statement.if_block = parse_block(p, level);
 
     return node;
 }
@@ -414,8 +431,28 @@ AST * parse_while(Parser *p, int level)
 {
     AST *node = create_ast_node(AST_WHILE);
     parser_advance(p, 1);
-    node->repeat.expression = parse_expression(p);
-    node->repeat.block = parse_block(p, level);
+    node->while_statement.expression = parse_expression(p);
+    node->while_statement.block = parse_block(p, level);
+
+    return node;
+}
+
+AST * parse_for(Parser *p, int level)
+{
+    AST *node = create_ast_node(AST_FOR);
+    parser_advance(p, 1);
+
+    if (!is_expression(p)) {
+        report_error(p, parser_peek(p, 0), "Need an expression in for start range");
+        exit(0);
+    }
+    node->for_statement.start = parse_expression(p);
+
+    match(p, TOKEN_DOUBLE_DOT, "Need .. in for range");
+    parser_advance(p, 1);
+
+    node->for_statement.end = parse_expression(p);
+    node->for_statement.block = parse_block(p, level+1);
 
     return node;
 }
@@ -437,6 +474,10 @@ AST * parse_statement(Parser *p, int level)
     } else if (parser_peek(p, 0).type == TOKEN_WHILE) {
         node = parse_while(p,  level + 1);
         match(p, TOKEN_RBRACE, "} expected to define a while block");
+        parser_advance(p, 1);
+    } else if (parser_peek(p, 0).type == TOKEN_FOR) {
+        node = parse_for(p,  level + 1);
+        match(p, TOKEN_RBRACE, "} expected to define a for block");
         parser_advance(p, 1);
     } else {
         printf("Syntax error\n");

@@ -14,6 +14,7 @@ typedef enum {
     AST_COMMAND,
     AST_IF,
     AST_WHILE,
+    AST_FOR,
     AST_ASSIGN
 } ASTType;
 
@@ -61,13 +62,20 @@ typedef struct AST {
 
         struct {
             struct AST *expression;
-            struct AST *block;
-        } condition;
+            struct AST *if_block;
+            struct AST *else_block;
+        } if_statement;
 
         struct {
             struct AST *expression;
             struct AST *block;
-        } repeat;
+        } while_statement;
+
+        struct {
+            struct AST *start;
+            struct AST *end;
+            struct AST *block;
+        } for_statement;
 
         struct {
             struct AST **statements;
