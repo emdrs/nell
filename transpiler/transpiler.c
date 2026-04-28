@@ -100,6 +100,15 @@ char * generate_code(AST *ast)
             asprintf(&result, "%s;", code);
             break;
         }
+        case AST_IF: {
+            char *expression = generate_code(ast->condition.expression);
+            char *block = generate_code(ast->condition.block);
+            asprintf(&result, "if (%s) %s", expression, block);
+
+            free(expression);
+            free(block);
+            break;
+        }
     }
 
     return result;
@@ -135,3 +144,4 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
