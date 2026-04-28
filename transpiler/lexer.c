@@ -15,6 +15,12 @@ void advance(Lexer *l)
     if (l->next_ch != '\0') l->next_ch = l->source[l->pos+1];
 }
 
+void rollback(Lexer *l, int pos)
+{
+    l->pos = pos-1;
+    advance(l);
+}
+
 void push(TokenList *list, Token token)
 {
     if (list->size >= list->capacity) {
@@ -112,6 +118,9 @@ void show_token(Token token)
         case TOKEN_RPAREN:
             printf("RPAREN");
             break;
+        case TOKEN_IF:
+            printf("IF");
+            break;
     }
 }
 
@@ -180,6 +189,28 @@ Token number(Lexer *l)
         is_float ? TOKEN_FLOAT : TOKEN_INT,
         strndup(l->source + start, (l->pos - start) + 1)
     };
+}
+
+int is_char(Lexer *l)
+{
+    return (l->next_ch >= 'a' && l->next_ch <= 'z') ||
+           (l->next_ch >= 'A' && l->next_ch <= 'Z') ||
+            l->next_ch == '_';
+}
+
+int is_keyword(Lexer *l, char *keyword)
+{
+    if (l->ch == keyword[0]) {
+        int start = l->pos;
+        while (is_char(l)) advance(l);
+
+        int is =
+            strcmp(keyword, strndup(l->source + start, (l->pos - start) + 1)) == 0;
+
+        if (!is) rollback(l, start);
+        return is;
+    }
+    return 0;
 }
 
 Token next_token(Lexer *l)
@@ -268,13 +299,15 @@ Token next_token(Lexer *l)
         return (Token){ TOKEN_ASSIGN, "=" };
     }
 
-    if (l->ch >= '0' && l->ch <= '9') return number(l);
+    if (is_keyword(l, "if")) return (Token){ TOKEN_IF, "if" };
+
+    if (l->ch >= '0' && l->ch < '9') return number(l);
 
     if ((l->ch >= 'a' && l->ch <= 'z') ||
         (l->ch >= 'A' && l->ch <= 'Z') ||
          l->ch == '_') return identifier(l);
 
-    printf("Unexpected character: %c", l->ch);
+    printf("Unexpected character: '%c'", l->ch);
     exit(1);
 }
 

@@ -29,6 +29,7 @@ typedef enum {
     TOKEN_RBRACE,         // }
     TOKEN_LPAREN,         // (
     TOKEN_RPAREN,         // )
+    TOKEN_IF,             // if
     TOKEN_EOF          
 } TokenType;
 
