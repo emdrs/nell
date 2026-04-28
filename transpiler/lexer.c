@@ -121,6 +121,9 @@ void show_token(Token token)
         case TOKEN_IF:
             printf("IF");
             break;
+        case TOKEN_WHILE:
+            printf("WHILE");
+          break;
     }
 }
 
