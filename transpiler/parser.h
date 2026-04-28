@@ -12,6 +12,7 @@ typedef enum {
     AST_UPDATE_IDENTIFIER,
     AST_BLOCK,
     AST_COMMAND,
+    AST_IF,
     AST_ASSIGN
 } ASTType;
 
@@ -56,6 +57,11 @@ typedef struct AST {
             struct AST *right;
             char *type;
         } assign;
+
+        struct {
+            struct AST *expression;
+            struct AST *block;
+        } condition;
 
         struct {
             struct AST **statements;

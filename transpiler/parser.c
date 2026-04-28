@@ -91,6 +91,12 @@ void show_ast(AST* node, int indent)
 
             break;
         }
+        case AST_IF: {
+            printf("IF\n");
+            show_ast(node->condition.expression, indent + 1);
+            show_ast(node->condition.block, indent + 1);
+            break;
+        }
     }
 }
 
@@ -388,6 +394,16 @@ AST * parse_command(Parser *p)
 
 AST * parse_block(Parser *p, int level);
 
+AST * parse_if(Parser *p, int level)
+{
+    AST *node = create_ast_node(AST_IF);
+    parser_advance(p, 1);
+    node->condition.expression = parse_expression(p);
+    node->condition.block = parse_block(p, level);
+
+    return node;
+}
+
 AST * parse_statement(Parser *p, int level)
 {
     AST *node;
@@ -396,6 +412,10 @@ AST * parse_statement(Parser *p, int level)
         node = parse_command(p);
     } else if (is_block(p, level + 1)) {
         node = parse_block(p, level + 1);
+        match(p, TOKEN_RBRACE, "} expected to define a block");
+        parser_advance(p, 1);
+    } else if (parser_peek(p, 0).type == TOKEN_IF) {
+        node = parse_if(p,  level + 1);
         match(p, TOKEN_RBRACE, "} expected to define a block");
         parser_advance(p, 1);
     } else {
