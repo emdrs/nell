@@ -133,7 +133,7 @@ int is_var_def_implicit(Parser *p)
 {
     if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
     if (parser_peek(p, 1).type != TOKEN_COLON) return 0;
-    if (parser_peek(p, 2).type != TOKEN_EQUALS) return 0;
+    if (parser_peek(p, 2).type != TOKEN_ASSIGN) return 0;
 
     return 1;
 }
@@ -262,11 +262,11 @@ AST * parse_expression(Parser *p)
 
 int is_assign(Token token)
 {
-    return token.type == TOKEN_EQUALS       ||
-           token.type == TOKEN_PLUS_EQUALS  ||
-           token.type == TOKEN_MINUS_EQUALS ||
-           token.type == TOKEN_STAR_EQUALS  ||
-           token.type == TOKEN_SLASH_EQUALS;
+    return token.type == TOKEN_ASSIGN       ||
+           token.type == TOKEN_PLUS_ASSIGN  ||
+           token.type == TOKEN_MINUS_ASSIGN ||
+           token.type == TOKEN_STAR_ASSIGN  ||
+           token.type == TOKEN_SLASH_ASSIGN;
 }
 
 int is_assignment(Parser *p)

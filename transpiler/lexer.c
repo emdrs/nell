@@ -37,20 +37,20 @@ void show_token(Token token)
         case TOKEN_FLOAT:
             printf("FLOAT(%s)", token.text);
             break;
-        case TOKEN_EQUALS:
-            printf("EQUALS");
+        case TOKEN_ASSIGN:
+            printf("ASSIGN");
             break;
-        case TOKEN_PLUS_EQUALS:
-            printf("PLUS_EQUALS");
+        case TOKEN_PLUS_ASSIGN:
+            printf("PLUS_ASSIGN");
             break;
-        case TOKEN_MINUS_EQUALS:
-            printf("MINUS_EQUALS");
+        case TOKEN_MINUS_ASSIGN:
+            printf("MINUS_ASSIGN");
             break;
-        case TOKEN_STAR_EQUALS:
-            printf("STAR_EQUALS");
+        case TOKEN_STAR_ASSIGN:
+            printf("STAR_ASSIGN");
             break;
-        case TOKEN_SLASH_EQUALS:
-            printf("SLASH_EQUALS");
+        case TOKEN_SLASH_ASSIGN:
+            printf("SLASH_ASSIGN");
             break;
         case TOKEN_SEMICOLON:
             printf("SEMICOLON");
@@ -167,7 +167,7 @@ Token next_token(Lexer *l)
         case ';':  return (Token) { TOKEN_SEMICOLON,    ";" };
         case '{':  return (Token) { TOKEN_LBRACE,       "{" };
         case '}':  return (Token) { TOKEN_RBRACE,       "}" };
-        case '=':  return (Token) { TOKEN_EQUALS,       "=" };
+        case '=':  return (Token) { TOKEN_ASSIGN,       "=" };
         case '\0': return (Token) { TOKEN_EOF,           "" };
     }
 
@@ -186,7 +186,7 @@ Token next_token(Lexer *l)
         }
         if (l->next_ch == '=') {
             advance(l);
-            return (Token){ TOKEN_PLUS_EQUALS, "+=" };
+            return (Token){ TOKEN_PLUS_ASSIGN, "+=" };
         }
         return (Token){ TOKEN_PLUS, "+" };
     }
@@ -198,7 +198,7 @@ Token next_token(Lexer *l)
         }
         if (l->next_ch == '=') {
             advance(l);
-            return (Token){ TOKEN_MINUS_EQUALS, "-=" };
+            return (Token){ TOKEN_MINUS_ASSIGN, "-=" };
         }
         return (Token){ TOKEN_MINUS, "-" };
     }
@@ -206,7 +206,7 @@ Token next_token(Lexer *l)
     if (l->ch == '*') {
         if (l->next_ch == '=') {
             advance(l);
-            return (Token){ TOKEN_STAR_EQUALS, "*=" };
+            return (Token){ TOKEN_STAR_ASSIGN, "*=" };
         }
         return (Token){ TOKEN_STAR, "*" };
     }
@@ -214,7 +214,7 @@ Token next_token(Lexer *l)
     if (l->ch == '/') {
         if (l->next_ch == '=') {
             advance(l);
-            return (Token){ TOKEN_SLASH_EQUALS, "/=" };
+            return (Token){ TOKEN_SLASH_ASSIGN, "/=" };
         }
         return (Token){ TOKEN_SLASH, "/" };
     }

@@ -8,11 +8,6 @@ typedef enum {
     TOKEN_SEMICOLON,    // ;
     TOKEN_COLON,        // :
     TOKEN_DOUBLE_COLON, // ::
-    TOKEN_EQUALS,       // =
-    TOKEN_PLUS_EQUALS,  // +=
-    TOKEN_MINUS_EQUALS, // -=
-    TOKEN_STAR_EQUALS,  // *=
-    TOKEN_SLASH_EQUALS, // /=
     TOKEN_PLUS,         // +
     TOKEN_DOUBLE_PLUS,  // ++
     TOKEN_MINUS,        // -
@@ -21,6 +16,11 @@ typedef enum {
     TOKEN_SLASH,        // /
     TOKEN_LBRACE,       // {
     TOKEN_RBRACE,       // }
+    TOKEN_ASSIGN,         // =
+    TOKEN_PLUS_ASSIGN,    // +=
+    TOKEN_MINUS_ASSIGN,   // -=
+    TOKEN_STAR_ASSIGN,    // *=
+    TOKEN_SLASH_ASSIGN,   // /=
     TOKEN_EOF          
 } TokenType;
 
