@@ -1,5 +1,6 @@
 #include "lexer.h"
 #include "parser.h"
+#include <_stdio.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,8 +125,14 @@ char * generate_code(AST *ast)
             char *block = generate_code(ast->for_statement.block);
             int start_increment = !ast->for_statement.is_start_inclusive;
             int end_increment = ast->for_statement.is_end_inclusive;
-            asprintf(&result, "for (int it = %s; it < %s; it++) %s", start,
-                    end, block);
+            if (start_increment) {
+                asprintf(&start, "%s + 1", start);
+            }
+            if (end_increment) {
+                asprintf(&end, "%s + 1", end);
+            }
+            asprintf(&result, "for (int it = %s; it < %s; it++) %s", start, end,
+                    block);
 
             free(start);
             free(end);
