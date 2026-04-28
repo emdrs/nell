@@ -33,6 +33,9 @@ typedef enum {
     TOKEN_WHILE,          // while
     TOKEN_FOR,            // for
     TOKEN_DOUBLE_DOT,     // ..
+    TOKEN_GREATER_DOT,    // >.
+    TOKEN_DOT_LESS,       // .<
+    TOKEN_GREATER_LESS,   // ><
     TOKEN_EOF          
 } TokenType;
 

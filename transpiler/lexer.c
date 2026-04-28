@@ -130,6 +130,15 @@ void show_token(Token token)
         case TOKEN_DOUBLE_DOT:
             printf("DOUBLE_DOT");
             break;
+        case TOKEN_GREATER_DOT:
+            printf("GREATER_DOT");
+            break;
+        case TOKEN_DOT_LESS:
+            printf("DOT_LESS");
+            break;
+        case TOKEN_GREATER_LESS:
+            printf("GREATER_LESS");
+            break;
         }
 }
 
@@ -184,7 +193,7 @@ Token number(Lexer *l)
 
     if (l->next_ch == '.') {
         advance(l);
-        if (l->next_ch == '.') {
+        if (l->next_ch == '.' || l->next_ch == '<') {
             rollback(l, l->pos - 1);
         } else {
             is_float = 1;
@@ -292,6 +301,14 @@ Token next_token(Lexer *l)
             advance(l);
             return (Token){ TOKEN_GREATER_EQUALS, ">=" };
         }
+        if (l->next_ch == '.') {
+            advance(l);
+            return (Token){ TOKEN_GREATER_DOT, ">." };
+        }
+        if (l->next_ch == '<') {
+            advance(l);
+            return (Token){ TOKEN_GREATER_LESS, "><" };
+        }
         return (Token){ TOKEN_GREATER, ">" };
     }
     
@@ -315,6 +332,10 @@ Token next_token(Lexer *l)
         if (l->next_ch == '.') {
             advance(l);
             return (Token){ TOKEN_DOUBLE_DOT, ".." };
+        }
+        if (l->next_ch == '<') {
+            advance(l);
+            return (Token){ TOKEN_DOT_LESS, ".<" };
         }
     }
 

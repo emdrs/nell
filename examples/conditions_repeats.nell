@@ -14,6 +14,14 @@ while a >= 5 {
     a++;
 }
 
-for 0..10 {
-    a: int = it + 2;
+for 0..10 { } // 0 to 10 
+
+for 0>.10 { } // 1 to 10
+
+for 0.<10 { } // 0 to 9
+
+for 0><10 { } // 1 to 9
+
+for a..b {
+    a: int = it; // 'it' has the iterations count
 }
