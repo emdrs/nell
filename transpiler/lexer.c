@@ -106,6 +106,12 @@ void show_token(Token token)
         case TOKEN_LESS_EQUALS:
             printf("LESS_EQUALS");
             break;
+        case TOKEN_LPAREN:
+            printf("LPAREN");
+            break;
+        case TOKEN_RPAREN:
+            printf("RPAREN");
+            break;
     }
 }
 
@@ -185,6 +191,8 @@ Token next_token(Lexer *l)
         case ';':  return (Token) { TOKEN_SEMICOLON,    ";" };
         case '{':  return (Token) { TOKEN_LBRACE,       "{" };
         case '}':  return (Token) { TOKEN_RBRACE,       "}" };
+        case '(':  return (Token) { TOKEN_LPAREN,       "(" };
+        case ')':  return (Token) { TOKEN_RPAREN,       ")" };
         case '\0': return (Token) { TOKEN_EOF,           "" };
     }
 

@@ -27,6 +27,8 @@ typedef enum {
     TOKEN_SLASH,          // /
     TOKEN_LBRACE,         // {
     TOKEN_RBRACE,         // }
+    TOKEN_LPAREN,         // (
+    TOKEN_RPAREN,         // )
     TOKEN_EOF          
 } TokenType;
 
