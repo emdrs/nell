@@ -16,6 +16,7 @@ typedef enum {
     AST_WHILE,
     AST_FOR,
     AST_FUNC_DEF,
+    AST_FUNC_DEF_PARAM,
     AST_RETURN,
     AST_ASSIGN
 } ASTType;
@@ -91,7 +92,15 @@ typedef struct AST {
 
         struct {
             char *name;
+            char *type;
+        } func_def_param;
+
+        struct {
+            char *name;
             char *return_type;
+            struct AST **params;
+            int size;
+            int capacity;
             struct AST *block;
         } func_def;
 

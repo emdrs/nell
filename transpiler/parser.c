@@ -119,13 +119,20 @@ void show_ast(AST* node, int indent)
             printf("FUNC_DEF(%s -> %s)\n", node->func_def.name,
                     node->func_def.return_type);
             print_indent(indent + 1);
-            printf("PARAMS: \n");
+            printf("PARAMS: ");
+            for (int i = 0; i < node->func_def.size; i++)
+                show_ast(node->func_def.params[i], indent + 1);
+            printf("\n");
             show_ast(node->func_def.block, indent + 1);
             break;
         }
         case AST_RETURN: {
             printf("RETURN\n");
             show_ast(node->return_statement, indent + 1);
+            break;
+        }
+        case AST_FUNC_DEF_PARAM: {
+            printf("[%s: %s] ", node->func_def_param.name, node->func_def_param.type);
             break;
         }
     }
@@ -540,6 +547,11 @@ int is_func_def(Parser *p)
     if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
     if (parser_peek(p, 1).type != TOKEN_DOUBLE_COLON) return 0;
     if (parser_peek(p, 2).type != TOKEN_LPAREN) return 0;
+
+    // With parameters
+    if (parser_peek(p, 3).type == TOKEN_IDENTIFIER &&
+        parser_peek(p, 4).type == TOKEN_COLON) return 1;
+
     if (parser_peek(p, 3).type != TOKEN_RPAREN) return 0;
     if (parser_peek(p, 4).type != TOKEN_ARROW) return 0;
     if (parser_peek(p, 5).type != TOKEN_IDENTIFIER) return 0;
@@ -547,12 +559,46 @@ int is_func_def(Parser *p)
     return 1;
 }
 
+void push_param(AST *func_def, AST *param)
+{
+    if (func_def->func_def.size >= func_def->func_def.capacity) {
+        func_def->func_def.capacity *= 2;
+        func_def->func_def.params =
+            realloc(func_def->func_def.params,
+                    sizeof(AST *) * func_def->func_def.capacity);
+    }
+
+    func_def->func_def.params[func_def->func_def.size++] = param;
+}
+
+AST * parse_func_def_param(Parser *p)
+{
+    AST *node = create_ast_node(AST_FUNC_DEF_PARAM);
+    node->func_def_param.name = parser_peek(p, 0).text;
+    node->func_def_param.type = parser_peek(p, 2).text;
+    parser_advance(p, 3);
+
+    return node;
+}
+
 AST * parse_func_def(Parser *p, int level)
 {
     AST *node = create_ast_node(AST_FUNC_DEF);
+    node->func_def.params = (AST **) malloc(sizeof(AST *));
+    node->func_def.size = 0;
+    node->func_def.capacity = 1;
     node->func_def.name = parser_peek(p, 0).text;
-    node->func_def.return_type = parser_peek(p, 5).text;
-    parser_advance(p, 6);
+    parser_advance(p, 3);
+
+    while (parser_peek(p, 0).type != TOKEN_RPAREN) {
+        push_param(node, parse_func_def_param(p));
+        if (parser_peek(p, 0).type == TOKEN_COMMA) parser_advance(p, 1);
+    }
+    parser_advance(p, 2);
+    node->func_def.return_type = parser_peek(p, 0).text;
+    parser_advance(p, 1);
+
+    show_ast(node, 0);
     node->func_def.block = parse_block(p, level+1);
 
     return node;
