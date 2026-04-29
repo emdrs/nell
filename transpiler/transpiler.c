@@ -1,6 +1,5 @@
 #include "lexer.h"
 #include "parser.h"
-#include <_stdio.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -145,8 +144,16 @@ char * generate_code(AST *ast)
         }
         case AST_FUNC_DEF: {
             char *block = generate_code(ast->func_def.block);
-            asprintf(&result, "%s %s() %s", ast->func_def.return_type,
-                    ast->func_def.name, block);
+            char *params = NULL;
+            for (int i = 0; i < ast->func_def.size; i++) {
+                if (params == NULL) 
+                    asprintf(&params, "%s", generate_code(ast->func_def.params[i]));
+                else
+                    asprintf(&params, "%s, %s", params, generate_code(ast->func_def.params[i]));
+            }
+
+            asprintf(&result, "%s %s(%s) %s", ast->func_def.return_type,
+                    ast->func_def.name, params, block);
             free(block);
             break;
         }
@@ -158,7 +165,13 @@ char * generate_code(AST *ast)
             free(expression);
             break;
         }
-    }
+        case AST_FUNC_DEF_PARAM: {
+            asprintf(&result, "%s %s", ast->func_def_param.type,
+                    ast->func_def_param.name);
+            break;
+        }
+          break;
+        }
 
     return result;
 }
