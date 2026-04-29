@@ -33,6 +33,7 @@ typedef enum {
     TOKEN_WHILE,          // while
     TOKEN_FOR,            // for
     TOKEN_RETURN,         // return
+    TOKEN_COMMA,          // ,
     TOKEN_DOUBLE_DOT,     // ..
     TOKEN_GREATER_DOT,    // >.
     TOKEN_DOT_LESS,       // .<

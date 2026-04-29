@@ -151,6 +151,9 @@ void show_token(Token token)
         case TOKEN_ARROW:
             printf("ARROW");
             break;
+        case TOKEN_COMMA:
+            printf("COMMA");
+            break;
         }
 }
 
@@ -252,12 +255,13 @@ Token next_token(Lexer *l)
     skip_comment(l);
 
     switch (l->ch) {
-        case ';':  return (Token) { TOKEN_SEMICOLON,    ";" };
-        case '{':  return (Token) { TOKEN_LBRACE,       "{" };
-        case '}':  return (Token) { TOKEN_RBRACE,       "}" };
-        case '(':  return (Token) { TOKEN_LPAREN,       "(" };
-        case ')':  return (Token) { TOKEN_RPAREN,       ")" };
-        case '\0': return (Token) { TOKEN_EOF,           "" };
+        case ',':  return (Token) { TOKEN_COMMA,     "," };
+        case ';':  return (Token) { TOKEN_SEMICOLON, ";" };
+        case '{':  return (Token) { TOKEN_LBRACE,    "{" };
+        case '}':  return (Token) { TOKEN_RBRACE,    "}" };
+        case '(':  return (Token) { TOKEN_LPAREN,    "(" };
+        case ')':  return (Token) { TOKEN_RPAREN,    ")" };
+        case '\0': return (Token) { TOKEN_EOF,        "" };
     }
 
     if (l->ch == '|' && l->next_ch == '|') {
