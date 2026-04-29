@@ -144,9 +144,9 @@ char * generate_code(AST *ast)
         }
         case AST_FUNC_DEF: {
             char *block = generate_code(ast->func_def.block);
-            char *params = NULL;
+            char *params = strdup("");
             for (int i = 0; i < ast->func_def.size; i++) {
-                if (params == NULL) 
+                if (*params == '\0') 
                     asprintf(&params, "%s", generate_code(ast->func_def.params[i]));
                 else
                     asprintf(&params, "%s, %s", params, generate_code(ast->func_def.params[i]));
