@@ -95,7 +95,7 @@ typedef struct AST {
             struct AST *block;
         } func_def;
 
-        struct AST *return_expression;
+        struct AST *return_statement;
     };
 } AST;
 

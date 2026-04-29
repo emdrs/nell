@@ -125,7 +125,7 @@ void show_ast(AST* node, int indent)
         }
         case AST_RETURN: {
             printf("RETURN\n");
-            show_ast(node->return_expression, indent + 1);
+            show_ast(node->return_statement, indent + 1);
             break;
         }
     }
@@ -437,7 +437,7 @@ AST * parse_return_expression(Parser *p)
 {
     AST *node = create_ast_node(AST_RETURN);
     parser_advance(p, 1);
-    node->return_expression = is_expression(p) ? parse_expression(p) : NULL;
+    node->return_statement = is_expression(p) ? parse_expression(p) : NULL;
 
     return node;
 }

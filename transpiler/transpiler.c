@@ -151,9 +151,9 @@ char * generate_code(AST *ast)
             break;
         }
         case AST_RETURN: {
-            if (ast->return_expression == NULL) return "return";
+            if (ast->return_statement == NULL) return "return";
 
-            char *expression = generate_code(ast->return_expression);
+            char *expression = generate_code(ast->return_statement);
             asprintf(&result, "return %s", expression);
             free(expression);
             break;
