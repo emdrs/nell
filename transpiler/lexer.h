@@ -5,7 +5,7 @@ typedef enum {
     TOKEN_IDENTIFIER,
     TOKEN_INT,
     TOKEN_FLOAT,
-    TOKEN_DOUBLE_COLON, // ::
+    TOKEN_DOUBLE_COLON,   // ::
     TOKEN_SEMICOLON,      // ;
     TOKEN_COLON,          // :
     TOKEN_ASSIGN,         // =
@@ -36,6 +36,8 @@ typedef enum {
     TOKEN_GREATER_DOT,    // >.
     TOKEN_DOT_LESS,       // .<
     TOKEN_GREATER_LESS,   // ><
+    TOKEN_OR,             // ||
+    TOKEN_AND,            // &&
     TOKEN_EOF          
 } TokenType;
 

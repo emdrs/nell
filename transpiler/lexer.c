@@ -139,6 +139,12 @@ void show_token(Token token)
         case TOKEN_GREATER_LESS:
             printf("GREATER_LESS");
             break;
+        case TOKEN_OR:
+            printf("OR");
+            break;
+        case TOKEN_AND:
+            printf("AND");
+            break;
         }
 }
 
@@ -246,6 +252,15 @@ Token next_token(Lexer *l)
         case '(':  return (Token) { TOKEN_LPAREN,       "(" };
         case ')':  return (Token) { TOKEN_RPAREN,       ")" };
         case '\0': return (Token) { TOKEN_EOF,           "" };
+    }
+
+    if (l->ch == '|' && l->next_ch == '|') {
+        advance(l);
+        return (Token){ TOKEN_OR, "||" };
+    }
+    if (l->ch == '&' && l->next_ch == '&') {
+        advance(l);
+        return (Token){ TOKEN_AND, "&&" };
     }
 
     if (l->ch == ':') {

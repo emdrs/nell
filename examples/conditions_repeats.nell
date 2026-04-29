@@ -1,14 +1,14 @@
 if a >= ++b - 5 { a++; }
-if a >= 5 {
-    if b < a {
+if a > 5 && a < 10 {
+    if b > a && a < 8 {
         b += 88;
     }
     a++;
 }
 
 while a >= ++b - 5 { a++; }
-while a >= 5 {
-    while b < a {
+while a > 5 && a < 10 {
+    while b > a && a < 8 {
         b += 88;
     }
     a++;
