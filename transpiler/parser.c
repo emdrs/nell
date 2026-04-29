@@ -115,6 +115,11 @@ void show_ast(AST* node, int indent)
             show_ast(node->for_statement.block, indent + 1);
             break;
         }
+        case AST_RETURN: {
+            printf("RETURN\n");
+            show_ast(node->return_expression, indent + 1);
+            break;
+        }
     }
 }
 
@@ -409,7 +414,17 @@ int is_command(Parser *p)
     return is_identifier_update(p) ||
            is_assignment(p)        ||
            is_var_def(p)           ||
-           is_const_def(p);
+           is_const_def(p)         ||
+           parser_peek(p, 0).type == TOKEN_RETURN;
+}
+
+AST * parse_return_expression(Parser *p)
+{
+    AST *node = create_ast_node(AST_RETURN);
+    parser_advance(p, 1);
+    node->return_expression = parse_expression(p);
+
+    return node;
 }
 
 AST * parse_command(Parser *p)
@@ -431,6 +446,10 @@ AST * parse_command(Parser *p)
     } else if (is_var_def(p)) {
         node->command = parse_var_def(p);
         match(p, TOKEN_SEMICOLON, "; expected to define a variable");
+        parser_advance(p, 1);
+    } else if (parser_peek(p, 0).type == TOKEN_RETURN) {
+        node->command = parse_return_expression(p);
+        match(p, TOKEN_SEMICOLON, "; expected to define a return");
         parser_advance(p, 1);
     }
 
@@ -525,6 +544,7 @@ AST * parse_statement(Parser *p, int level)
         parser_advance(p, 1);
     } else {
         printf("Syntax error\n");
+        printf("Token: %s\n", parser_peek(p, 0).text);
         printf("Line: %s\n", get_token_source_line(p, parser_peek(p, 0)));
         exit(1);
     }
