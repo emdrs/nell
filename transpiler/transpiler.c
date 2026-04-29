@@ -143,6 +143,12 @@ char * generate_code(AST *ast)
             free(block);
             break;
         }
+        case AST_RETURN: {
+            char *expression = generate_code(ast->return_expression);
+            asprintf(&result, "return %s", expression);
+            free(expression);
+            break;
+        }
     }
 
     return result;
