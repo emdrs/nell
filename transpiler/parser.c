@@ -417,20 +417,27 @@ AST * parse_const_def(Parser *p)
     return node;
 }
 
+int is_return(Parser *p)
+{
+    if(parser_peek(p, 0).type != TOKEN_RETURN) return 0;
+
+    return 1;
+}
+
 int is_command(Parser *p)
 {
     return is_identifier_update(p) ||
            is_assignment(p)        ||
            is_var_def(p)           ||
            is_const_def(p)         ||
-           parser_peek(p, 0).type == TOKEN_RETURN;
+           is_return(p);
 }
 
 AST * parse_return_expression(Parser *p)
 {
     AST *node = create_ast_node(AST_RETURN);
     parser_advance(p, 1);
-    node->return_expression = parse_expression(p);
+    node->return_expression = is_expression(p) ? parse_expression(p) : NULL;
 
     return node;
 }
