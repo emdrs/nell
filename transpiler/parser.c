@@ -115,6 +115,14 @@ void show_ast(AST* node, int indent)
             show_ast(node->for_statement.block, indent + 1);
             break;
         }
+        case AST_FUNC_DEF: {
+            printf("FUNC_DEF(%s -> %s)\n", node->func_def.name,
+                    node->func_def.return_type);
+            print_indent(indent + 1);
+            printf("PARAMS: \n");
+            show_ast(node->func_def.block, indent + 1);
+            break;
+        }
         case AST_RETURN: {
             printf("RETURN\n");
             show_ast(node->return_expression, indent + 1);
@@ -520,11 +528,37 @@ AST * parse_for(Parser *p, int level)
     return node;
 }
 
+int is_func_def(Parser *p)
+{
+    if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
+    if (parser_peek(p, 1).type != TOKEN_DOUBLE_COLON) return 0;
+    if (parser_peek(p, 2).type != TOKEN_LPAREN) return 0;
+    if (parser_peek(p, 3).type != TOKEN_RPAREN) return 0;
+    if (parser_peek(p, 4).type != TOKEN_ARROW) return 0;
+    if (parser_peek(p, 5).type != TOKEN_IDENTIFIER) return 0;
+
+    return 1;
+}
+
+AST * parse_func_def(Parser *p, int level)
+{
+    AST *node = create_ast_node(AST_FUNC_DEF);
+    node->func_def.name = parser_peek(p, 0).text;
+    node->func_def.return_type = parser_peek(p, 5).text;
+    parser_advance(p, 6);
+    node->func_def.block = parse_block(p, level+1);
+
+    return node;
+}
+
 AST * parse_statement(Parser *p, int level)
 {
     AST *node;
 
-    if (is_command(p)) {
+    if (is_func_def(p)) {
+        node = parse_func_def(p,  level + 1);
+        parser_advance(p, 1);
+    } else if (is_command(p)) {
         node = parse_command(p);
     } else if (is_block(p, level + 1)) {
         node = parse_block(p, level + 1);

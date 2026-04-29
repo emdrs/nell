@@ -15,6 +15,8 @@ typedef enum {
     AST_IF,
     AST_WHILE,
     AST_FOR,
+    AST_FUNC_DEF,
+    AST_RETURN,
     AST_ASSIGN
 } ASTType;
 
@@ -86,6 +88,14 @@ typedef struct AST {
             int capacity;
             int level;
         } block;
+
+        struct {
+            char *name;
+            char *return_type;
+            struct AST *block;
+        } func_def;
+
+        struct AST *return_expression;
     };
 } AST;
 
