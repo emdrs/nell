@@ -34,6 +34,7 @@ typedef struct AST {
             struct AST *left;
             struct AST *right;
             char *type;
+            int has_paren;
         } expression;
 
         struct {

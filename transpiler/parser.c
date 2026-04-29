@@ -251,8 +251,27 @@ AST * parse_identifier_update(Parser *p)
     return update;
 }
 
+AST * parse_expression(Parser *p);
+
 AST * parse_factor(Parser *p)
 {
+    Token token = parser_peek(p, 0);
+
+    // Lógica para Parênteses
+    if (token.type == TOKEN_LPAREN) {
+        parser_advance(p, 1); // Consome o '('
+        
+        // Reinicia o ciclo: trata o conteúdo como uma nova expressão completa
+        AST *node = parse_expression(p);
+        node->expression.has_paren = 1;
+
+        // Após a expressão, PRECISA haver um ')'
+        match(p, TOKEN_RPAREN, "')' needed to close a '('b");
+        parser_advance(p, 1); // Consome o ')'
+        
+        return node;
+    }
+
     if (is_number(parser_peek(p, 0))) return parse_number(p);
     if (is_identifier_update(p)) return parse_identifier_update(p);
 
@@ -263,14 +282,14 @@ int is_expression(Parser *p) { return is_factor(p, 0); }
 
 int is_operator(Token token)
 {
-    if (token.type != TOKEN_PLUS  &&
-        token.type != TOKEN_MINUS &&
-        token.type != TOKEN_STAR  &&
-        token.type != TOKEN_SLASH &&
-        token.type != TOKEN_GREATER &&
+    if (token.type != TOKEN_PLUS           &&
+        token.type != TOKEN_MINUS          &&
+        token.type != TOKEN_STAR           &&
+        token.type != TOKEN_SLASH          &&
+        token.type != TOKEN_GREATER        &&
         token.type != TOKEN_GREATER_EQUALS &&
-        token.type != TOKEN_LESS &&
-        token.type != TOKEN_LESS_EQUALS &&
+        token.type != TOKEN_LESS           &&
+        token.type != TOKEN_LESS_EQUALS    &&
         token.type != TOKEN_EQUALS) return 0;
 
     return 1;
@@ -290,6 +309,7 @@ AST * parse_expression(Parser *p)
     op->expression.left = left;
     op->expression.right = parse_expression(p);
     op->expression.type = operator.text;
+    op->expression.has_paren = 0;
 
     return op;
 }

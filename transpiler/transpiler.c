@@ -67,7 +67,11 @@ char * generate_code(AST *ast)
             char *left_code = generate_code(ast->expression.left);
             char *right_code = generate_code(ast->expression.right);
 
-            asprintf(&result, "%s %s %s", left_code, ast->expression.type, right_code);
+            if (ast->expression.has_paren) {
+                asprintf(&result, "(%s %s %s)", left_code, ast->expression.type, right_code);
+            } else {
+                asprintf(&result, "%s %s %s", left_code, ast->expression.type, right_code);
+            }
 
             free(left_code);
             free(right_code);
