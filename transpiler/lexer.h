@@ -39,6 +39,7 @@ typedef enum {
     TOKEN_GREATER_LESS,   // ><
     TOKEN_OR,             // ||
     TOKEN_AND,            // &&
+    TOKEN_ARROW,          // ->
     TOKEN_EOF          
 } TokenType;
 

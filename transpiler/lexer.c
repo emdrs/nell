@@ -148,6 +148,9 @@ void show_token(Token token)
         case TOKEN_RETURN:
             printf("RETURN");
             break;
+        case TOKEN_ARROW:
+            printf("ARROW");
+            break;
         }
 }
 
@@ -294,6 +297,10 @@ Token next_token(Lexer *l)
         if (l->next_ch == '=') {
             advance(l);
             return (Token){ TOKEN_MINUS_ASSIGN, "-=" };
+        }
+        if (l->next_ch == '>') {
+            advance(l);
+            return (Token){ TOKEN_ARROW, "->" };
         }
         return (Token){ TOKEN_MINUS, "-" };
     }
