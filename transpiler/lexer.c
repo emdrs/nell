@@ -145,6 +145,9 @@ void show_token(Token token)
         case TOKEN_AND:
             printf("AND");
             break;
+        case TOKEN_RETURN:
+            printf("RETURN");
+            break;
         }
 }
 
@@ -357,6 +360,7 @@ Token next_token(Lexer *l)
     if (is_keyword(l, "if")) return (Token){ TOKEN_IF, "if" };
     if (is_keyword(l, "while")) return (Token){ TOKEN_WHILE, "while" };
     if (is_keyword(l, "for")) return (Token){ TOKEN_FOR, "for" };
+    if (is_keyword(l, "return")) return (Token){ TOKEN_RETURN, "return" };
 
     if (l->ch >= '0' && l->ch < '9') return number(l);
 
