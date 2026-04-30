@@ -66,9 +66,11 @@ char * generate_code(AST *ast)
             char *right_code = generate_code(ast->expression.right);
 
             if (ast->expression.has_paren) {
-                asprintf(&result, "(%s %s %s)", left_code, ast->expression.type, right_code);
+                asprintf(&result, "(%s %s %s)", left_code, ast->expression.type,
+                        right_code);
             } else {
-                asprintf(&result, "%s %s %s", left_code, ast->expression.type, right_code);
+                asprintf(&result, "%s %s %s", left_code, ast->expression.type,
+                        right_code);
             }
 
             free(left_code);
@@ -85,6 +87,7 @@ char * generate_code(AST *ast)
 
                 free(statement_code);
             }
+            if (!code) code = "";
             if (ast->block.level == 0) asprintf(&result, "%s", code);
             else                       asprintf(&result, "{ %s }", code);
             break;
@@ -189,7 +192,31 @@ char * generate_code(AST *ast)
             asprintf(&result, "\"%s\"", ast->str);
             break;
         }
-    }
+        case AST_SWITCH: {
+            char *identifier = generate_code(ast->switch_statement.value);
+            char *block = generate_code(ast->switch_statement.block);
+            asprintf(&result, "switch (%s) %s", identifier, block);
+
+            free(identifier);
+            free(block);
+            break;
+        }
+        case AST_CASE: {
+            char *block = generate_code(ast->case_statement.block);
+            if (ast->case_statement.is_default) {
+                asprintf(&result, "default: %s", block);
+            } else {
+                char *expression = generate_code(ast->case_statement.value);
+                asprintf(&result, "case %s: %s", expression, block);
+                free(expression);
+            }
+            free(block);
+            break;
+        }
+        case AST_BREAK:
+            asprintf(&result, "break");
+            break;
+        }
 
     return result;
 }
@@ -218,9 +245,9 @@ int main(int argc, char *argv[])
 
     printf("\n");
 
-    // printf("source: %s\n", source);
+    printf("source: %s\n", source);
 
-    // printf("Ccode:  %s\n", code);
+    printf("Ccode:  %s\n", code);
 
     return 0;
 }
