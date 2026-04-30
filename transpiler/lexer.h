@@ -5,6 +5,7 @@ typedef enum {
     TOKEN_IDENTIFIER,
     TOKEN_INT,
     TOKEN_FLOAT,
+    TOKEN_STRING,
     TOKEN_DOUBLE_COLON,   // ::
     TOKEN_SEMICOLON,      // ;
     TOKEN_COLON,          // :

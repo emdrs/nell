@@ -154,6 +154,9 @@ void show_token(Token token)
         case TOKEN_COMMA:
             printf("COMMA");
             break;
+        case TOKEN_STRING:
+            printf("STRING(%s)", token.text);
+            break;
         }
 }
 
@@ -174,8 +177,7 @@ void skip_whitespaces(Lexer *l)
     skip_comment(l);
 }
 
-void skip_comment(Lexer *l)
-{
+void skip_comment(Lexer *l) {
     if (l->ch == '/' && l->next_ch == '/') {
         while (l->ch != '\n' && l->ch != '\0') advance(l);
         skip_whitespaces(l);
@@ -323,6 +325,32 @@ Token next_token(Lexer *l)
             return (Token){ TOKEN_SLASH_ASSIGN, "/=" };
         }
         return (Token){ TOKEN_SLASH, "/" };
+    }
+
+    if (l->ch == '"') {
+        advance(l);
+        int start = l->pos;
+        while (1) {
+            if (l->ch == '\\' && l->next_ch == '\\') {
+                advance(l);
+                advance(l);
+            }
+
+            if (l->ch == '"') break;
+
+            if (l->next_ch == '"') {
+                if(l->ch != '\\') break;
+            }
+
+            if (l->next_ch == '\0') {
+                printf("String withous '\"' on end");
+                exit(1);
+            }
+            advance(l);
+        }
+        printf("char: %c\n", l->ch);
+        return (Token) { TOKEN_STRING,
+            strndup(l->source + start, (l->pos - start)) };
     }
 
     if (l->ch == '>') {

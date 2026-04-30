@@ -1,0 +1,3 @@
+name: str = "João\\"; // String
+age: int = 10;        // Integer
+height: float = 1.45; // Float
