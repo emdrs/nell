@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 char * read_all_file(char *path)
 {
     FILE *f = fopen(path, "rb");
@@ -186,6 +185,10 @@ char * generate_code(AST *ast)
             free(params);
             break;
         }
+        case AST_STRING: {
+            asprintf(&result, "\"%s\"", ast->str);
+            break;
+        }
     }
 
     return result;
@@ -215,10 +218,21 @@ int main(int argc, char *argv[])
 
     printf("\n");
 
-    printf("source: %s\n", source);
+    // printf("source: %s\n", source);
 
-    printf("Ccode:  %s\n", code);
+    // printf("Ccode:  %s\n", code);
 
     return 0;
 }
 
+/*
+ * Switch case
+ * Strings
+ * Char
+ * Include
+ * Struct
+ * Enum
+ * Arrays
+ * Typedef
+ * Break
+ */
