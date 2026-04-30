@@ -14,6 +14,9 @@ typedef enum {
     AST_BLOCK,
     AST_COMMAND,
     AST_IF,
+    AST_SWITCH,
+    AST_CASE,
+    AST_BREAK,
     AST_WHILE,
     AST_FOR,
     AST_FUNC_DEF,
@@ -72,6 +75,17 @@ typedef struct AST {
             struct AST *if_block;
             struct AST *else_block;
         } if_statement;
+
+        struct {
+            struct AST *value;
+            struct AST *block;
+        } switch_statement;
+
+        struct {
+            struct AST *value;
+            struct AST *block;
+            int is_default;
+        } case_statement;
 
         struct {
             struct AST *expression;

@@ -140,10 +140,30 @@ void show_ast(AST* node, int indent)
                 show_ast(node->func_exec.params[i], indent + 1);
             break;
         }
-        case AST_STRING:
+        case AST_STRING: {
             printf("STRING(%s)\n", node->str);
-          break;
+            break;
         }
+        case AST_SWITCH: {
+            printf("SWITCH(%s)\n", node->switch_statement.value->identifier);
+            show_ast(node->switch_statement.block, indent + 1);
+            break;
+        }
+        case AST_CASE: {
+            if (node->case_statement.is_default) {
+                printf("DEFAULT\n");
+            } else  {
+                printf("CASE\n");
+                show_ast(node->case_statement.value, indent + 1);
+            }
+            show_ast(node->case_statement.block, indent + 1);
+            break;
+        }
+        case AST_BREAK: {
+            printf("BREAK\n");
+            break;
+        }
+    }
 }
 
 void parser_advance(Parser *p, int amount) {
@@ -496,13 +516,24 @@ int is_return(Parser *p)
     return 1;
 }
 
+int is_break(Parser *p)
+{
+    return parser_peek(p, 0).type == TOKEN_BREAK;
+}
+
+int is_default(Parser *p)
+{
+    return parser_peek(p, 0).type == TOKEN_DEFAULT;
+}
+
 int is_command(Parser *p)
 {
     return is_identifier_update(p) ||
            is_assignment(p)        ||
            is_var_def(p)           ||
            is_const_def(p)         ||
-           is_return(p);
+           is_return(p)            ||
+           is_break(p);
 }
 
 AST * parse_return_expression(Parser *p)
@@ -538,6 +569,11 @@ AST * parse_command(Parser *p)
         node->command = parse_return_expression(p);
         match(p, TOKEN_SEMICOLON, "; expected to define a return");
         parser_advance(p, 1);
+    } else if (is_break(p)) {
+        node->command = create_ast_node(AST_BREAK);
+        parser_advance(p, 1);
+        match(p, TOKEN_SEMICOLON, "; expected to define a break");
+        parser_advance(p, 1);
     }
 
     return node;
@@ -551,6 +587,36 @@ AST * parse_if(Parser *p, int level)
     parser_advance(p, 1);
     node->if_statement.expression = parse_expression(p);
     node->if_statement.if_block = parse_block(p, level);
+
+    return node;
+}
+
+AST * parse_case(Parser *p, int level)
+{
+    AST *node = create_ast_node(AST_CASE);
+    node->case_statement.is_default = parser_peek(p, 0).type == TOKEN_DEFAULT;
+    parser_advance(p, 1);
+    Token token = parser_peek(p, 0);
+    if (!is_expression(p))
+        report_error(p, token, "Expression needed on case value");
+    if (node->case_statement.is_default)
+        node->case_statement.value = NULL;
+    else
+        node->case_statement.value = parse_expression(p);
+    node->case_statement.block = parse_block(p, level);
+
+    return node;
+}
+
+AST * parse_switch(Parser *p, int level)
+{
+    AST *node = create_ast_node(AST_SWITCH);
+    parser_advance(p, 1);
+    Token token = parser_peek(p, 0);
+    if (token.type != TOKEN_IDENTIFIER)
+        report_error(p, token, "Identifier needed on switch value");
+    node->switch_statement.value = parse_identifier(p);
+    node->switch_statement.block = parse_block(p, level);
 
     return node;
 }
@@ -684,6 +750,14 @@ AST * parse_statement(Parser *p, int level)
     } else if (parser_peek(p, 0).type == TOKEN_IF) {
         node = parse_if(p,  level + 1);
         match(p, TOKEN_RBRACE, "} expected to define a if block");
+        parser_advance(p, 1);
+    } else if (parser_peek(p, 0).type == TOKEN_SWITCH) {
+        node = parse_switch(p,  level + 1);
+        match(p, TOKEN_RBRACE, "} expected to define a switch block");
+        parser_advance(p, 1);
+    } else if (parser_peek(p, 0).type == TOKEN_CASE || is_default(p)) {
+        node = parse_case(p,  level + 1);
+        match(p, TOKEN_RBRACE, "} expected to define a case block");
         parser_advance(p, 1);
     } else if (parser_peek(p, 0).type == TOKEN_WHILE) {
         node = parse_while(p,  level + 1);
