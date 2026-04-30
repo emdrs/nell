@@ -135,7 +135,7 @@ void show_ast(AST* node, int indent)
             break;
         }
         case AST_FUNC_EXEC: {
-            printf("FUNC_EXEC(%s)", node->func_exec.name);
+            printf("FUNC_EXEC(%s)\n", node->func_exec.name);
             for (int i = 0; i < node->func_exec.size; i++)
                 show_ast(node->func_exec.params[i], indent + 1);
             break;
