@@ -331,16 +331,13 @@ Token next_token(Lexer *l)
         advance(l);
         int start = l->pos;
         while (1) {
-            if (l->ch == '\\' && l->next_ch == '\\') {
+            if (l->ch == '\\') {
                 advance(l);
                 advance(l);
+                continue;
             }
 
             if (l->ch == '"') break;
-
-            if (l->next_ch == '"') {
-                if(l->ch != '\\') break;
-            }
 
             if (l->next_ch == '\0') {
                 printf("String withous '\"' on end");
@@ -348,7 +345,6 @@ Token next_token(Lexer *l)
             }
             advance(l);
         }
-        printf("char: %c\n", l->ch);
         return (Token) { TOKEN_STRING,
             strndup(l->source + start, (l->pos - start)) };
     }
