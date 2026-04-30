@@ -1,1 +1,10 @@
-soma :: (a: int, b: int) -> int { return a + b; }
+switch a {
+    case 10 {
+        a++;
+        break;
+    }
+    default {
+        a--;
+        break;
+    }
+}

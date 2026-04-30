@@ -157,6 +157,18 @@ void show_token(Token token)
         case TOKEN_STRING:
             printf("STRING(%s)", token.text);
             break;
+        case TOKEN_SWITCH:
+            printf("SWITCH");
+            break;
+        case TOKEN_BREAK:
+            printf("BREAK");
+            break;
+        case TOKEN_CASE:
+            printf("CASE");
+            break;
+        case TOKEN_DEFAULT:
+            printf("DEFAULT");
+            break;
         }
 }
 
@@ -395,7 +407,11 @@ Token next_token(Lexer *l)
     if (is_keyword(l, "if")) return (Token){ TOKEN_IF, "if" };
     if (is_keyword(l, "while")) return (Token){ TOKEN_WHILE, "while" };
     if (is_keyword(l, "for")) return (Token){ TOKEN_FOR, "for" };
+    if (is_keyword(l, "switch")) return (Token){ TOKEN_SWITCH, "switch" };
+    if (is_keyword(l, "case")) return (Token){ TOKEN_CASE, "case" };
+    if (is_keyword(l, "default")) return (Token){ TOKEN_DEFAULT, "default" };
     if (is_keyword(l, "return")) return (Token){ TOKEN_RETURN, "return" };
+    if (is_keyword(l, "break")) return (Token){ TOKEN_BREAK, "break" };
 
     if (l->ch >= '0' && l->ch < '9') return number(l);
 

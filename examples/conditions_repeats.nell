@@ -1,9 +1,20 @@
-if a >= ++b - 5 { a++; }
+if (a >= ++b - 5) { a++; }
 if a > 5 && a < 10 {
     if b > a || a < 8 {
         b += 88;
     }
     a++;
+}
+
+switch a {
+    case 10 {
+        a++;
+        break;
+    }
+    default {
+        a--;
+        break;
+    }
 }
 
 while a >= ++b - 5 { a++; }

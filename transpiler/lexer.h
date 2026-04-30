@@ -33,6 +33,10 @@ typedef enum {
     TOKEN_IF,             // if
     TOKEN_WHILE,          // while
     TOKEN_FOR,            // for
+    TOKEN_SWITCH,         // switch
+    TOKEN_BREAK,          // break
+    TOKEN_CASE,           // case
+    TOKEN_DEFAULT,        // default
     TOKEN_RETURN,         // return
     TOKEN_COMMA,          // ,
     TOKEN_DOUBLE_DOT,     // ..
