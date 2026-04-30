@@ -258,6 +258,7 @@ int is_identifier_update(Parser *p)
 }
 
 int is_func_exec(Parser *p);
+
 int is_factor(Parser *p, int offset)
 {
     Token token = parser_peek(p, offset);
@@ -438,8 +439,9 @@ int is_assignment(Parser *p)
         if (is_factor(p, offset)) return 1;
     } else {
         if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
-        if (!is_assign(parser_peek(p, 1)) && !is_factor(p, 2)) return 0;
+        if (!is_assign(parser_peek(p, 1)) || !is_factor(p, 2)) return 0;
     }
+
 
     return 1;
 }
@@ -533,6 +535,7 @@ int is_command(Parser *p)
            is_var_def(p)           ||
            is_const_def(p)         ||
            is_return(p)            ||
+           is_func_exec(p)         ||
            is_break(p);
 }
 
@@ -573,6 +576,10 @@ AST * parse_command(Parser *p)
         node->command = create_ast_node(AST_BREAK);
         parser_advance(p, 1);
         match(p, TOKEN_SEMICOLON, "; expected to define a break");
+        parser_advance(p, 1);
+    } else if (is_func_exec(p)) {
+        node->command = parse_func_exec(p);
+        match(p, TOKEN_SEMICOLON, "; expected to define a func exec");
         parser_advance(p, 1);
     }
 

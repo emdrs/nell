@@ -1,10 +1,4 @@
-switch a {
-    case 10 {
-        a++;
-        break;
-    }
-    default {
-        a--;
-        break;
-    }
+main :: () -> int {
+    idade: int = 10;
+    printf("Idade: %d\n", idade);
 }
