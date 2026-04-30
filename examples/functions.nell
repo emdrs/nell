@@ -12,6 +12,6 @@ subtracao :: (a: int, b: int) -> int {
 }
 
 main :: () -> int {
-    res := soma(10, random() - 1);
+    res := soma(10, random(SEED) - 1);
     return 0;
 }

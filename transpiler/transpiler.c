@@ -149,7 +149,8 @@ char * generate_code(AST *ast)
                 if (*params == '\0') 
                     asprintf(&params, "%s", generate_code(ast->func_def.params[i]));
                 else
-                    asprintf(&params, "%s, %s", params, generate_code(ast->func_def.params[i]));
+                    asprintf(&params, "%s, %s", params,
+                            generate_code(ast->func_def.params[i]));
             }
 
             asprintf(&result, "%s %s(%s) %s", ast->func_def.return_type,
@@ -170,8 +171,22 @@ char * generate_code(AST *ast)
                     ast->func_def_param.name);
             break;
         }
-          break;
+        case AST_FUNC_EXEC: {
+            char *params = strdup("");
+            for (int i = 0; i < ast->func_exec.size; i++) {
+                char *old_params = params;
+                if (*params == '\0') 
+                    asprintf(&params, "%s", generate_code(ast->func_exec.params[i]));
+                else
+                    asprintf(&params, "%s, %s", params,
+                            generate_code(ast->func_exec.params[i]));
+                free(old_params);
+            }
+            asprintf(&result, "%s(%s)", ast->func_exec.name, params);
+            free(params);
+            break;
         }
+    }
 
     return result;
 }
