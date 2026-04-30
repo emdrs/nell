@@ -1,4 +1,29 @@
+_age: int = 10;
+
+get_age :: () -> int { return _age; }
+increment_age :: () -> void {
+    printf("Envelhecendo...\n");
+    _age++;
+}
+
+msg :: (age: int) -> void {
+    printf("%d\n", age);
+    switch age {
+        case 18 {
+            printf("Caramba, 18?\n");
+            break;
+        }
+        default {
+            printf("Ah, não é 18\n");
+            break;
+        }
+    }
+}
+
 main :: () -> int {
-    idade: int = 10;
-    printf("Idade: %d\n", idade);
+    while get_age() < 18 {
+        increment_age();
+        msg(get_age());
+    }
+    return 0;
 }
