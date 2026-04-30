@@ -6,6 +6,7 @@
 typedef enum {
     AST_IDENTIFIER,
     AST_NUMBER,
+    AST_STRING,
     AST_OPERATOR,
     AST_VAR_DEF,
     AST_CONST_DEF,
@@ -27,6 +28,7 @@ typedef struct AST {
 
     union {
         char *identifier;
+        char *str;
         struct AST *command;
 
         struct {

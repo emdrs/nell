@@ -140,7 +140,10 @@ void show_ast(AST* node, int indent)
                 show_ast(node->func_exec.params[i], indent + 1);
             break;
         }
-    }
+        case AST_STRING:
+            printf("STRING(%s)\n", node->str);
+          break;
+        }
 }
 
 void parser_advance(Parser *p, int amount) {
@@ -215,6 +218,10 @@ int is_number(Token token)
 {
     return token.type == TOKEN_INT || token.type == TOKEN_FLOAT;
 }
+int is_string(Token token)
+{
+    return token.type == TOKEN_STRING;
+}
 
 int is_identifier_updater(Token token)
 {
@@ -236,6 +243,7 @@ int is_factor(Parser *p, int offset)
     Token token = parser_peek(p, offset);
     return (token.type == TOKEN_IDENTIFIER ||
             is_number(token)               ||
+            is_string(token)               ||
             is_identifier_update(p)        ||
             is_func_exec(p));
 }
@@ -246,6 +254,16 @@ AST * parse_number(Parser *p)
     Token number = parser_peek(p, 0);
     node->number.type = strdup(number.type == TOKEN_INT ? "int" : "float");
     node->number.value = number.text;
+    parser_advance(p, 1);
+
+    return node;
+}
+
+AST * parse_string(Parser *p)
+{
+    AST *node = create_ast_node(AST_STRING);
+    Token str = parser_peek(p, 0);
+    node->str = str.text;
     parser_advance(p, 1);
 
     return node;
@@ -340,6 +358,7 @@ AST * parse_factor(Parser *p)
     if (is_number(parser_peek(p, 0))) return parse_number(p);
     if (is_identifier_update(p)) return parse_identifier_update(p);
     if (is_func_exec(p)) return parse_func_exec(p);
+    if (is_string(parser_peek(p, 0))) return parse_string(p);
 
     return parse_identifier(p);
 }
