@@ -63,6 +63,12 @@ typedef struct {
 } TokenList;
 
 typedef struct {
+    float chance;
+    char *message;
+    Token token;
+} ErrorInfo;
+
+typedef struct {
     char *source;
     unsigned int pos;
     unsigned int line;

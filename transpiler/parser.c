@@ -197,11 +197,31 @@ void match(Parser* p, TokenType type, char* error_msg) {
     }
 }
 
+void set_error_info(Parser *p, ErrorInfo error_info, int priority)
+{
+    p->error_info = error_info;
+}
+
+void parser_show_error(Parser *p)
+{
+    printf("Line: %s\n", get_token_source_line(p, p->error_info.token));
+    printf("%s\n", p->error_info.message);
+}
+
+#define VAR_DEF_STEPS 3
 int is_var_def_explicit(Parser *p)
 {
     if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
-    if (parser_peek(p, 1).type != TOKEN_COLON) return 0;
-    if (parser_peek(p, 2).type != TOKEN_IDENTIFIER) return 0;
+    if (parser_peek(p, 1).type != TOKEN_COLON) {
+        set_error_info(p, (ErrorInfo){ 1.0f/VAR_DEF_STEPS,
+                "Colon needed to set variable type;", parser_peek(p, 1)}, 0);
+        return 0;
+    }
+    if (parser_peek(p, 2).type != TOKEN_IDENTIFIER) {
+        set_error_info(p, (ErrorInfo){ 2.0f/VAR_DEF_STEPS,
+                "Type needed to define a variable.", parser_peek(p, 1)}, 0);
+        return 0;
+    };
 
     return 1;
 }
@@ -238,6 +258,7 @@ int is_number(Token token)
 {
     return token.type == TOKEN_INT || token.type == TOKEN_FLOAT;
 }
+
 int is_string(Token token)
 {
     return token.type == TOKEN_STRING;
@@ -775,9 +796,11 @@ AST * parse_statement(Parser *p, int level)
         match(p, TOKEN_RBRACE, "} expected to define a for block");
         parser_advance(p, 1);
     } else {
-        printf("Syntax error\n");
-        printf("Token: %s\n", parser_peek(p, 0).text);
-        printf("Line: %s\n", get_token_source_line(p, parser_peek(p, 0)));
+        // printf("Syntax error\n");
+        // printf("Token: %s\n", parser_peek(p, 0).text);
+        // printf("Line: %s\n", get_token_source_line(p, parser_peek(p, 0)));
+
+        parser_show_error(p);
         exit(1);
     }
 

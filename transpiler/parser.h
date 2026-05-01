@@ -137,11 +137,15 @@ typedef struct {
     int pos;
     char *source;
     char *file;
+    ErrorInfo error_info;
 } Parser;
 
 void show_ast(AST* node, int indent);
 
 AST * parse(TokenList list, char *source, char *file);
 AST * create_ast_node(ASTType type);
+
+void set_error_info(Parser *p, ErrorInfo error_info, int priority);
+void parser_show_error(Parser *p);
 
 #endif
