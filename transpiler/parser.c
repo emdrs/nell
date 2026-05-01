@@ -208,22 +208,41 @@ void parser_show_error(Parser *p)
     printf("%s\n", p->error_info.message);
 }
 
+typedef struct {
+    TokenType type;
+    char *message;
+} ExpectedToken;
+
 #define VAR_DEF_STEPS 3
 int is_var_def_explicit(Parser *p)
 {
-    if (parser_peek(p, 0).type != TOKEN_IDENTIFIER) return 0;
-    if (parser_peek(p, 1).type != TOKEN_COLON) {
-        set_error_info(p, (ErrorInfo){ 1.0f/VAR_DEF_STEPS,
-                "Colon needed to set variable type;", parser_peek(p, 1)}, 0);
-        return 0;
-    }
-    if (parser_peek(p, 2).type != TOKEN_IDENTIFIER) {
-        set_error_info(p, (ErrorInfo){ 2.0f/VAR_DEF_STEPS,
-                "Type needed to define a variable.", parser_peek(p, 1)}, 0);
-        return 0;
+    int steps = 0;
+    int error_setted = 0;
+    Token error_token;
+    char *error_msg = NULL;
+
+    ExpectedToken expected_tokens[] = {
+        { TOKEN_IDENTIFIER, "Identifier needed to define a variable.", },
+        { TOKEN_COLON,      "Colon needed to define a variable type.", },
+        { TOKEN_IDENTIFIER, "Identifier needed to define a variable type.", }
     };
 
-    return 1;
+    Token token;
+    ExpectedToken expected_token;
+    for (int i = 0; i < VAR_DEF_STEPS; i++) {
+        if ((token = parser_peek(p, steps)).type == (expected_token = expected_tokens[i]).type) steps++;
+
+        if (error_setted){ continue; }
+
+        error_token = token;
+        error_msg = expected_token.message;
+        error_setted = 1;
+    }
+
+    set_error_info(p, (ErrorInfo){ (float)steps/(float)VAR_DEF_STEPS, error_msg,
+            error_token}, 0);
+
+    return steps == VAR_DEF_STEPS;
 }
 
 int is_var_def_implicit(Parser *p)
