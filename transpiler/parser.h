@@ -1,6 +1,9 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+#include "lexer.h"
+#include "langb.h"
+
 typedef enum {
     AST_NUMBER,            /*NEEDED*/
     AST_NAME,              /*NEEDED*/
@@ -121,17 +124,13 @@ typedef struct AST {
 
         struct {
             char *name;
-            struct AST **params;
-            int size;
-            int capacity;
+            ArrayList *params;
         } func_exec;
 
         struct AST *return_statement;
     };
 } AST;
 
-#include "lexer.h"
-#include "langb.h"
 
 AST * parse(ArrayList *list, char *source, char *file);
 void show_ast(AST* node, int indent);

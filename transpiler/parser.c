@@ -8,7 +8,7 @@ void print_indent(int level) { for (int i = 0; i < level; i++) printf("  "); }
 
 void show_ast(AST* node, int indent)
 {
-    if (!node) return;
+    if (node == NULL) return;
 
     print_indent(indent);
 
@@ -53,7 +53,7 @@ void show_ast(AST* node, int indent)
                    node->update_identifier.is_increment ? "++" : "--",
                    node->update_identifier.is_prefix ? "PRE" : "POST");
             show_ast(node->update_identifier.target, indent + 1);
-          break;
+            break;
         }
         case AST_COMMAND: {
             printf("COMMAND\n");
@@ -106,8 +106,11 @@ void show_ast(AST* node, int indent)
         }
         case AST_FUNC_EXEC: {
             printf("FUNC_EXEC(%s)\n", node->func_exec.name);
-            for (int i = 0; i < node->func_exec.size; i++)
-                show_ast(node->func_exec.params[i], indent + 1);
+            for (int i = 0; i < node->func_exec.params->size; i++) {
+                AST *param = (AST *)array_list_get(node->func_exec.params, i);
+                printf("");
+                show_ast(param, indent + 1);
+            }
             break;
         }
         case AST_STRING: {
@@ -231,18 +234,6 @@ AST * parse_factor(Parser *p)
     return parse_name(p);
 }
 
-void push_exec_param(AST *func_exec, AST *param)
-{
-    if (func_exec->func_exec.size >= func_exec->func_exec.capacity) {
-        func_exec->func_exec.capacity *= 2;
-        func_exec->func_exec.params =
-            realloc(func_exec->func_exec.params,
-                    sizeof(AST *) * func_exec->func_exec.capacity);
-    }
-
-    func_exec->func_exec.params[func_exec->func_exec.size++] = param;
-}
-
 int is_func_exec(Parser *p)
 {
     if (parser_peek(p, 0)->type != TOKEN_IDENTIFIER) return 0;
@@ -254,9 +245,7 @@ int is_func_exec(Parser *p)
 AST * parse_func_exec(Parser *p)
 {
     AST *node = create_ast_node(AST_FUNC_EXEC);
-    node->func_exec.params = (AST **) malloc(sizeof(AST *));
-    node->func_exec.size = 0;
-    node->func_exec.capacity = 1;
+    node->func_exec.params = array_list_create(sizeof(AST), 1);
     node->func_exec.name = parser_peek(p, 0)->text;
     parser_advance(p, 2);
 
@@ -265,13 +254,14 @@ AST * parse_func_exec(Parser *p)
             ErrorInfo error_info = {
                 1,
                 "Expression needed in function execution",
-                parser_peek(p, 0)
+                parser_peek(p, 0),
+                1
             };
-            parser_set_error_info(p, error_info, 0);
+            parser_set_error_info(p, error_info);
             parser_show_error(p);
             exit(1);
         }
-        push_exec_param(node, parse_expression(p));
+        array_list_add(node->func_exec.params, parse_expression(p));
         if (parser_peek(p, 0)->type == TOKEN_COMMA) parser_advance(p, 1);
     }
     parser_advance(p, 1);

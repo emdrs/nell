@@ -174,14 +174,16 @@ char * generate_code(AST *ast)
         }
         case AST_FUNC_EXEC: {
             char *params = strdup("");
-            for (int i = 0; i < ast->func_exec.size; i++) {
+            for (int i = 0; i < ast->func_exec.params->size; i++) {
                 char *old_params = params;
+                char *param_code =
+                    generate_code((AST *) array_list_get(ast->func_exec.params, i));
                 if (*params == '\0') 
-                    asprintf(&params, "%s", generate_code(ast->func_exec.params[i]));
+                    asprintf(&params, "%s", param_code);
                 else
-                    asprintf(&params, "%s, %s", params,
-                            generate_code(ast->func_exec.params[i]));
+                    asprintf(&params, "%s, %s", params, param_code);
                 free(old_params);
+                free(param_code);
             }
             asprintf(&result, "%s(%s)", ast->func_exec.name, params);
             free(params);
