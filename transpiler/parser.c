@@ -136,42 +136,24 @@ void show_ast(AST* node, int indent)
     }
 }
 
-int is_var_def_explicit(Parser *p)
+int is_var_def(Parser *p)
 {
     ExpectedToken expected_tokens[] = {
-        { TOKEN_IDENTIFIER, "Identifier needed to define a variable.", },
-        { TOKEN_COLON,      "Colon needed to define a variable type.", },
-        { TOKEN_IDENTIFIER, "Identifier needed to define a variable type.", }
+        { TOKEN_IDENTIFIER, "Identifier needed to define a variable type.", },
+        { TOKEN_IDENTIFIER, "Identifier needed to define a variable name.", }
     };
 
     return is_valid_syntax(p, expected_tokens,
             sizeof_expected_tokens(expected_tokens));
 }
 
-int is_var_def_implicit(Parser *p)
-{
-    if (parser_peek(p, 0)->type != TOKEN_IDENTIFIER) return 0;
-    if (parser_peek(p, 1)->type != TOKEN_COLON) return 0;
-    if (parser_peek(p, 2)->type != TOKEN_ASSIGN) return 0;
-
-    return 1;
-}
-
-int is_var_def(Parser *p) { return is_var_def_explicit(p) || is_var_def_implicit(p); }
-
 AST * parse_var_def(Parser *p)
 {
     AST *node = create_ast_node(AST_VAR_DEF);
     node->var_def.initialized = 0;
-    node->var_def.name = parser_peek(p, 0)->text;
-
-    if (is_var_def_implicit(p)) {
-        node->var_def.type = strdup("int");
-        parser_advance(p, 2);
-    } else {
-        node->var_def.type = parser_peek(p, 2)->text;
-        parser_advance(p, 3);
-    }
+    node->var_def.type = parser_peek(p, 0)->text;
+    node->var_def.name = parser_peek(p, 1)->text;
+    parser_advance(p, 2);
 
     return node;
 }
@@ -186,8 +168,8 @@ int is_identifier_update(Parser *p)
     Token *token1 = parser_peek(p, 0);
     Token *token2 = parser_peek(p, 1);
 
-    return (is_identifier_updater(token1) && token2->type == TOKEN_IDENTIFIER) ||
-           (is_identifier_updater(token2) && token1->type == TOKEN_IDENTIFIER);
+    return (is_identifier_updater(token1) && is_name(token2)) ||
+           (is_identifier_updater(token2) && is_name(token1));
 }
 
 int is_func_exec(Parser *p);
@@ -195,10 +177,10 @@ int is_func_exec(Parser *p);
 int is_factor(Parser *p, int offset)
 {
     Token *token = parser_peek(p, offset);
-    return (token->type == TOKEN_IDENTIFIER ||
-            is_number(token)                ||
-            is_string(token)                ||
-            is_identifier_update(p)         ||
+    return (is_name(token)          ||
+            is_number(token)        ||
+            is_string(token)        ||
+            is_identifier_update(p) ||
             is_func_exec(p));
 }
 
@@ -241,6 +223,7 @@ int is_func_exec(Parser *p)
 
     return 1;
 }
+int is_expression(Parser *p);
 
 AST * parse_func_exec(Parser *p)
 {
@@ -252,6 +235,16 @@ AST * parse_func_exec(Parser *p)
     parser_advance(p, 2);
 
     while (parser_peek(p, 0)->type != TOKEN_RPAREN) {
+        if(!is_expression(p) && p->error_info.progress == 0) {
+            ErrorInfo error_info = {
+                1,
+                "Expression needed in function execution",
+                parser_peek(p, 0)
+            };
+            parser_set_error_info(p, error_info, 0);
+            parser_show_error(p);
+            exit(1);
+        }
         push_exec_param(node, parse_expression(p));
         if (parser_peek(p, 0)->type == TOKEN_COMMA) parser_advance(p, 1);
     }
@@ -337,9 +330,8 @@ int is_assign(Token *token)
 int is_assignment(Parser *p)
 {
     if(is_var_def(p)) {
-        int offset = is_var_def_implicit(p) ? 3 : 4;
-        if (parser_peek(p, offset-1)->type == TOKEN_SEMICOLON) return 0;
-        if (is_factor(p, offset)) return 1;
+        if (!is_assign(parser_peek(p, 2))) return 0;
+        if (is_factor(p, 3)) return 1;
     } else {
         if (parser_peek(p, 0)->type != TOKEN_IDENTIFIER) return 0;
         if (!is_assign(parser_peek(p, 1)) || !is_factor(p, 2)) return 0;
