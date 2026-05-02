@@ -65,6 +65,7 @@ typedef struct {
     float progress;
     char *message;
     Token *token;
+    int priority;
 } ErrorInfo;
 
 typedef struct {
@@ -84,7 +85,7 @@ typedef struct AST AST; // YOU NEED TO IMPLEMENT THIS
 
 AST * create_ast_node(int type);
 
-void parser_set_error_info(Parser *p, ErrorInfo error_info, int priority);
+void parser_set_error_info(Parser *p, ErrorInfo error_info);
 void parser_show_error(Parser *p);
 void parser_advance(Parser *p, int amount);
 Token * parser_peek(Parser *p, int offset);
@@ -359,7 +360,7 @@ void parser_match(Parser* p, int type, char* error_msg)
     }
 }
 
-void parser_set_error_info(Parser *p, ErrorInfo error_info, int priority)
+void parser_set_error_info(Parser *p, ErrorInfo error_info)
 {
     if(p->error_info.progress < error_info.progress) p->error_info = error_info;
 }
@@ -435,7 +436,7 @@ int is_valid_syntax(Parser *p, ExpectedToken expected_tokens[], int count)
 
     if(steps < count)
         parser_set_error_info(p, (ErrorInfo){ (float)steps/(float)count, error_msg,
-            error_token}, 0);
+            error_token});
 
     return steps == count;
 }
