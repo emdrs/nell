@@ -231,8 +231,6 @@ int main(int argc, char *argv[])
 
     if (source == NULL) return 1;
 
-    printf("%s\n", source);
-
     ArrayList *tokens = tokenize(source);
 
     token_list_show(tokens);

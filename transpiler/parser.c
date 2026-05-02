@@ -168,6 +168,13 @@ int is_identifier_update(Parser *p)
     Token *token1 = parser_peek(p, 0);
     Token *token2 = parser_peek(p, 1);
 
+    if (is_identifier_updater(token1) && token2->type != TOKEN_IDENTIFIER) {
+        parser_report_error(p, token2,"Name needed after/before updater.");
+        exit(1);
+    } else if (is_identifier_updater(token2)) {
+        parser_match(p, TOKEN_IDENTIFIER, "Name needed after/before updater.");
+    }
+
     return (is_identifier_updater(token1) && is_name(token2)) ||
            (is_identifier_updater(token2) && is_name(token1));
 }

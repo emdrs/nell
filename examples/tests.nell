@@ -1,1 +1,1 @@
-int a = random(+);
+int a = random(++);

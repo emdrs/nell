@@ -267,8 +267,6 @@ ArrayList * tokenize(char *source)
 {
     ArrayList *list = array_list_create(sizeof(Token), 2);
     
-    printf("%s\n", source);
-
     Lexer l;
     l.source = source;
     l.pos = 0;
