@@ -434,7 +434,8 @@ int is_valid_syntax(Parser *p, ExpectedToken expected_tokens[], int count)
         error_setted = 1;
     }
 
-    parser_set_error_info(p, (ErrorInfo){ (float)steps/(float)count, error_msg,
+    if(steps < count)
+        parser_set_error_info(p, (ErrorInfo){ (float)steps/(float)count, error_msg,
             error_token}, 0);
 
     return steps == count;
