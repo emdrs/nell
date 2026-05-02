@@ -1,47 +1,69 @@
-#include "lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-void advance(Lexer *l)
-{
-    l->ch = l->source[++l->pos];
-    if (l->ch == '\n'){
-        l->line++;
-        l->column = 0;
-    } else {
-        l->column++;
-    }
-    if (l->next_ch != '\0') l->next_ch = l->source[l->pos+1];
-}
+typedef enum {
+    TOKEN_IDENTIFIER,     /*NEEDED*/
+    TOKEN_INT,            /*NEEDED*/
+    TOKEN_FLOAT,          /*NEEDED*/
+    TOKEN_STRING,         /*NEEDED*/
+    TOKEN_EOF,            /*NEEDED*/
+    TOKEN_DOUBLE_COLON,   // ::
+    TOKEN_SEMICOLON,      // ;
+    TOKEN_COLON,          // :
+    TOKEN_ASSIGN,         // =
+    TOKEN_EQUALS,         // ==
+    TOKEN_NOT_EQUALS,     // !=
+    TOKEN_GREATER,        // >
+    TOKEN_LESS,           // <
+    TOKEN_GREATER_EQUALS, // >=
+    TOKEN_LESS_EQUALS,    // <=
+    TOKEN_PLUS_ASSIGN,    // +=
+    TOKEN_MINUS_ASSIGN,   // -=
+    TOKEN_STAR_ASSIGN,    // *=
+    TOKEN_SLASH_ASSIGN,   // /=
+    TOKEN_PLUS,           // +
+    TOKEN_INCREMENT,      // ++
+    TOKEN_MINUS,          // -
+    TOKEN_DECREMENT,      // --
+    TOKEN_STAR,           // *
+    TOKEN_SLASH,          // /
+    TOKEN_LBRACE,         // {
+    TOKEN_RBRACE,         // }
+    TOKEN_LPAREN,         // (
+    TOKEN_RPAREN,         // )
+    TOKEN_IF,             // if
+    TOKEN_WHILE,          // while
+    TOKEN_FOR,            // for
+    TOKEN_SWITCH,         // switch
+    TOKEN_BREAK,          // break
+    TOKEN_CASE,           // case
+    TOKEN_DEFAULT,        // default
+    TOKEN_RETURN,         // return
+    TOKEN_COMMA,          // ,
+    TOKEN_DOUBLE_DOT,     // ..
+    TOKEN_GREATER_DOT,    // >.
+    TOKEN_DOT_LESS,       // .<
+    TOKEN_GREATER_LESS,   // ><
+    TOKEN_OR,             // ||
+    TOKEN_AND,            // &&
+    TOKEN_ARROW           // ->
+} TokenType;
 
-void rollback(Lexer *l, int pos)
-{
-    l->pos = pos-1;
-    advance(l);
-}
+#define LANGB_IMPLEMENTATION
+#include "langb.h"
 
-void push(TokenList *list, Token token)
+void token_show(Token *token)
 {
-    if (list->size >= list->capacity) {
-        list->capacity *= 2;
-        list->data = realloc(list->data, sizeof(Token) * list->capacity);
-    }
-
-    list->data[list->size++] = token;
-}
-
-void show_token(Token token)
-{
-    switch (token.type) {
+    switch (token->type) {
         case TOKEN_IDENTIFIER:
-            printf("IDENTIFIER(%s)", token.text);
+            printf("IDENTIFIER(%s)", token->text);
             break;
         case TOKEN_INT:
-            printf("INT(%s)", token.text);
+            printf("INT(%s)", token->text);
             break;
         case TOKEN_FLOAT:
-            printf("FLOAT(%s)", token.text);
+            printf("FLOAT(%s)", token->text);
             break;
         case TOKEN_ASSIGN:
             printf("ASSIGN");
@@ -155,7 +177,7 @@ void show_token(Token token)
             printf("COMMA");
             break;
         case TOKEN_STRING:
-            printf("STRING(%s)", token.text);
+            printf("STRING(%s)", token->text);
             break;
         case TOKEN_SWITCH:
             printf("SWITCH");
@@ -172,98 +194,7 @@ void show_token(Token token)
         }
 }
 
-void show_token_list(TokenList list)
-{
-    for (int i = 0; i < list.size; i++) {
-        show_token(list.data[i]);
-        printf(" ");
-    }
-    printf("\n");
-}
-
-void skip_comment(Lexer *l);
-
-void skip_whitespaces(Lexer *l)
-{
-    while (l->ch == ' ' || l->ch == '\n' || l->ch == '\t') advance(l);
-    skip_comment(l);
-}
-
-void skip_comment(Lexer *l) {
-    if (l->ch == '/' && l->next_ch == '/') {
-        while (l->ch != '\n' && l->ch != '\0') advance(l);
-        skip_whitespaces(l);
-    }
-}
-
-Token identifier(Lexer *l)
-{
-    int start = l->pos;
-
-    while ((l->next_ch >= 'a' && l->next_ch <= 'z') ||
-           (l->next_ch >= 'A' && l->next_ch <= 'Z') ||
-           (l->next_ch >= '0' && l->next_ch <= '9') ||
-            l->next_ch == '_') advance(l);
-
-    return (Token) {
-        TOKEN_IDENTIFIER,
-        strndup(l->source + start, (l->pos - start) + 1)
-    };
-}
-
-int is_digit(Lexer *l) { return l->next_ch >= '0' && l->next_ch <= '9'; }
-
-Token number(Lexer *l)
-{
-    int start = l->pos;
-    int is_float = 0;
-
-    while (is_digit(l)) advance(l);
-
-    if (l->next_ch == '.') {
-        advance(l);
-        if (l->next_ch == '.' || l->next_ch == '<') {
-            rollback(l, l->pos - 1);
-        } else {
-            is_float = 1;
-            if (!is_digit(l)) {
-                printf("Expected a digit after '.'\n");
-                exit(1);
-            }
-
-            while (is_digit(l)) advance(l);
-        }
-    }
-
-    return (Token) {
-        is_float ? TOKEN_FLOAT : TOKEN_INT,
-        strndup(l->source + start, (l->pos - start) + 1)
-    };
-}
-
-int is_char(Lexer *l)
-{
-    return (l->next_ch >= 'a' && l->next_ch <= 'z') ||
-           (l->next_ch >= 'A' && l->next_ch <= 'Z') ||
-            l->next_ch == '_';
-}
-
-int is_keyword(Lexer *l, char *keyword)
-{
-    if (l->ch == keyword[0]) {
-        int start = l->pos;
-        while (is_char(l)) advance(l);
-
-        int is =
-            strcmp(keyword, strndup(l->source + start, (l->pos - start) + 1)) == 0;
-
-        if (!is) rollback(l, start);
-        return is;
-    }
-    return 0;
-}
-
-Token next_token(Lexer *l)
+Token get_token(Lexer *l)
 {
     skip_whitespaces(l);
     skip_comment(l);
@@ -292,7 +223,7 @@ Token next_token(Lexer *l)
             advance(l);
             return (Token){ TOKEN_DOUBLE_COLON, "::" };
         }
-        return (Token){ TOKEN_COLON, ":" };
+        return (Token){ TOKEN_COLON, strdup(":") };
     }
 
     if (l->ch == '+') {
@@ -339,27 +270,7 @@ Token next_token(Lexer *l)
         return (Token){ TOKEN_SLASH, "/" };
     }
 
-    if (l->ch == '"') {
-        advance(l);
-        int start = l->pos;
-        while (1) {
-            if (l->ch == '\\') {
-                advance(l);
-                advance(l);
-                continue;
-            }
-
-            if (l->ch == '"') break;
-
-            if (l->next_ch == '\0') {
-                printf("String withous '\"' on end");
-                exit(1);
-            }
-            advance(l);
-        }
-        return (Token) { TOKEN_STRING,
-            strndup(l->source + start, (l->pos - start)) };
-    }
+    if (l->ch == '"') return get_string(l);
 
     if (l->ch == '>') {
         if (l->next_ch == '=') {
@@ -413,41 +324,9 @@ Token next_token(Lexer *l)
     if (is_keyword(l, "return")) return (Token){ TOKEN_RETURN, "return" };
     if (is_keyword(l, "break")) return (Token){ TOKEN_BREAK, "break" };
 
-    if (l->ch >= '0' && l->ch < '9') return number(l);
-
-    if ((l->ch >= 'a' && l->ch <= 'z') ||
-        (l->ch >= 'A' && l->ch <= 'Z') ||
-         l->ch == '_') return identifier(l);
+    if (is_digit(l->ch)) return get_number(l);
+    if (is_char(l->ch)) return get_identifier(l);
 
     printf("Unexpected character: '%c'", l->ch);
     exit(1);
-}
-
-TokenList tokenize(char *source)
-{
-    TokenList list = { NULL, 0, 2 };
-    list.data = (Token*) malloc(sizeof(Token) * list.capacity);
-
-    Lexer l;
-    l.source = source;
-    l.pos = 0;
-    l.line = 1;
-    l.column = 1;
-    l.ch = source[0];
-    if (l.ch == '\0') return list;
-    l.next_ch = source[1];
-
-    Token tk;
-    do {
-        tk = next_token(&l);
-
-        tk.line = l.line;
-        tk.column = l.column;
-
-        push(&list, tk);
-
-        advance(&l);
-    } while(tk.type != TOKEN_EOF);
-
-    return list;
 }
