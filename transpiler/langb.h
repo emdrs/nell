@@ -344,9 +344,9 @@ Token * parser_peek(Parser *p, int offset)
 
 void parser_report_error(Parser *p, Token *token, char *error_msg)
 {
-    printf("%s:%d:%d error: %s\n", p->file, token->line, token->column, error_msg);
+    printf("%s:%d:%d: error: %s\n", p->file, token->line, token->column, error_msg);
     printf("%4d | %s", token->line, get_token_source_line(p, token));
-    printf("%*c\n", 4 + 3 + token->column, '^');
+    printf("%4c | %*c\n", ' ', token->column, '^');
     printf("Got: %s\n", token->text);
 }
 
