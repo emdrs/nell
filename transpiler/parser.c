@@ -35,7 +35,7 @@ void show_ast(AST* node, int indent)
             break;
         }
         case AST_NAME: {
-            printf("NAME(%s)\n", node->identifier);
+            printf("NAME(%s)\n", node->name);
             break;
         }
         case AST_OPERATOR: {
@@ -117,7 +117,7 @@ void show_ast(AST* node, int indent)
             break;
         }
         case AST_SWITCH: {
-            printf("SWITCH(%s)\n", node->switch_statement.value->identifier);
+            printf("SWITCH(%s)\n", node->switch_statement.value->name);
             show_ast(node->switch_statement.block, indent + 1);
             break;
         }

@@ -396,7 +396,7 @@ AST * parse_number(Parser *p)
 AST * parse_name(Parser *p)
 {
     AST *node = create_ast_node(AST_NAME);
-    node->identifier = parser_peek(p, 0)->text;
+    node->name = parser_peek(p, 0)->text;
     parser_advance(p, 1);
 
     return node;

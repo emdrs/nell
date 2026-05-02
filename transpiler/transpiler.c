@@ -1,4 +1,3 @@
-#include "lexer.h"
 #include "parser.h"
 #include <string.h>
 #include <stdio.h>
@@ -57,8 +56,8 @@ char * generate_code(AST *ast)
             free(right_code);
             break;
         }
-        case AST_IDENTIFIER: {
-            asprintf(&result, "%s", ast->identifier);
+        case AST_NAME: {
+            asprintf(&result, "%s", ast->name);
             break;
         }
         case AST_OPERATOR: {
@@ -232,22 +231,24 @@ int main(int argc, char *argv[])
 
     if (source == NULL) return 1;
 
-    TokenList tokens = tokenize(source);
+    printf("%s\n", source);
 
-    show_token_list(tokens);
+    ArrayList *tokens = tokenize(source);
+
+    token_list_show(tokens);
 
     printf("\n");
 
     AST *ast = parse(tokens, source, argv[1]);
     show_ast(ast, 0);
 
-    char *code = generate_code(ast);
-
-    printf("\n");
-
-    printf("source: %s\n", source);
-
-    printf("Ccode:  %s\n", code);
+    // char *code = generate_code(ast);
+    //
+    // printf("\n");
+    //
+    // printf("source: %s\n", source);
+    //
+    // printf("Ccode:  %s\n", code);
 
     return 0;
 }
@@ -263,3 +264,6 @@ int main(int argc, char *argv[])
  * Typedef
  * Break
  */
+
+#define LANGB_IMPLEMENTATION
+#include "langb.h"

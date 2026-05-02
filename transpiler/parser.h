@@ -29,7 +29,7 @@ typedef struct AST {
     ASTType type;
 
     union {
-        char *identifier;       /*NEEDED*/
+        char *name;             /*NEEDED*/
         char *str;              /*NEEDED*/
         struct AST *command;
 
@@ -131,6 +131,7 @@ typedef struct AST {
     };
 } AST;
 
+#include "lexer.h"
 #include "langb.h"
 
 AST * parse(ArrayList *list, char *source, char *file);
