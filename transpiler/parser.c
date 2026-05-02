@@ -186,13 +186,13 @@ AST * parse_identifier_update(Parser *p)
     int is_prefix = is_identifier_updater(parser_peek(p, 0));
     update->update_identifier.is_prefix = is_prefix;
 
-    if (is_prefix) parser_advance(p, 1); // Consume -- or ++
+    if (is_prefix) parser_advance(p, 1); // -- or ++
 
     update->update_identifier.target = parse_name(p);
     update->update_identifier.is_increment =
         parser_peek(p, is_prefix)->type == TOKEN_INCREMENT;
 
-    if (!is_prefix) parser_advance(p, 1); // Consume -- or ++
+    if (!is_prefix) parser_advance(p, 1); // -- or ++
 
     return update;
 }
@@ -211,17 +211,14 @@ AST * parse_factor(Parser *p)
 {
     Token *token = parser_peek(p, 0);
 
-    // Lógica para Parênteses
     if (token->type == TOKEN_LPAREN) {
-        parser_advance(p, 1); // Consome o '('
+        parser_advance(p, 1); // (
         
-        // Reinicia o ciclo: trata o conteúdo como uma nova expressão completa
         AST *node = parse_expression(p);
         node->expression.has_paren = 1;
 
-        // Após a expressão, PRECISA haver um ')'
-        parser_match(p, TOKEN_RPAREN, "')' needed to close a '('b");
-        parser_advance(p, 1); // Consome o ')'
+        parser_match(p, TOKEN_RPAREN, "')' needed to close a '('");
+        parser_advance(p, 1); // )
         
         return node;
     }

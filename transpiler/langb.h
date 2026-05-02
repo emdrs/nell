@@ -158,6 +158,7 @@ void advance(Lexer *l)
 
 void rollback(Lexer *l, int pos)
 {
+    l->column -= (l->pos - pos) + 1;
     l->pos = pos-1;
     advance(l);
 }
@@ -344,7 +345,8 @@ Token * parser_peek(Parser *p, int offset)
 void parser_report_error(Parser *p, Token *token, char *error_msg)
 {
     printf("%s:%d:%d error: %s\n", p->file, token->line, token->column, error_msg);
-    printf("%4d | %s\n", token->line, get_token_source_line(p, token));
+    printf("%4d | %s", token->line, get_token_source_line(p, token));
+    printf("%*c\n", 4 + 3 + token->column, '^');
     printf("Got: %s\n", token->text);
 }
 
@@ -364,8 +366,7 @@ void parser_set_error_info(Parser *p, ErrorInfo error_info, int priority)
 
 void parser_show_error(Parser *p)
 {
-    printf("Line: %s\n", get_token_source_line(p, p->error_info.token));
-    printf("%s\n", p->error_info.message);
+    parser_report_error(p, p->error_info.token, p->error_info.message);
 }
 
 int is_number(Token *token)
