@@ -1,12 +1,11 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "lexer.h"
 
 typedef enum {
-    AST_IDENTIFIER,
-    AST_NUMBER,
-    AST_STRING,
+    AST_NUMBER,            /*NEEDED*/
+    AST_NAME,              /*NEEDED*/
+    AST_STRING,            /*NEEDED*/
     AST_OPERATOR,
     AST_VAR_DEF,
     AST_CONST_DEF,
@@ -30,14 +29,14 @@ typedef struct AST {
     ASTType type;
 
     union {
-        char *identifier;
-        char *str;
+        char *identifier;       /*NEEDED*/
+        char *str;              /*NEEDED*/
         struct AST *command;
 
         struct {
             char *value;
             char *type;
-        } number;
+        } number;               /*NEEDED*/
 
         struct {
             struct AST *left;
@@ -132,20 +131,9 @@ typedef struct AST {
     };
 } AST;
 
-typedef struct {
-    TokenList list;
-    int pos;
-    char *source;
-    char *file;
-    ErrorInfo error_info;
-} Parser;
+#include "langb.h"
 
+AST * parse(ArrayList *list, char *source, char *file);
 void show_ast(AST* node, int indent);
-
-AST * parse(TokenList list, char *source, char *file);
-AST * create_ast_node(ASTType type);
-
-void set_error_info(Parser *p, ErrorInfo error_info, int priority);
-void parser_show_error(Parser *p);
 
 #endif

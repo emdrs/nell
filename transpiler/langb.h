@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef LANGB_H
+#define LANGB_H
+
+// ==================== LEXER ====================
+
 typedef struct {
     int type; // An enum
     char *text;
@@ -54,7 +59,52 @@ Token get_token(Lexer *l); // YOU NEED TO IMPLEMENT THIS FUNCTION.
 
 ArrayList * tokenize(char *source);
 
+// ==================== PARSER ====================
+
+typedef struct {
+    float progress;
+    char *message;
+    Token *token;
+} ErrorInfo;
+
+typedef struct {
+    int type;
+    char *message;
+} ExpectedToken;
+
+typedef struct {
+    ArrayList *list;
+    int pos;
+    char *source;
+    char *file;
+    ErrorInfo error_info;
+} Parser;
+
+typedef struct AST AST; // YOU NEED TO IMPLEMENT THIS
+
+AST * create_ast_node(int type);
+
+void parser_set_error_info(Parser *p, ErrorInfo error_info, int priority);
+void parser_show_error(Parser *p);
+void parser_advance(Parser *p, int amount);
+Token * parser_peek(Parser *p, int offset);
+void parser_report_error(Parser *p, Token *token, char *error_msg);
+void parser_match(Parser* p, int token_type, char* error_msg);
+int is_valid_syntax(Parser *p, ExpectedToken expected_tokens[], int count);
+
+int is_number(Token *token);
+int is_string(Token *token);
+int is_name(Token *token);
+
+AST * parse_number(Parser *p);
+AST * parse_name(Parser *p);
+AST * parse_string(Parser *p);
+
+#endif // LANGB_H
+
 #ifdef LANGB_IMPLEMENTATION
+
+// ==================== LEXER IMPLEMENTATIONS ====================
 
 ArrayList * array_list_create(size_t element_size, size_t initial_capacity) {
     ArrayList *list = (ArrayList *) malloc(sizeof(ArrayList));
@@ -238,6 +288,153 @@ ArrayList * tokenize(char *source)
     } while(tk.type != TOKEN_EOF);
 
     return list;
+}
+
+// ==================== PARSER IMPLEMENTATIONS ====================
+
+char * get_token_source_line(Parser *p, Token *token)
+{
+    int pos = 0;
+    int line = 1;
+    char ch;
+    while (1) {
+        ch = p->source[pos];
+        if (ch == '\n') {
+            line++;
+            pos++;
+            continue;
+        }
+
+        if (line == token->line) {
+            int start = pos;
+            while(p->source[pos++] != '\n');
+            return strndup(p->source + start, (pos - start) + 1);
+        }
+        pos++;
+    }
+}
+
+AST * create_ast_node(int type)
+{
+    AST *node = (AST *) malloc(sizeof(AST));
+    node->type = type;
+    return node;
+}
+
+void parser_advance(Parser *p, int amount)
+{
+    p->pos += amount;
+
+    if (p->pos < p->list->size) return;
+
+    printf("Trying to advance to a token after EOF\n");
+    exit(1);
+}
+
+Token * parser_peek(Parser *p, int offset)
+{
+    if (p->pos + offset < p->list->size)
+        return array_list_get(p->list, p->pos + offset);
+
+    printf("Trying to peek a token after EOF\n");
+    exit(1);
+}
+
+void parser_report_error(Parser *p, Token *token, char *error_msg)
+{
+    printf("%s:%d:%d error: %s\n", p->file, token->line, token->column, error_msg);
+    printf("%4d | %s\n", token->line, get_token_source_line(p, token));
+    printf("Got: %s\n", token->text);
+}
+
+void parser_match(Parser* p, int type, char* error_msg)
+{
+    Token *token = parser_peek(p, 0);
+    if (token->type != type) {
+        parser_report_error(p, token, error_msg);
+        exit(1);
+    }
+}
+
+void parser_set_error_info(Parser *p, ErrorInfo error_info, int priority)
+{
+    p->error_info = error_info;
+}
+
+void parser_show_error(Parser *p)
+{
+    printf("Line: %s\n", get_token_source_line(p, p->error_info.token));
+    printf("%s\n", p->error_info.message);
+}
+
+int is_number(Token *token)
+{
+    return token->type == TOKEN_INT || token->type == TOKEN_FLOAT;
+}
+
+int is_name(Token *token)
+{
+    return token->type == TOKEN_IDENTIFIER;
+}
+
+int is_string(Token *token)
+{
+    return token->type == TOKEN_STRING;
+}
+
+AST * parse_number(Parser *p)
+{
+    AST *node = create_ast_node(AST_NUMBER);
+    Token *number = parser_peek(p, 0);
+    node->number.type = strdup(number->type == TOKEN_INT ? "int" : "float");
+    node->number.value = number->text;
+    parser_advance(p, 1);
+
+    return node;
+}
+
+AST * parse_name(Parser *p)
+{
+    AST *node = create_ast_node(AST_NAME);
+    node->identifier = parser_peek(p, 0)->text;
+    parser_advance(p, 1);
+
+    return node;
+}
+
+AST * parse_string(Parser *p)
+{
+    AST *node = create_ast_node(AST_STRING);
+    Token *str = parser_peek(p, 0);
+    node->str = str->text;
+    parser_advance(p, 1);
+
+    return node;
+}
+
+int is_valid_syntax(Parser *p, ExpectedToken expected_tokens[], int count)
+{
+    int steps = 0;
+    int error_setted = 0;
+    Token *error_token;
+    char *error_msg = NULL;
+    Token *token;
+    ExpectedToken expected_token;
+    for (int i = 0; i < count; i++) {
+        if ((token = parser_peek(p, steps))->type ==
+                (expected_token = expected_tokens[i]).type) steps++;
+
+        if (error_setted){ continue; }
+
+        error_token = token;
+        error_msg = expected_token.message;
+        error_setted = 1;
+    }
+
+    parser_set_error_info(p, (ErrorInfo){ (float)steps/(float)count, error_msg,
+            error_token}, 0);
+
+    return steps == count;
 }
 
 #endif // LANGB_IMPLEMENTATION

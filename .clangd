@@ -1,5 +1,5 @@
 If:
   PathMatch: [.*\.h, .*\.c]
 CompileFlags:
-  Add: [-DLANGB_IMPLEMENTATION, -xc]
+  Add: [-xc]
 
