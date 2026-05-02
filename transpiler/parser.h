@@ -1,7 +1,6 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-
 typedef enum {
     AST_NUMBER,            /*NEEDED*/
     AST_NAME,              /*NEEDED*/

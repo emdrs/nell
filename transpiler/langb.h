@@ -92,6 +92,9 @@ void parser_report_error(Parser *p, Token *token, char *error_msg);
 void parser_match(Parser* p, int token_type, char* error_msg);
 int is_valid_syntax(Parser *p, ExpectedToken expected_tokens[], int count);
 
+#define sizeof_expected_tokens(expected_tokens) \
+    sizeof(expected_tokens) / sizeof(ExpectedToken)
+
 int is_number(Token *token);
 int is_string(Token *token);
 int is_name(Token *token);
@@ -358,7 +361,7 @@ void parser_match(Parser* p, int type, char* error_msg)
 
 void parser_set_error_info(Parser *p, ErrorInfo error_info, int priority)
 {
-    p->error_info = error_info;
+    if(p->error_info.progress < error_info.progress) p->error_info = error_info;
 }
 
 void parser_show_error(Parser *p)

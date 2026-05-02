@@ -242,13 +242,13 @@ int main(int argc, char *argv[])
     AST *ast = parse(tokens, source, argv[1]);
     show_ast(ast, 0);
 
-    // char *code = generate_code(ast);
-    //
-    // printf("\n");
-    //
-    // printf("source: %s\n", source);
-    //
-    // printf("Ccode:  %s\n", code);
+    char *code = generate_code(ast);
+
+    printf("\n");
+
+    printf("source: %s\n", source);
+
+    printf("Ccode:  %s\n", code);
 
     return 0;
 }

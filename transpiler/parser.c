@@ -1,5 +1,3 @@
-#include "lexer.h"
-#include "langb.h"
 #include "parser.h"
 #include <string.h>
 #include <stdlib.h>
@@ -138,18 +136,6 @@ void show_ast(AST* node, int indent)
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-#define VAR_DEF_STEPS 3
 int is_var_def_explicit(Parser *p)
 {
     ExpectedToken expected_tokens[] = {
@@ -158,7 +144,8 @@ int is_var_def_explicit(Parser *p)
         { TOKEN_IDENTIFIER, "Identifier needed to define a variable type.", }
     };
 
-    return is_valid_syntax(p, expected_tokens, 3);
+    return is_valid_syntax(p, expected_tokens,
+            sizeof_expected_tokens(expected_tokens));
 }
 
 int is_var_def_implicit(Parser *p)
@@ -357,7 +344,6 @@ int is_assignment(Parser *p)
         if (parser_peek(p, 0)->type != TOKEN_IDENTIFIER) return 0;
         if (!is_assign(parser_peek(p, 1)) || !is_factor(p, 2)) return 0;
     }
-
 
     return 1;
 }
