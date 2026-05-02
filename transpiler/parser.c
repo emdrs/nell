@@ -179,18 +179,6 @@ int is_identifier_update(Parser *p)
            (is_identifier_updater(token2) && is_name(token1));
 }
 
-int is_func_exec(Parser *p);
-
-int is_factor(Parser *p, int offset)
-{
-    Token *token = parser_peek(p, offset);
-    return (is_name(token)          ||
-            is_number(token)        ||
-            is_string(token)        ||
-            is_identifier_update(p) ||
-            is_func_exec(p));
-}
-
 AST * parse_identifier_update(Parser *p)
 {
     AST *update = create_ast_node(AST_UPDATE_IDENTIFIER);
@@ -209,55 +197,14 @@ AST * parse_identifier_update(Parser *p)
     return update;
 }
 
-AST * parse_expression(Parser *p);
-
-void push_exec_param(AST *func_exec, AST *param)
+int is_factor(Parser *p, int offset)
 {
-    if (func_exec->func_exec.size >= func_exec->func_exec.capacity) {
-        func_exec->func_exec.capacity *= 2;
-        func_exec->func_exec.params =
-            realloc(func_exec->func_exec.params,
-                    sizeof(AST *) * func_exec->func_exec.capacity);
-    }
-
-    func_exec->func_exec.params[func_exec->func_exec.size++] = param;
-}
-
-int is_func_exec(Parser *p)
-{
-    if (parser_peek(p, 0)->type != TOKEN_IDENTIFIER) return 0;
-    if (parser_peek(p, 1)->type != TOKEN_LPAREN) return 0;
-
-    return 1;
-}
-int is_expression(Parser *p);
-
-AST * parse_func_exec(Parser *p)
-{
-    AST *node = create_ast_node(AST_FUNC_EXEC);
-    node->func_exec.params = (AST **) malloc(sizeof(AST *));
-    node->func_exec.size = 0;
-    node->func_exec.capacity = 1;
-    node->func_exec.name = parser_peek(p, 0)->text;
-    parser_advance(p, 2);
-
-    while (parser_peek(p, 0)->type != TOKEN_RPAREN) {
-        if(!is_expression(p) && p->error_info.progress == 0) {
-            ErrorInfo error_info = {
-                1,
-                "Expression needed in function execution",
-                parser_peek(p, 0)
-            };
-            parser_set_error_info(p, error_info, 0);
-            parser_show_error(p);
-            exit(1);
-        }
-        push_exec_param(node, parse_expression(p));
-        if (parser_peek(p, 0)->type == TOKEN_COMMA) parser_advance(p, 1);
-    }
-    parser_advance(p, 1);
-
-    return node;
+    Token *token = parser_peek(p, offset);
+    return (is_name(token)          ||
+            is_number(token)        ||
+            is_string(token)        ||
+            is_identifier_update(p) ||
+            is_func_exec(p));
 }
 
 AST * parse_factor(Parser *p)
@@ -285,6 +232,54 @@ AST * parse_factor(Parser *p)
     if (is_string(parser_peek(p, 0))) return parse_string(p);
 
     return parse_name(p);
+}
+
+void push_exec_param(AST *func_exec, AST *param)
+{
+    if (func_exec->func_exec.size >= func_exec->func_exec.capacity) {
+        func_exec->func_exec.capacity *= 2;
+        func_exec->func_exec.params =
+            realloc(func_exec->func_exec.params,
+                    sizeof(AST *) * func_exec->func_exec.capacity);
+    }
+
+    func_exec->func_exec.params[func_exec->func_exec.size++] = param;
+}
+
+int is_func_exec(Parser *p)
+{
+    if (parser_peek(p, 0)->type != TOKEN_IDENTIFIER) return 0;
+    if (parser_peek(p, 1)->type != TOKEN_LPAREN) return 0;
+
+    return 1;
+}
+
+AST * parse_func_exec(Parser *p)
+{
+    AST *node = create_ast_node(AST_FUNC_EXEC);
+    node->func_exec.params = (AST **) malloc(sizeof(AST *));
+    node->func_exec.size = 0;
+    node->func_exec.capacity = 1;
+    node->func_exec.name = parser_peek(p, 0)->text;
+    parser_advance(p, 2);
+
+    while (parser_peek(p, 0)->type != TOKEN_RPAREN) {
+        if(!is_expression(p) && p->error_info.progress == 0) {
+            ErrorInfo error_info = {
+                1,
+                "Expression needed in function execution",
+                parser_peek(p, 0)
+            };
+            parser_set_error_info(p, error_info, 0);
+            parser_show_error(p);
+            exit(1);
+        }
+        push_exec_param(node, parse_expression(p));
+        if (parser_peek(p, 0)->type == TOKEN_COMMA) parser_advance(p, 1);
+    }
+    parser_advance(p, 1);
+
+    return node;
 }
 
 int is_expression(Parser *p) { return is_factor(p, 0); }
@@ -419,6 +414,15 @@ int is_return(Parser *p)
     return 1;
 }
 
+AST * parse_return_expression(Parser *p)
+{
+    AST *node = create_ast_node(AST_RETURN);
+    parser_advance(p, 1);
+    node->return_statement = is_expression(p) ? parse_expression(p) : NULL;
+
+    return node;
+}
+
 int is_break(Parser *p)
 {
     return parser_peek(p, 0)->type == TOKEN_BREAK;
@@ -438,15 +442,6 @@ int is_command(Parser *p)
            is_return(p)            ||
            is_func_exec(p)         ||
            is_break(p);
-}
-
-AST * parse_return_expression(Parser *p)
-{
-    AST *node = create_ast_node(AST_RETURN);
-    parser_advance(p, 1);
-    node->return_statement = is_expression(p) ? parse_expression(p) : NULL;
-
-    return node;
 }
 
 AST * parse_command(Parser *p)
@@ -486,8 +481,6 @@ AST * parse_command(Parser *p)
 
     return node;
 }
-
-AST * parse_block(Parser *p, int level);
 
 AST * parse_if(Parser *p, int level)
 {

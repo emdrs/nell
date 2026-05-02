@@ -136,4 +136,57 @@ typedef struct AST {
 AST * parse(ArrayList *list, char *source, char *file);
 void show_ast(AST* node, int indent);
 
+// =================== GRAMMAR ===================
+int is_var_def(Parser *p);
+AST * parse_var_def(Parser *p);
+
+int is_identifier_updater(Token *token);
+int is_identifier_update(Parser *p);
+AST * parse_identifier_update(Parser *p);
+
+int is_func_exec(Parser *p);
+AST * parse_func_exec(Parser *p);
+
+int is_factor(Parser *p, int offset);
+AST * parse_factor(Parser *p);
+
+int is_operator(Token *token);
+int is_expression(Parser *p);
+AST * parse_expression(Parser *p);
+
+int is_assign(Token *token);
+int is_assignment(Parser *p);
+AST * parse_assignment(Parser *p);
+
+int is_block(Parser *p, int level);
+AST * parse_block(Parser *p, int level);
+
+int is_const_def(Parser *p);
+AST * parse_const_def(Parser *p);
+
+int is_return(Parser *p);
+AST * parse_return_expression(Parser *p);
+
+int is_break(Parser *p);
+int is_default(Parser *p);
+
+int is_command(Parser *p);
+AST * parse_command(Parser *p);
+
+AST * parse_if(Parser *p, int level);
+
+AST * parse_case(Parser *p, int level);
+
+AST * parse_switch(Parser *p, int level);
+
+AST * parse_while(Parser *p, int level);
+
+AST * parse_for(Parser *p, int level);
+
+int is_func_def(Parser *p);
+AST * parse_func_def(Parser *p, int level);
+AST * parse_func_def_param(Parser *p);
+
+AST * parse_statement(Parser *p, int level);
+
 #endif
