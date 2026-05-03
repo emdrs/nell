@@ -206,7 +206,7 @@ int is_factor(Parser *p, int offset)
 {
     Token *token = parser_peek(p, offset);
 
-    if(token->type == TOKEN_LPAREN) token = parser_peek(p, offset + 1);
+    if(token->type == TOKEN_LPAREN) return is_factor(p, offset + 1);
 
     return (is_name(token)          ||
             is_number(token)        ||
