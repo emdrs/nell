@@ -245,14 +245,45 @@ int is_func_exec(Parser *p)
     return 1;
 }
 
+// first needed to prevent exec(a,)
+void parse_func_exec_params(Parser *p, ArrayList *param_list, int first)
+{
+    if (first) parser_advance(p, 1); // (
+    if(parser_peek(p, 0)->type == TOKEN_RPAREN) {
+        parser_advance(p, 1); // )
+        return;
+    }
+    if (!first) parser_advance(p, 1); // ,
+
+    if(!is_expression(p) && p->error_info.progress == 0) {
+        ErrorInfo error_info = {
+            1,
+            "Expression needed in function execution",
+            parser_peek(p, 0),
+            1
+        };
+        parser_set_error_info(p, error_info);
+        parser_show_error(p);
+        exit(1);
+    }
+
+    array_list_add(param_list, parse_expression(p));
+    if (parser_peek(p, 0)->type == TOKEN_COMMA)
+        parse_func_exec_params(p, param_list, 0);
+}
+
 AST * parse_func_exec(Parser *p)
 {
     AST *node = create_ast_node(AST_FUNC_EXEC);
     node->func_exec.params = array_list_create(sizeof(AST), 1);
     node->func_exec.name = parser_peek(p, 0)->text;
-    parser_advance(p, 2);
+    parser_advance(p, 1); // Identifier
 
-    while (parser_peek(p, 0)->type != TOKEN_RPAREN) {
+    parse_func_exec_params(p, node->func_exec.params, 1);
+
+    while (1) {
+        if(parser_peek(p, 0)->type == TOKEN_RPAREN) break;
+
         if(!is_expression(p) && p->error_info.progress == 0) {
             ErrorInfo error_info = {
                 1,
