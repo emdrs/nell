@@ -144,8 +144,7 @@ int is_var_def(Parser *p)
     if (parser_peek(p, 0)->type != TOKEN_IDENTIFIER) return 0;
     Token *token;
     if ((token = parser_peek(p, 1))->type != TOKEN_IDENTIFIER) {
-        parser_set_error_info(p, 1.0f/2.0f,
-                "Name is needed in var definition", token, 0);
+        parser_set_error(p, 1.0f/2.0f, "Name is needed in var definition", token, 0);
         return 0;
     }
 
@@ -235,6 +234,7 @@ AST * parse_factor(Parser *p)
     if (is_identifier_update(p))      return parse_identifier_update(p);
     if (is_func_exec(p))              return parse_func_exec(p);
     if (is_string(parser_peek(p, 0))) return parse_string(p);
+    if (is_name(parser_peek(p, 0)))   return parse_name(p);
 
     return parse_name(p);
 }
@@ -255,12 +255,9 @@ void parse_func_exec_params(Parser *p, ArrayList *param_list, int first)
 
     if (token->type == TOKEN_RPAREN) return;
 
-    if(!is_expression(p) && p->error_info.progress == 0) {
-        parser_set_error_info(p, 1, "Expression needed in function execution",
+    if(!is_expression(p) && p->error_info.progress == 0)
+        parser_set_error_and_abort(p, 1, "Expression needed in function execution",
                 parser_peek(p, 0), 1);
-        parser_show_error(p);
-        exit(1);
-    }
 
     array_list_add(param_list, parse_expression(p));
 
@@ -310,6 +307,10 @@ AST * parse_expression(Parser *p)
 
     AST *op = create_ast_node(AST_OPERATOR);
     op->expression.left = left;
+    if (!is_factor(p, 0))
+        parser_set_error_and_abort(p, 2.0f/3.0f, "Factor expected after operator",
+                parser_peek(p, 0), 1);
+
     op->expression.right = parse_expression(p);
     op->expression.type = operator->text;
     op->expression.has_paren = 0;
@@ -330,12 +331,12 @@ int is_assignment(Parser *p)
 {
     if(is_var_def(p)) {
         if (!is_assign(parser_peek(p, 2))) {
-            parser_set_error_info(p, 2.0 / 4.0, "Assignment need a assign.",
+            parser_set_error(p, 2.0 / 4.0, "Assignment need a assign.",
                     parser_peek(p, 2), 0);
             return 0;
         }
         if (!is_factor(p, 3)) {
-            parser_set_error_info(p, 3.0 / 4.0, "Assignment need a factor.",
+            parser_set_error(p, 3.0 / 4.0, "Assignment need a factor.",
                     parser_peek(p, 3), 0);
             return 0;
         }
@@ -365,6 +366,9 @@ AST * parse_assignment(Parser *p)
     parser_advance(p, 1);
 
     node->assign.right = parse_expression(p);
+
+    if ((token = parser_peek(p, 0))->type == TOKEN_RPAREN)
+        parser_set_error_and_abort(p, 1, "Extra ')' on expression", token, 1);
 
     return node;
 }
