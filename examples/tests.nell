@@ -1,1 +1,1 @@
-int a = random((a + 3) * 2, 10);
+int a = random((, 10);

@@ -203,12 +203,14 @@ AST * parse_identifier_update(Parser *p)
 int is_factor(Parser *p, int offset)
 {
     Token *token = parser_peek(p, offset);
+
+    if(token->type == TOKEN_LPAREN) token = parser_peek(p, offset + 1);
+
     return (is_name(token)          ||
             is_number(token)        ||
             is_string(token)        ||
             is_identifier_update(p) ||
-            is_func_exec(p)         ||
-            token->type == TOKEN_LPAREN);
+            is_func_exec(p));
 }
 
 AST * parse_factor(Parser *p)
