@@ -85,7 +85,8 @@ typedef struct AST AST; // YOU NEED TO IMPLEMENT THIS
 
 AST * create_ast_node(int type);
 
-void parser_set_error_info(Parser *p, int progress, char *error_message, Token *token, int priority);
+void parser_set_error(Parser *p, int progress, char *error_message, Token *token, int priority);
+void parser_set_error_and_abort(Parser *p, int progress, char *error_message, Token *token, int priority);
 void parser_show_error(Parser *p);
 void parser_advance(Parser *p, int amount);
 Token * parser_peek(Parser *p, int offset);
@@ -360,10 +361,17 @@ void parser_match(Parser* p, int type, char* error_msg)
     }
 }
 
-void parser_set_error_info(Parser *p, int progress, char *error_message, Token *token, int priority)
+void parser_set_error(Parser *p, int progress, char *error_message, Token *token, int priority)
 {
     if(p->error_info.progress < progress) p->error_info =
         (ErrorInfo) { progress, error_message, token, priority};
+}
+
+void parser_set_error_and_abort(Parser *p, int progress, char *error_message, Token *token, int priority)
+{
+    parser_set_error(p, progress, error_message, token, priority);
+    parser_show_error(p);
+    exit(1);
 }
 
 void parser_show_error(Parser *p)
@@ -436,7 +444,7 @@ int is_valid_syntax(Parser *p, ExpectedToken expected_tokens[], int count)
     }
 
     if(steps < count)
-        parser_set_error_info(p, (float)steps/(float)count, error_msg, error_token, 0);
+        parser_set_error(p, (float)steps/(float)count, error_msg, error_token, 0);
 
     return steps == count;
 }
