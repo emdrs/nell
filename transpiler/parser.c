@@ -207,7 +207,8 @@ int is_factor(Parser *p, int offset)
             is_number(token)        ||
             is_string(token)        ||
             is_identifier_update(p) ||
-            is_func_exec(p));
+            is_func_exec(p)         ||
+            token->type == TOKEN_LPAREN);
 }
 
 AST * parse_factor(Parser *p)
