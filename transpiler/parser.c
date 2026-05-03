@@ -141,13 +141,15 @@ void show_ast(AST* node, int indent)
 
 int is_var_def(Parser *p)
 {
-    ExpectedToken expected_tokens[] = {
-        { TOKEN_IDENTIFIER, "Identifier needed to define a variable type.", },
-        { TOKEN_IDENTIFIER, "Identifier needed to define a variable name.", }
-    };
+    if (parser_peek(p, 0)->type != TOKEN_IDENTIFIER) return 0;
+    Token *token;
+    if ((token = parser_peek(p, 1))->type != TOKEN_IDENTIFIER) {
+        parser_set_error_info(p, 1.0f/2.0f,
+                "Name is needed in var definition", token, 0);
+        return 0;
+    }
 
-    return is_valid_syntax(p, expected_tokens,
-            sizeof_expected_tokens(expected_tokens));
+    return 1;
 }
 
 AST * parse_var_def(Parser *p)
@@ -248,28 +250,21 @@ int is_func_exec(Parser *p)
 // first needed to prevent exec(a,)
 void parse_func_exec_params(Parser *p, ArrayList *param_list, int first)
 {
-    if (first) parser_advance(p, 1); // (
-    if(parser_peek(p, 0)->type == TOKEN_RPAREN) {
-        parser_advance(p, 1); // )
-        return;
-    }
-    if (!first) parser_advance(p, 1); // ,
+    Token *token = parser_peek(p, 0);
+    parser_advance(p, 1); // ( or , or )
+
+    if (token->type == TOKEN_RPAREN) return;
 
     if(!is_expression(p) && p->error_info.progress == 0) {
-        ErrorInfo error_info = {
-            1,
-            "Expression needed in function execution",
-            parser_peek(p, 0),
-            1
-        };
-        parser_set_error_info(p, error_info);
+        parser_set_error_info(p, 1, "Expression needed in function execution",
+                parser_peek(p, 0), 1);
         parser_show_error(p);
         exit(1);
     }
 
     array_list_add(param_list, parse_expression(p));
-    if (parser_peek(p, 0)->type == TOKEN_COMMA)
-        parse_func_exec_params(p, param_list, 0);
+
+    parse_func_exec_params(p, param_list, 0);
 }
 
 AST * parse_func_exec(Parser *p)
@@ -280,25 +275,6 @@ AST * parse_func_exec(Parser *p)
     parser_advance(p, 1); // Identifier
 
     parse_func_exec_params(p, node->func_exec.params, 1);
-
-    while (1) {
-        if(parser_peek(p, 0)->type == TOKEN_RPAREN) break;
-
-        if(!is_expression(p) && p->error_info.progress == 0) {
-            ErrorInfo error_info = {
-                1,
-                "Expression needed in function execution",
-                parser_peek(p, 0),
-                1
-            };
-            parser_set_error_info(p, error_info);
-            parser_show_error(p);
-            exit(1);
-        }
-        array_list_add(node->func_exec.params, parse_expression(p));
-        if (parser_peek(p, 0)->type == TOKEN_COMMA) parser_advance(p, 1);
-    }
-    parser_advance(p, 1);
 
     return node;
 }
@@ -353,8 +329,18 @@ int is_assign(Token *token)
 int is_assignment(Parser *p)
 {
     if(is_var_def(p)) {
-        if (!is_assign(parser_peek(p, 2))) return 0;
-        if (is_factor(p, 3)) return 1;
+        if (!is_assign(parser_peek(p, 2))) {
+            parser_set_error_info(p, 2.0 / 4.0, "Assignment need a assign.",
+                    parser_peek(p, 2), 0);
+            return 0;
+        }
+        if (!is_factor(p, 3)) {
+            parser_set_error_info(p, 3.0 / 4.0, "Assignment need a factor.",
+                    parser_peek(p, 3), 0);
+            return 0;
+        }
+        return 1;
+
     } else {
         if (parser_peek(p, 0)->type != TOKEN_IDENTIFIER) return 0;
         if (!is_assign(parser_peek(p, 1)) || !is_factor(p, 2)) return 0;
@@ -716,6 +702,7 @@ AST * parse_block(Parser *p, int level)
 AST * parse(ArrayList *list, char *source, char *file)
 {
     Parser p = { list, 0, source, file };
+    p.error_info.progress = -1;
 
     AST *ast = parse_block(&p, 0);
 
