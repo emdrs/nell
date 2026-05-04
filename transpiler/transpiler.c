@@ -41,6 +41,14 @@ void write_file(char *path, char *content)
     fclose(f);
 }
 
+void compile_code(char *code_path)
+{
+    char *command;
+    asprintf(&command, "gcc %s", code_path);
+    system(command);
+    free(command);
+}
+
 char * generate_code(AST *ast)
 {
     if(ast == NULL) return strdup("");
