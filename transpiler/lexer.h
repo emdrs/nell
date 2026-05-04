@@ -31,6 +31,7 @@ typedef enum {
     TOKEN_RBRACE,         // }
     TOKEN_LPAREN,         // (
     TOKEN_RPAREN,         // )
+    TOKEN_CONST,          // const
     TOKEN_IF,             // if
     TOKEN_WHILE,          // while
     TOKEN_FOR,            // for

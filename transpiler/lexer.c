@@ -91,6 +91,9 @@ void token_show(Token *token)
         case TOKEN_RPAREN:
             printf("RPAREN");
             break;
+        case TOKEN_CONST:
+            printf("CONST");
+            break;
         case TOKEN_IF:
             printf("IF");
             break;
@@ -285,6 +288,7 @@ Token get_token(Lexer *l)
         }
     }
 
+    if (is_keyword(l, "const"))   return (Token){ TOKEN_CONST, "const" };
     if (is_keyword(l, "if"))      return (Token){ TOKEN_IF, "if" };
     if (is_keyword(l, "while"))   return (Token){ TOKEN_WHILE, "while" };
     if (is_keyword(l, "for"))     return (Token){ TOKEN_FOR, "for" };
