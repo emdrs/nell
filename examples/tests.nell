@@ -3,5 +3,5 @@ const int a = 10 + 5;
 a++;
 --a;
 break;
-random(1, 2);
+random(1, random(10, a++ - 15));
 return 10;

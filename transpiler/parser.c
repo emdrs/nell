@@ -223,8 +223,8 @@ AST * parse_factor(Parser *p)
 {
     Token *token = parser_peek(p, 0);
 
-    if (is_number(token))           return parse_number(p);
     if (is_identifier_update(p, 0)) return parse_identifier_update(p);
+    if (is_number(token))           return parse_number(p);
     if (is_func_exec(p))            return parse_func_exec(p);
     if (is_string(token))           return parse_string(p);
     if (is_name(token))             return parse_name(p);
