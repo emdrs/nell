@@ -407,6 +407,7 @@ int is_const_def(Parser *p)
     if ((token = parser_peek(p, 3))->type != TOKEN_ASSIGN)
         parser_set_error_and_abort(p, 3.0f/5, "Assign needed to define a const", token);
 
+    token = parser_peek(p, 4);
     if (!is_factor(p, 4))
         parser_set_error_and_abort(p, 4.0f/5, "Value needed to define a const", token);
 
