@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+typedef AST * (*ParseFunction)(Parser *);
 
 void print_indent(int level) { for (int i = 0; i < level; i++) printf("  "); }
 
@@ -160,8 +161,6 @@ AST * parse_var_def(Parser *p)
     node->var_def.type = parser_peek(p, 0)->text;
     node->var_def.name = parser_peek(p, 1)->text;
     parser_advance(p, 2);
-    parser_match(p, TOKEN_SEMICOLON, "; expected to define a variable");
-    parser_advance(p, 1);
 
     return node;
 }
@@ -416,6 +415,8 @@ int is_const_def(Parser *p)
 
 AST * parse_const_def(Parser *p)
 {
+    if(!is_const_def(p)) return NULL;
+
     AST *node = create_ast_node(AST_CONST_DEF);
     node->const_def.type = parser_peek(p, 1)->text;
     node->const_def.name = parser_peek(p, 2)->text;
@@ -465,7 +466,27 @@ int is_command(Parser *p)
 
 AST * parse_command(Parser *p)
 {
-    AST *node = create_ast_node(AST_COMMAND);
+    AST *node = NULL;
+    ParseFunction functions[] = {
+        parse_var_def,
+        parse_const_def
+    };
+
+    for (int i = 0; node == NULL && i < sizeof(functions) / sizeof(ParseFunction); i++)
+        node = functions[i](p);
+
+    if (node == NULL) return NULL;
+
+    parser_match(p, TOKEN_SEMICOLON, "; expected to define a command");
+    parser_advance(p, 1);
+
+
+    AST *command = create_ast_node(AST_COMMAND);
+    command->command = node;
+
+    return command;
+
+    AST *node2 = create_ast_node(AST_COMMAND);
 
     if (is_identifier_update(p, 0)) {
         node->command = parse_identifier_update(p);
@@ -645,13 +666,12 @@ AST * parse_func_def(Parser *p, int level)
     return node;
 }
 
-typedef AST * (*ParseFunction)(Parser *);
 
 AST * parse_statement(Parser *p, int level)
 {
     AST *node = NULL;
     ParseFunction functions[] = {
-        parse_var_def
+        parse_command
     };
 
     for (int i = 0; node == NULL && i < sizeof(functions) / sizeof(ParseFunction); i++)
