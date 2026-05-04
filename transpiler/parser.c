@@ -449,9 +449,13 @@ int is_return(Parser *p)
     return 1;
 }
 
-AST * parse_return_expression(Parser *p)
+AST * parse_return(Parser *p)
 {
     if(!is_return(p)) return NULL;
+
+    if (!p->in_func)
+        parser_set_error_and_abort(p, 1.0/2.0,
+                "return not allowed outside function block", parser_peek(p, 0));
 
     AST *node = create_ast_node(AST_RETURN);
     parser_advance(p, 1);
@@ -468,6 +472,10 @@ int is_break(Parser *p)
 AST * parse_break(Parser *p) {
     if (!is_break(p)) return NULL;
 
+    if (!p->in_case && !p->in_repeat) 
+        parser_set_error_and_abort(p, 1,
+                "break not allowed outside case or repeat blocks", parser_peek(p, 0));
+    
     parser_advance(p, 1);
     return create_ast_node(AST_BREAK); }
 
@@ -495,7 +503,7 @@ AST * parse_command(Parser *p)
         parse_assignment,
         parse_var_def,
         parse_const_def,
-        parse_return_expression,
+        parse_return,
         parse_break,
         parse_func_exec
     };
@@ -736,7 +744,7 @@ AST * parse_block(Parser *p)
 
 AST * parse(ArrayList *list, char *source, char *file)
 {
-    Parser p = { list, 0, source, file, 0 };
+    Parser p = { list, 0, source, file, 0, 0, 0, 0 };
 
     p.error_info.progress = -1;
 

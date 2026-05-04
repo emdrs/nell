@@ -164,7 +164,7 @@ int is_const_def(Parser *p);
 AST * parse_const_def(Parser *p);
 
 int is_return(Parser *p);
-AST * parse_return_expression(Parser *p);
+AST * parse_return(Parser *p);
 
 int is_break(Parser *p);
 AST * parse_break(Parser *p);

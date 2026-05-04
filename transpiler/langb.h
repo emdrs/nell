@@ -75,6 +75,9 @@ typedef struct {
     char *source;
     char *file;
     int level;
+    int in_func;
+    int in_case;
+    int in_repeat;
     ErrorInfo error_info;
 } Parser;
 
