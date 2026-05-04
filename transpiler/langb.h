@@ -81,14 +81,13 @@ typedef struct AST AST; // YOU NEED TO IMPLEMENT THIS
 
 AST * create_ast_node(int type);
 
-void parser_set_error(Parser *p, int progress, char *error_message, Token *token, int priority);
-void parser_set_error_and_abort(Parser *p, int progress, char *error_message, Token *token, int priority);
+void parser_set_error(Parser *p, float progress, char *error_message, Token *token, int priority);
+void parser_set_error_and_abort(Parser *p, float progress, char *error_message, Token *token);
 void parser_show_error(Parser *p);
 void parser_advance(Parser *p, int amount);
 Token * parser_peek(Parser *p, int offset);
 void parser_report_error(Parser *p, Token *token, char *error_msg);
 void parser_match(Parser* p, int token_type, char* error_msg);
-int is_valid_syntax(Parser *p, ExpectedToken expected_tokens[], int count);
 
 #define sizeof_expected_tokens(expected_tokens) \
     sizeof(expected_tokens) / sizeof(ExpectedToken)
@@ -145,13 +144,13 @@ void token_list_show(ArrayList *list)
 void advance(Lexer *l)
 {
     l->ch = l->source[++l->pos];
-    if (l->ch == '\n'){
+    if (l->next_ch != '\0') l->next_ch = l->source[l->pos+1];
+    if (l->ch == '\n' && l->next_ch != '\0'){
         l->line++;
         l->column = 0;
     } else {
         l->column++;
     }
-    if (l->next_ch != '\0') l->next_ch = l->source[l->pos+1];
 }
 
 void rollback(Lexer *l, int pos)
@@ -332,7 +331,6 @@ void parser_report_error(Parser *p, Token *token, char *error_msg)
     printf("%s:%d:%d: error: %s\n", p->file, token->line, token->column, error_msg);
     printf("%4d | %s", token->line, get_token_source_line(p, token));
     printf("%4c | %*c\n", ' ', token->column, '^');
-    printf("Got: %s\n", token->text);
 }
 
 void parser_match(Parser* p, int type, char* error_msg)
@@ -344,15 +342,15 @@ void parser_match(Parser* p, int type, char* error_msg)
     }
 }
 
-void parser_set_error(Parser *p, int progress, char *error_message, Token *token, int priority)
+void parser_set_error(Parser *p, float progress, char *error_message, Token *token, int priority)
 {
     if(priority || p->error_info.progress < progress) p->error_info =
         (ErrorInfo) { progress, error_message, token };
 }
 
-void parser_set_error_and_abort(Parser *p, int progress, char *error_message, Token *token, int priority)
+void parser_set_error_and_abort(Parser *p, float progress, char *error_message, Token *token)
 {
-    parser_set_error(p, progress, error_message, token, priority);
+    parser_set_error(p, progress, error_message, token, 1);
     parser_show_error(p);
     exit(1);
 }
@@ -405,31 +403,6 @@ AST * parse_string(Parser *p)
     parser_advance(p, 1);
 
     return node;
-}
-
-int is_valid_syntax(Parser *p, ExpectedToken expected_tokens[], int count)
-{
-    int steps = 0;
-    int error_setted = 0;
-    Token *error_token;
-    char *error_msg = NULL;
-    Token *token;
-    ExpectedToken expected_token;
-    for (int i = 0; i < count; i++) {
-        if ((token = parser_peek(p, steps))->type ==
-                (expected_token = expected_tokens[i]).type) steps++;
-
-        if (error_setted){ continue; }
-
-        error_token = token;
-        error_msg = expected_token.message;
-        error_setted = 1;
-    }
-
-    if(steps < count)
-        parser_set_error(p, (float)steps/(float)count, error_msg, error_token, 0);
-
-    return steps == count;
 }
 
 #endif // LANGB_IMPLEMENTATION
