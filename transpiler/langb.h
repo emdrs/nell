@@ -328,9 +328,16 @@ Token * parser_peek(Parser *p, int offset)
 
 void parser_report_error(Parser *p, Token *token, char *error_msg)
 {
+    int offset = 0;
+    // Use token previous EOF and add 1 char offset to better visualization
+    if(token->type == TOKEN_EOF) {
+        token = array_list_get(p->list, p->list->size-2);
+        offset = 1;
+    }
+
     printf("%s:%d:%d: error: %s\n", p->file, token->line, token->column, error_msg);
     printf("%4d | %s", token->line, get_token_source_line(p, token));
-    printf("%4c | %*c\n", ' ', token->column, '^');
+    printf("%4c | %*c\n", ' ', token->column + offset, '^');
 }
 
 void parser_match(Parser* p, int type, char* error_msg)

@@ -1,13 +1,12 @@
 // Var definition
-a: int;
-a: int = 10;
-b := a; // Implicit type (int)
+int a;
+int a = 10;
 
 // Operators
-c := a * b;
-d := a / b;
-e := a + b;
-f := a - b;
+c = a * b;
+d = a / b;
+e = a + b;
+f = a - b;
 
 // Assign operators
 f *= 1;
@@ -19,15 +18,15 @@ f -= 1 + 2;
 f++;
 --f;
 g = f++;
-g := --f - 5;
+g = --f - 5;
 
 // Constants
-PI :: 3.1415;
-YEAR :: 2026;
-NEXT_YEAR :: 2026 + 1;
+const float PI = 3.1415;
+const int YEAR = 2026;
+const int NEXT_YEAR = 2026 + 1;
 
 // Binary expressions
-IS_TEEN :: idade < 18;
-is_adult := idade >= 18;
-is_old: bool = idade > 65;
-IS_CENTENARY :: idade == 100;
+const int IS_TEEN = idade < 18;
+int is_adult := idade >= 18;
+int is_old = idade > 65;
+const int IS_CENTENARY = idade == 100;
