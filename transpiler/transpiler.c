@@ -169,12 +169,14 @@ char * generate_code(AST *ast)
         case AST_FUNC_DEF: {
             char *block = generate_code(ast->func_def.block);
             char *params = strdup("");
-            for (int i = 0; i < ast->func_def.size; i++) {
+            for (int i = 0; i < ast->func_def.params->size; i++) {
+                char *param_code =
+                    generate_code(array_list_get(ast->func_def.params, i));
                 if (*params == '\0') 
-                    asprintf(&params, "%s", generate_code(ast->func_def.params[i]));
+                    asprintf(&params, "%s", param_code);
                 else
-                    asprintf(&params, "%s, %s", params,
-                            generate_code(ast->func_def.params[i]));
+                    asprintf(&params, "%s, %s", params, param_code);
+                free(param_code);
             }
 
             asprintf(&result, "%s %s(%s) %s", ast->func_def.return_type,

@@ -6,6 +6,17 @@ if a > 5 && a < 10 {
     a++;
 }
 
+switch (a) {
+    case 10 {
+        a++;
+        break;
+    }
+    default {
+        a--;
+        break;
+    }
+}
+
 switch a {
     case 10 {
         a++;

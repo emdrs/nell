@@ -89,8 +89,8 @@ void show_ast(AST* node, int indent)
                     node->func_def.return_type);
             print_indent(indent + 1);
             printf("PARAMS:\n");
-            for (int i = 0; i < node->func_def.size; i++)
-                show_ast(node->func_def.params[i], indent + 2);
+            for (int i = 0; i < node->func_def.params->size; i++)
+                show_ast(array_list_get(node->func_def.params, i), indent + 2);
             show_ast(node->func_def.block, indent + 1);
             break;
         }
@@ -542,9 +542,9 @@ AST * parse_switch(Parser *p)
     AST *node = create_ast_node(AST_SWITCH);
     parser_advance(p, 1); // switch
     Token *token = parser_peek(p, 0);
-    if (token->type != TOKEN_IDENTIFIER)
-        parser_report_error(p, token, "Identifier needed on switch value");
-    node->switch_statement.value = parse_name(p);
+    if (!is_expression(p))
+        parser_report_error(p, token, "Expression needed on switch value");
+    node->switch_statement.value = parse_expression(p);
     node->switch_statement.block = parse_block(p);
 
     return node;
@@ -615,18 +615,6 @@ int is_func_def(Parser *p)
     return 1;
 }
 
-void push_param(AST *func_def, AST *param)
-{
-    if (func_def->func_def.size >= func_def->func_def.capacity) {
-        func_def->func_def.capacity *= 2;
-        func_def->func_def.params =
-            realloc(func_def->func_def.params,
-                    sizeof(AST *) * func_def->func_def.capacity);
-    }
-
-    func_def->func_def.params[func_def->func_def.size++] = param;
-}
-
 AST * parse_func_def_param(Parser *p)
 {
     AST *node = create_ast_node(AST_FUNC_DEF_PARAM);
@@ -642,15 +630,13 @@ AST * parse_func_def(Parser *p)
     if (!is_func_def(p)) return NULL;
 
     AST *node = create_ast_node(AST_FUNC_DEF);
-    node->func_def.params = (AST **) malloc(sizeof(AST *));
-    node->func_def.size = 0;
-    node->func_def.capacity = 1;
+    node->func_def.params = array_list_create(sizeof(AST), 1);
     node->func_def.return_type = parser_peek(p, 0)->text;
     node->func_def.name = parser_peek(p, 1)->text;
     parser_advance(p, 3);
 
     while (parser_peek(p, 0)->type != TOKEN_RPAREN) {
-        push_param(node, parse_func_def_param(p));
+        array_list_add(node->func_def.params, parse_func_def_param(p));
         if (parser_peek(p, 0)->type == TOKEN_COMMA) parser_advance(p, 1);
     }
 

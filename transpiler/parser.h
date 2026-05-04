@@ -114,9 +114,7 @@ typedef struct AST {
         struct {
             char *name;
             char *return_type;
-            struct AST **params;
-            int size;
-            int capacity;
+            ArrayList *params;
             struct AST *block;
         } func_def;
 
