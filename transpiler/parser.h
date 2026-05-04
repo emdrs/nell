@@ -174,20 +174,20 @@ int is_default(Parser *p);
 int is_command(Parser *p);
 AST * parse_command(Parser *p);
 
-AST * parse_if(Parser *p, int level);
+AST * parse_if(Parser *p);
 
-AST * parse_case(Parser *p, int level);
+AST * parse_case(Parser *p);
 
-AST * parse_switch(Parser *p, int level);
+AST * parse_switch(Parser *p);
 
-AST * parse_while(Parser *p, int level);
+AST * parse_while(Parser *p);
 
-AST * parse_for(Parser *p, int level);
+AST * parse_for(Parser *p);
 
 int is_func_def(Parser *p);
-AST * parse_func_def(Parser *p, int level);
+AST * parse_func_def(Parser *p);
 AST * parse_func_def_param(Parser *p);
 
-AST * parse_statement(Parser *p, int level);
+AST * parse_statement(Parser *p);
 
 #endif
