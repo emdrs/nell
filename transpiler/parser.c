@@ -516,14 +516,17 @@ AST * parse_case(Parser *p)
 
     AST *node = create_ast_node(AST_CASE);
     node->case_statement.is_default = parser_peek(p, 0)->type == TOKEN_DEFAULT;
-    parser_advance(p, 1);
+    parser_advance(p, 1); // case or default
     Token *token = parser_peek(p, 0);
-    if (!is_expression(p))
-        parser_report_error(p, token, "Expression needed on case value");
-    if (node->case_statement.is_default)
+
+    if (node->case_statement.is_default) {
         node->case_statement.value = NULL;
-    else
+    } else {
+        if (!is_expression(p))
+            parser_set_error_and_abort(p, 1.0f/2.0f, "Expression needed on case value",
+                    token);
         node->case_statement.value = parse_expression(p);
+    }
 
     p->in_case = 1;
     node->case_statement.block = parse_block(p);
