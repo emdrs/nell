@@ -418,14 +418,11 @@ int is_const_def(Parser *p)
 AST * parse_const_def(Parser *p)
 {
     AST *node = create_ast_node(AST_CONST_DEF);
-    node->const_def.name = parser_peek(p, 0)->text;
-    parser_advance(p, 2);
+    node->const_def.type = parser_peek(p, 1)->text;
+    node->const_def.name = parser_peek(p, 2)->text;
+    parser_advance(p, 4); // const type name =
 
     node->const_def.value = parse_expression(p);
-    if (node->const_def.value->type == AST_NUMBER)
-        node->const_def.type = node->const_def.value->number.type;
-    else
-        node->const_def.type = strdup("int");
 
     return node;
 }
@@ -649,6 +646,7 @@ AST * parse_func_def(Parser *p, int level)
         push_param(node, parse_func_def_param(p));
         if (parser_peek(p, 0)->type == TOKEN_COMMA) parser_advance(p, 1);
     }
+
     parser_advance(p, 2);
     node->func_def.return_type = parser_peek(p, 0)->text;
     parser_advance(p, 1);
