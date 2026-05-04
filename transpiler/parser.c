@@ -448,6 +448,12 @@ int is_break(Parser *p)
     return parser_peek(p, 0)->type == TOKEN_BREAK;
 }
 
+AST * parse_break(Parser *p) {
+    if (!is_break(p)) return NULL;
+
+    parser_advance(p, 1);
+    return create_ast_node(AST_BREAK); }
+
 int is_default(Parser *p)
 {
     return parser_peek(p, 0)->type == TOKEN_DEFAULT;

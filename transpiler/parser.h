@@ -167,6 +167,8 @@ int is_return(Parser *p);
 AST * parse_return_expression(Parser *p);
 
 int is_break(Parser *p);
+AST * parse_break(Parser *p);
+
 int is_default(Parser *p);
 
 int is_command(Parser *p);
