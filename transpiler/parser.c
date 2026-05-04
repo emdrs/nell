@@ -594,17 +594,9 @@ AST * parse_for(Parser *p, int level)
 
 int is_func_def(Parser *p)
 {
-    if (parser_peek(p, 0)->type != TOKEN_IDENTIFIER) return 0;
-    if (parser_peek(p, 1)->type != TOKEN_DOUBLE_COLON) return 0;
+    if (!is_name(parser_peek(p, 0))) return 0;
+    if (!is_name(parser_peek(p, 1))) return 0;
     if (parser_peek(p, 2)->type != TOKEN_LPAREN) return 0;
-
-    // With parameter
-    if (parser_peek(p, 3)->type == TOKEN_IDENTIFIER &&
-        parser_peek(p, 4)->type == TOKEN_COLON) return 1;
-
-    if (parser_peek(p, 3)->type != TOKEN_RPAREN) return 0;
-    if (parser_peek(p, 4)->type != TOKEN_ARROW) return 0;
-    if (parser_peek(p, 5)->type != TOKEN_IDENTIFIER) return 0;
 
     return 1;
 }
@@ -624,9 +616,9 @@ void push_param(AST *func_def, AST *param)
 AST * parse_func_def_param(Parser *p)
 {
     AST *node = create_ast_node(AST_FUNC_DEF_PARAM);
-    node->func_def_param.name = parser_peek(p, 0)->text;
-    node->func_def_param.type = parser_peek(p, 2)->text;
-    parser_advance(p, 3);
+    node->func_def_param.type = parser_peek(p, 0)->text;
+    node->func_def_param.name = parser_peek(p, 1)->text;
+    parser_advance(p, 2);
 
     return node;
 }
@@ -637,7 +629,8 @@ AST * parse_func_def(Parser *p, int level)
     node->func_def.params = (AST **) malloc(sizeof(AST *));
     node->func_def.size = 0;
     node->func_def.capacity = 1;
-    node->func_def.name = parser_peek(p, 0)->text;
+    node->func_def.return_type = parser_peek(p, 0)->text;
+    node->func_def.name = parser_peek(p, 1)->text;
     parser_advance(p, 3);
 
     while (parser_peek(p, 0)->type != TOKEN_RPAREN) {
@@ -645,10 +638,7 @@ AST * parse_func_def(Parser *p, int level)
         if (parser_peek(p, 0)->type == TOKEN_COMMA) parser_advance(p, 1);
     }
 
-    parser_advance(p, 2);
-    node->func_def.return_type = parser_peek(p, 0)->text;
     parser_advance(p, 1);
-
     node->func_def.block = parse_block(p, level+1);
 
     return node;

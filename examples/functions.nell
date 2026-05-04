@@ -1,11 +1,19 @@
-// Nome    Parâmetros(nome:tipo)     Retorno   Bloco
-main :: (argc: int, argv: char *) -> int { return 0; }
-
-commands :: () -> void {
-    a := 15;
-    b := 10;
-    c := a * b;
-    d :: c;
+void comment(int age) {
+    if age < 18 {
+        printf("You are minor\n");
+        return;
+    }
+    printf("You are major\n");
 }
 
-soma :: (a: int, b: int) -> int { return a + b; }
+int sum(int a, int b) { return a + b; }
+
+int main() {
+    int age = 10;
+    while age < 18 {
+        age++;
+        printf("Getting old...\n");
+        comment(age);
+    }
+    return 0;
+}
