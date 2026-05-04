@@ -27,6 +27,20 @@ char * read_all_file(char *path)
     return content;
 }
 
+void write_file(char *path, char *content)
+{
+    FILE *f = fopen(path, "w");
+
+    if (!f) {
+        printf("Error opening file\n");
+        return;
+    }
+
+    fprintf(f, "%s", content);
+
+    fclose(f);
+}
+
 char * generate_code(AST *ast)
 {
     if(ast == NULL) return strdup("");
@@ -249,6 +263,8 @@ int main(int argc, char *argv[])
     printf("source: %s\n", source);
 
     printf("Ccode:  %s\n", code);
+
+    write_file("out.c", code);
 
     return 0;
 }

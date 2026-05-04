@@ -1,32 +1,34 @@
 // Var definition
-int a;
 int a = 10;
+int b = 10;
+int c;
 
 // Operators
 c = a * b;
-d = a / b;
-e = a + b;
-f = a - b;
+c = a / b;
+c = a + b;
+c = a - b;
 
 // Assign operators
-f *= 1;
-f /= a;
-f += b + 5;
-f -= 1 + 2;
+c *= 1;
+c /= a;
+c += b + 5;
+c -= 1 + 2;
 
 // Increment and decrement
-f++;
---f;
-g = f++;
-g = --f - 5;
+c++;
+--c;
+c = b++;
+c = --a - 5;
 
 // Constants
 const float PI = 3.1415;
 const int YEAR = 2026;
 const int NEXT_YEAR = 2026 + 1;
+const int AGE = 15;
 
 // Binary expressions
-const int IS_TEEN = idade < 18;
-int is_adult = idade >= 18;
-int is_old = idade > 65;
-const int IS_CENTENARY = idade == 100;
+const int IS_TEEN = AGE < 18;
+int is_adult = AGE >= 18;
+int is_old = AGE > 65;
+const int IS_CENTENARY = AGE == 100;
