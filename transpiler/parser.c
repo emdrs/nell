@@ -153,11 +153,15 @@ int is_var_def(Parser *p)
 
 AST * parse_var_def(Parser *p)
 {
+    if(!is_var_def(p)) return NULL;
+
     AST *node = create_ast_node(AST_VAR_DEF);
     node->var_def.initialized = 0;
     node->var_def.type = parser_peek(p, 0)->text;
     node->var_def.name = parser_peek(p, 1)->text;
     parser_advance(p, 2);
+    parser_match(p, TOKEN_SEMICOLON, "; expected to define a variable");
+    parser_advance(p, 1);
 
     return node;
 }
@@ -640,12 +644,19 @@ AST * parse_func_def(Parser *p, int level)
     return node;
 }
 
+typedef AST * (*ParseFunction)(Parser *);
+
 AST * parse_statement(Parser *p, int level)
 {
-    AST *node;
+    AST *node = NULL;
+    ParseFunction functions[] = {
+        parse_var_def
+    };
 
-    if ((node = parse_command(p))) {
-    } else {
+    for (int i = 0; node == NULL && i < sizeof(functions) / sizeof(ParseFunction); i++)
+        node = functions[i](p);
+
+    if (node == NULL) {
         parser_show_error(p);
         exit(1);
     }
