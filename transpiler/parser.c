@@ -731,7 +731,12 @@ AST * parse_block(Parser *p)
 
     while (parser_peek(p, 0)->type != ((level > 0) ? TOKEN_RBRACE : TOKEN_EOF)) {
         p->error_info.progress = -1;
-        push_statement(block, parse_statement(p, level));
+        push_statement(block, parse_statement(p));
+    }
+
+    if (level > 0) {
+        parser_match(p, TOKEN_RBRACE, "'}' needed to define a block");
+        parser_advance(p, 1);
     }
     p->level--;
 
