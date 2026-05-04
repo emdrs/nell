@@ -294,7 +294,7 @@ char * get_token_source_line(Parser *p, Token *token)
         if (line == token->line) {
             int start = pos;
             while(p->source[pos++] != '\n');
-            return strndup(p->source + start, (pos - start) + 1);
+            return strndup(p->source + start, (pos - start));
         }
         pos++;
     }
