@@ -145,6 +145,25 @@ void token_show(Token *token)
         }
 }
 
+void skip_whitespaces(Lexer *l)
+{
+    while (l->ch == ' ' || l->ch == '\n' || l->ch == '\t') advance(l);
+}
+
+void skip_comment(Lexer *l)
+{
+    if (l->ch == '/' && l->next_ch == '/') {
+        while (l->ch != '\n' && l->ch != '\0') advance(l);
+        skip_whitespaces(l);
+    }
+    if (l->ch == '/' && l->next_ch == '*') {
+        while (l->ch != '*' || l->next_ch != '/') advance(l);
+        advance(l); // *
+        advance(l); // /
+        skip_whitespaces(l);
+    }
+}
+
 Token get_token(Lexer *l)
 {
     skip_whitespaces(l);
@@ -266,14 +285,14 @@ Token get_token(Lexer *l)
         }
     }
 
-    if (is_keyword(l, "if")) return (Token){ TOKEN_IF, "if" };
-    if (is_keyword(l, "while")) return (Token){ TOKEN_WHILE, "while" };
-    if (is_keyword(l, "for")) return (Token){ TOKEN_FOR, "for" };
-    if (is_keyword(l, "switch")) return (Token){ TOKEN_SWITCH, "switch" };
-    if (is_keyword(l, "case")) return (Token){ TOKEN_CASE, "case" };
+    if (is_keyword(l, "if"))      return (Token){ TOKEN_IF, "if" };
+    if (is_keyword(l, "while"))   return (Token){ TOKEN_WHILE, "while" };
+    if (is_keyword(l, "for"))     return (Token){ TOKEN_FOR, "for" };
+    if (is_keyword(l, "switch"))  return (Token){ TOKEN_SWITCH, "switch" };
+    if (is_keyword(l, "case"))    return (Token){ TOKEN_CASE, "case" };
     if (is_keyword(l, "default")) return (Token){ TOKEN_DEFAULT, "default" };
-    if (is_keyword(l, "return")) return (Token){ TOKEN_RETURN, "return" };
-    if (is_keyword(l, "break")) return (Token){ TOKEN_BREAK, "break" };
+    if (is_keyword(l, "return"))  return (Token){ TOKEN_RETURN, "return" };
+    if (is_keyword(l, "break"))   return (Token){ TOKEN_BREAK, "break" };
 
     if (is_digit(l->ch)) return get_number(l);
     if (is_char(l->ch)) return get_identifier(l);

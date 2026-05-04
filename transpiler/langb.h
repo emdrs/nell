@@ -41,9 +41,6 @@ typedef struct {
 void advance(Lexer *l);
 void rollback(Lexer *l, int pos);
 
-void skip_whitespaces(Lexer *l);
-void skip_comment(Lexer *l);
-
 int is_identifier(Lexer *l);
 Token get_identifier(Lexer *l);
 
@@ -65,7 +62,6 @@ typedef struct {
     float progress;
     char *message;
     Token *token;
-    int priority;
 } ErrorInfo;
 
 typedef struct {
@@ -163,19 +159,6 @@ void rollback(Lexer *l, int pos)
     l->column -= (l->pos - pos) + 1;
     l->pos = pos-1;
     advance(l);
-}
-
-void skip_whitespaces(Lexer *l)
-{
-    while (l->ch == ' ' || l->ch == '\n' || l->ch == '\t') advance(l);
-}
-
-void skip_comment(Lexer *l)
-{
-    if (l->ch == '/' && l->next_ch == '/') {
-        while (l->ch != '\n' && l->ch != '\0') advance(l);
-        skip_whitespaces(l);
-    }
 }
 
 Token get_number(Lexer *l)
@@ -363,8 +346,8 @@ void parser_match(Parser* p, int type, char* error_msg)
 
 void parser_set_error(Parser *p, int progress, char *error_message, Token *token, int priority)
 {
-    if(p->error_info.progress < progress) p->error_info =
-        (ErrorInfo) { progress, error_message, token, priority};
+    if(priority || p->error_info.progress < progress) p->error_info =
+        (ErrorInfo) { progress, error_message, token };
 }
 
 void parser_set_error_and_abort(Parser *p, int progress, char *error_message, Token *token, int priority)
