@@ -257,7 +257,7 @@ void parse_func_exec_params(Parser *p, ArrayList *param_list, int first)
 
     if(!is_expression(p) && p->error_info.progress == 0)
         parser_set_error_and_abort(p, 1, "Expression needed in function execution",
-                parser_peek(p, 0), 1);
+                parser_peek(p, 0));
 
     array_list_add(param_list, parse_expression(p));
 
@@ -309,7 +309,7 @@ AST * parse_expression(Parser *p)
     op->expression.left = left;
     if (!is_factor(p, 0))
         parser_set_error_and_abort(p, 2.0f/3.0f, "Factor expected after operator",
-                parser_peek(p, 0), 1);
+                parser_peek(p, 0));
 
     op->expression.right = parse_expression(p);
     op->expression.type = operator->text;
@@ -368,7 +368,7 @@ AST * parse_assignment(Parser *p)
     node->assign.right = parse_expression(p);
 
     if ((token = parser_peek(p, 0))->type == TOKEN_RPAREN)
-        parser_set_error_and_abort(p, 1, "Extra ')' on expression", token, 1);
+        parser_set_error_and_abort(p, 1, "Extra ')' on expression", token);
 
     return node;
 }
