@@ -216,20 +216,6 @@ int is_factor(Parser *p, int offset)
 
 AST * parse_factor(Parser *p)
 {
-    Token *token = parser_peek(p, 0);
-
-    if (token->type == TOKEN_LPAREN) {
-        parser_advance(p, 1); // (
-        
-        AST *node = parse_expression(p);
-        node->expression.has_paren = 1;
-
-        parser_match(p, TOKEN_RPAREN, "')' needed to close a '('");
-        parser_advance(p, 1); // )
-        
-        return node;
-    }
-
     if (is_number(parser_peek(p, 0))) return parse_number(p);
     if (is_identifier_update(p, 0))   return parse_identifier_update(p);
     if (is_func_exec(p))              return parse_func_exec(p);
@@ -297,6 +283,19 @@ int is_operator(Token *token)
 
 AST * parse_expression(Parser *p)
 {
+    if (parser_peek(p, 0)->type == TOKEN_LPAREN) {
+        parser_advance(p, 1); // (
+        
+        AST *node = parse_expression(p);
+        if(node->type == AST_OPERATOR)
+            node->expression.has_paren = 1;
+
+        parser_match(p, TOKEN_RPAREN, "')' needed to close a '('");
+        parser_advance(p, 1); // )
+        
+        return node;
+    }
+
     AST *left = parse_factor(p);
 
     Token *operator = parser_peek(p, 0);
@@ -364,9 +363,6 @@ AST * parse_assignment(Parser *p)
     parser_advance(p, 1);
 
     node->assign.right = parse_expression(p);
-
-    if ((token = parser_peek(p, 0))->type == TOKEN_RPAREN)
-        parser_set_error_and_abort(p, 1, "Extra ')' on expression", token);
 
     return node;
 }

@@ -17,7 +17,7 @@ switch a {
     }
 }
 
-while a >= ++b - 5 { a++; }
+while(a >= ++b - 5) { a++; }
 while a > 5 && a < 10 {
     while b > a || a < 8 {
         b += 88;
@@ -34,5 +34,5 @@ for 0.<10 { } // 0 to 9
 for 0><10 { } // 1 to 9
 
 for a..b {
-    a: int = it; // 'it' has the iterations count
+    int a = it; // 'it' has the iterations count
 }
