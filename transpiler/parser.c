@@ -43,8 +43,8 @@ void show_ast(AST* node, int indent)
         }
         case AST_BLOCK: {
             printf("BLOCK(%d)\n", node->block.level);
-            for (int i = 0; i < node->block.size; i++)
-                show_ast(node->block.statements[i], indent + 1);
+            for (int i = 0; i < node->block.statements->size; i++)
+                show_ast(array_list_get(node->block.statements, i), indent + 1);
             break;
         }
         case AST_UPDATE_IDENTIFIER: {
@@ -383,17 +383,6 @@ AST * parse_assignment(Parser *p)
     return node;
 }
 
-void push_statement(AST *block, AST *statement)
-{
-    if (block->block.size >= block->block.capacity) {
-        block->block.capacity *= 2;
-        block->block.statements =
-            realloc(block->block.statements, sizeof(AST *) * block->block.capacity);
-    }
-
-    block->block.statements[block->block.size++] = statement;
-}
-
 int is_const_def(Parser *p)
 {
     if (parser_peek(p, 0)->type != TOKEN_CONST) return 0;
@@ -709,9 +698,7 @@ AST * parse_block(Parser *p)
 
     int level = p->level;
     AST *block = create_ast_node(AST_BLOCK);
-    block->block.statements = (AST **) malloc(sizeof(AST *));
-    block->block.size = 0;
-    block->block.capacity = 1;
+    block->block.statements = array_list_create(sizeof(AST), 1);
     block->block.level = level;
 
     if (level > 0) parser_advance(p, 1);
@@ -719,7 +706,7 @@ AST * parse_block(Parser *p)
 
     while (parser_peek(p, 0)->type != ((level > 0) ? TOKEN_RBRACE : TOKEN_EOF)) {
         p->error_info.progress = -1;
-        push_statement(block, parse_statement(p));
+        array_list_add(block->block.statements, parse_statement(p));
     }
 
     if (level > 0) {

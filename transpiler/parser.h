@@ -102,9 +102,7 @@ typedef struct AST {
         } for_statement;
 
         struct {
-            struct AST **statements;
-            int size;
-            int capacity;
+            ArrayList *statements;
             int level;
         } block;
 

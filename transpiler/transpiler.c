@@ -100,8 +100,9 @@ char * generate_code(AST *ast)
         }
         case AST_BLOCK: {
             char *code = NULL;
-            for (int i = 0; i < ast->block.size; i++) {
-                char *statement_code = generate_code(ast->block.statements[i]);
+            for (int i = 0; i < ast->block.statements->size; i++) {
+                char *statement_code =
+                    generate_code((AST *) array_list_get(ast->block.statements, i));
 
                 if (code) asprintf(&code, "%s %s", code, statement_code);
                 else      asprintf(&code, "%s", statement_code);
