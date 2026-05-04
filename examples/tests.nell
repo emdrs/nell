@@ -1,2 +1,7 @@
-int a;
-const int a = ;
+int a = 10 + a++;
+const int a = 10 + 5;
+a++;
+--a;
+break;
+random(1, 2);
+return 10;

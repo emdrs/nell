@@ -188,6 +188,8 @@ int is_identifier_update(Parser *p, int offset)
 
 AST * parse_identifier_update(Parser *p)
 {
+    if (!is_identifier_update(p, 0)) return NULL;
+
     AST *update = create_ast_node(AST_UPDATE_IDENTIFIER);
 
     int is_prefix = is_identifier_updater(parser_peek(p, 0));
@@ -219,13 +221,16 @@ int is_factor(Parser *p, int offset)
 
 AST * parse_factor(Parser *p)
 {
-    if (is_number(parser_peek(p, 0))) return parse_number(p);
-    if (is_identifier_update(p, 0))   return parse_identifier_update(p);
-    if (is_func_exec(p))              return parse_func_exec(p);
-    if (is_string(parser_peek(p, 0))) return parse_string(p);
-    if (is_name(parser_peek(p, 0)))   return parse_name(p);
+    Token *token = parser_peek(p, 0);
 
-    return parse_name(p);
+    if (is_number(token))           return parse_number(p);
+    if (is_identifier_update(p, 0)) return parse_identifier_update(p);
+    if (is_func_exec(p))            return parse_func_exec(p);
+    if (is_string(token))           return parse_string(p);
+    if (is_name(token))             return parse_name(p);
+
+    parser_set_error_and_abort(p, 0, "Invalid factor", token);
+    exit(1);
 }
 
 int is_func_exec(Parser *p)
@@ -240,9 +245,7 @@ int is_func_exec(Parser *p)
 void parse_func_exec_params(Parser *p, ArrayList *param_list, int first)
 {
     Token *token = parser_peek(p, 0);
-    parser_advance(p, 1); // ( or , or )
-
-    if (token->type == TOKEN_RPAREN) return;
+    parser_advance(p, 1); // first ( or ,
 
     if(!is_expression(p) && p->error_info.progress == 0)
         parser_set_error_and_abort(p, 1, "Expression needed in function execution",
@@ -250,11 +253,21 @@ void parse_func_exec_params(Parser *p, ArrayList *param_list, int first)
 
     array_list_add(param_list, parse_expression(p));
 
+    token = parser_peek(p, 0);
+    if (token->type == TOKEN_RPAREN) {
+        parser_advance(p, 1); // )
+        return;
+    }
+
+    parser_match(p, TOKEN_COMMA, "',' needed to split execution parameters");
+
     parse_func_exec_params(p, param_list, 0);
 }
 
 AST * parse_func_exec(Parser *p)
 {
+    if (!is_func_exec(p)) return NULL;
+
     AST *node = create_ast_node(AST_FUNC_EXEC);
     node->func_exec.params = array_list_create(sizeof(AST), 1);
     node->func_exec.name = parser_peek(p, 0)->text;
@@ -309,11 +322,11 @@ AST * parse_expression(Parser *p)
 
     AST *op = create_ast_node(AST_EXPRESSION);
     op->expression.left = left;
-    if (!is_factor(p, 0))
+    op->expression.right = parse_expression(p);
+    if (op->expression.right == NULL)
         parser_set_error_and_abort(p, 2.0f/3.0f, "Factor expected after operator",
                 parser_peek(p, 0));
 
-    op->expression.right = parse_expression(p);
     op->expression.type = operator->text;
     op->expression.has_paren = 0;
 
@@ -352,6 +365,8 @@ int is_assignment(Parser *p)
 
 AST * parse_assignment(Parser *p)
 {
+    if (!is_assignment(p)) return NULL;
+
     AST *node = create_ast_node(AST_ASSIGN);
     if (is_var_def(p)) {
         node->assign.left = parse_var_def(p);
@@ -436,6 +451,8 @@ int is_return(Parser *p)
 
 AST * parse_return_expression(Parser *p)
 {
+    if(!is_return(p)) return NULL;
+
     AST *node = create_ast_node(AST_RETURN);
     parser_advance(p, 1);
     node->return_statement = is_expression(p) ? parse_expression(p) : NULL;
@@ -474,8 +491,13 @@ AST * parse_command(Parser *p)
 {
     AST *node = NULL;
     ParseFunction functions[] = {
+        parse_identifier_update,
+        parse_assignment,
         parse_var_def,
-        parse_const_def
+        parse_const_def,
+        parse_return_expression,
+        parse_break,
+        parse_func_exec
     };
 
     for (int i = 0; node == NULL && i < sizeof(functions) / sizeof(ParseFunction); i++)
@@ -486,46 +508,10 @@ AST * parse_command(Parser *p)
     parser_match(p, TOKEN_SEMICOLON, "; expected to define a command");
     parser_advance(p, 1);
 
-
     AST *command = create_ast_node(AST_COMMAND);
     command->command = node;
 
     return command;
-
-    AST *node2 = create_ast_node(AST_COMMAND);
-
-    if (is_identifier_update(p, 0)) {
-        node->command = parse_identifier_update(p);
-        parser_match(p, TOKEN_SEMICOLON, "; expected to define a identifier updater");
-        parser_advance(p, 1);
-    } else if (is_const_def(p)) {
-        node->command = parse_const_def(p);
-        parser_match(p, TOKEN_SEMICOLON, "; expected to define a const");
-        parser_advance(p, 1);
-    } else if (is_assignment(p)) {
-        node->command = parse_assignment(p);
-        parser_match(p, TOKEN_SEMICOLON, "; expected to define a assignment");
-        parser_advance(p, 1);
-    } else if (is_var_def(p)) {
-        node->command = parse_var_def(p);
-        parser_match(p, TOKEN_SEMICOLON, "; expected to define a variable");
-        parser_advance(p, 1);
-    } else if (is_return(p)) {
-        node->command = parse_return_expression(p);
-        parser_match(p, TOKEN_SEMICOLON, "; expected to define a return");
-        parser_advance(p, 1);
-    } else if (is_break(p)) {
-        node->command = create_ast_node(AST_BREAK);
-        parser_advance(p, 1);
-        parser_match(p, TOKEN_SEMICOLON, "; expected to define a break");
-        parser_advance(p, 1);
-    } else if (is_func_exec(p)) {
-        node->command = parse_func_exec(p);
-        parser_match(p, TOKEN_SEMICOLON, "; expected to define a func exec");
-        parser_advance(p, 1);
-    }
-
-    return node;
 }
 
 AST * parse_if(Parser *p, int level)
