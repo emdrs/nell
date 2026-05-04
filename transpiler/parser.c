@@ -167,10 +167,10 @@ int is_identifier_updater(Token *token)
     return token->type == TOKEN_INCREMENT || token->type == TOKEN_DECREMENT;
 }
 
-int is_identifier_update(Parser *p)
+int is_identifier_update(Parser *p, int offset)
 {
-    Token *token1 = parser_peek(p, 0);
-    Token *token2 = parser_peek(p, 1);
+    Token *token1 = parser_peek(p, offset);
+    Token *token2 = parser_peek(p, offset + 1);
 
     if (is_identifier_updater(token1) && token2->type != TOKEN_IDENTIFIER) {
         parser_report_error(p, token2,"Name needed after/before updater.");
@@ -210,7 +210,7 @@ int is_factor(Parser *p, int offset)
     return (is_name(token)          ||
             is_number(token)        ||
             is_string(token)        ||
-            is_identifier_update(p) ||
+            is_identifier_update(p, offset) ||
             is_func_exec(p));
 }
 
@@ -231,7 +231,7 @@ AST * parse_factor(Parser *p)
     }
 
     if (is_number(parser_peek(p, 0))) return parse_number(p);
-    if (is_identifier_update(p))      return parse_identifier_update(p);
+    if (is_identifier_update(p, 0))   return parse_identifier_update(p);
     if (is_func_exec(p))              return parse_func_exec(p);
     if (is_string(parser_peek(p, 0))) return parse_string(p);
     if (is_name(parser_peek(p, 0)))   return parse_name(p);
@@ -330,21 +330,19 @@ int is_assign(Token *token)
 int is_assignment(Parser *p)
 {
     if(is_var_def(p)) {
-        if (!is_assign(parser_peek(p, 2))) {
-            parser_set_error(p, 2.0 / 4.0, "Assignment need a assign.",
-                    parser_peek(p, 2), 0);
-            return 0;
-        }
+        if (!is_assign(parser_peek(p, 2))) return 0;
         if (!is_factor(p, 3)) {
             parser_set_error(p, 3.0 / 4.0, "Assignment need a factor.",
                     parser_peek(p, 3), 0);
             return 0;
         }
         return 1;
-
     } else {
         if (parser_peek(p, 0)->type != TOKEN_IDENTIFIER) return 0;
-        if (!is_assign(parser_peek(p, 1)) || !is_factor(p, 2)) return 0;
+        if (!is_assign(parser_peek(p, 1))) return 0;
+        if (!is_factor(p, 2))
+            parser_set_error_and_abort(p, 3.0f/4, "Assignment need a factor",
+                    parser_peek(p, 2));
     }
 
     return 1;
@@ -455,7 +453,7 @@ int is_default(Parser *p)
 
 int is_command(Parser *p)
 {
-    return is_identifier_update(p) ||
+    return is_identifier_update(p, 0) ||
            is_assignment(p)        ||
            is_var_def(p)           ||
            is_const_def(p)         ||
@@ -468,7 +466,7 @@ AST * parse_command(Parser *p)
 {
     AST *node = create_ast_node(AST_COMMAND);
 
-    if (is_identifier_update(p)) {
+    if (is_identifier_update(p, 0)) {
         node->command = parse_identifier_update(p);
         parser_match(p, TOKEN_SEMICOLON, "; expected to define a identifier updater");
         parser_advance(p, 1);
@@ -707,8 +705,10 @@ AST * parse_block(Parser *p, int level)
     
     if (level > 0) parser_advance(p, 1);
 
-    while (parser_peek(p, 0)->type != ((level > 0) ? TOKEN_RBRACE : TOKEN_EOF))
+    while (parser_peek(p, 0)->type != ((level > 0) ? TOKEN_RBRACE : TOKEN_EOF)) {
+        p->error_info.progress = -1;
         push_statement(block, parse_statement(p, level));
+    }
 
     return block;
 }

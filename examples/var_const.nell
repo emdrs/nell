@@ -27,6 +27,6 @@ const int NEXT_YEAR = 2026 + 1;
 
 // Binary expressions
 const int IS_TEEN = idade < 18;
-int is_adult := idade >= 18;
+int is_adult = idade >= 18;
 int is_old = idade > 65;
 const int IS_CENTENARY = idade == 100;

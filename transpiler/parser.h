@@ -140,7 +140,7 @@ int is_var_def(Parser *p);
 AST * parse_var_def(Parser *p);
 
 int is_identifier_updater(Token *token);
-int is_identifier_update(Parser *p);
+int is_identifier_update(Parser *p, int offset);
 AST * parse_identifier_update(Parser *p);
 
 int is_func_exec(Parser *p);
