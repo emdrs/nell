@@ -396,9 +396,21 @@ int is_block(Parser *p, int level)
 
 int is_const_def(Parser *p)
 {
-    if (parser_peek(p, 0)->type != TOKEN_IDENTIFIER) return 0;
-    if (parser_peek(p, 1)->type != TOKEN_DOUBLE_COLON) return 0;
-    if (!is_factor(p, 2)) return 0;
+    if (parser_peek(p, 0)->type != TOKEN_CONST) return 0;
+
+    Token *token;
+    if ((token = parser_peek(p, 1))->type != TOKEN_IDENTIFIER)
+        parser_set_error_and_abort(p, 1.0f/5, "Type needed to define a const", token);
+
+    if ((token = parser_peek(p, 2))->type != TOKEN_IDENTIFIER)
+        parser_set_error_and_abort(p, 2.0f/5, "Type and name needed to define a const",
+                token);
+
+    if ((token = parser_peek(p, 3))->type != TOKEN_ASSIGN)
+        parser_set_error_and_abort(p, 3.0f/5, "Assign needed to define a const", token);
+
+    if (!is_factor(p, 4))
+        parser_set_error_and_abort(p, 4.0f/5, "Value needed to define a const", token);
 
     return 1;
 }
