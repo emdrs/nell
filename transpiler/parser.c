@@ -36,8 +36,8 @@ void show_ast(AST* node, int indent)
             printf("NAME(%s)\n", node->name);
             break;
         }
-        case AST_OPERATOR: {
-            printf("OPERATOR(%s)\n", node->expression.type);
+        case AST_EXPRESSION: {
+            printf("EXPRESSION(%s)\n", node->expression.type);
             show_ast(node->expression.left, indent + 1);
             show_ast(node->expression.right, indent + 1);
             break;
@@ -287,7 +287,7 @@ AST * parse_expression(Parser *p)
         parser_advance(p, 1); // (
         
         AST *node = parse_expression(p);
-        if(node->type == AST_OPERATOR)
+        if(node->type == AST_EXPRESSION)
             node->expression.has_paren = 1;
 
         parser_match(p, TOKEN_RPAREN, "')' needed to close a '('");
@@ -304,7 +304,7 @@ AST * parse_expression(Parser *p)
     
     parser_advance(p, 1);
 
-    AST *op = create_ast_node(AST_OPERATOR);
+    AST *op = create_ast_node(AST_EXPRESSION);
     op->expression.left = left;
     if (!is_factor(p, 0))
         parser_set_error_and_abort(p, 2.0f/3.0f, "Factor expected after operator",

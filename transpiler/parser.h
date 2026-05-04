@@ -8,7 +8,7 @@ typedef enum {
     AST_NUMBER,            /*NEEDED*/
     AST_NAME,              /*NEEDED*/
     AST_STRING,            /*NEEDED*/
-    AST_OPERATOR,
+    AST_EXPRESSION,
     AST_VAR_DEF,
     AST_CONST_DEF,
     AST_UPDATE_IDENTIFIER,

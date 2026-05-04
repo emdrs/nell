@@ -82,7 +82,7 @@ char * generate_code(AST *ast)
             asprintf(&result, "%s", ast->name);
             break;
         }
-        case AST_OPERATOR: {
+        case AST_EXPRESSION: {
             char *left_code = generate_code(ast->expression.left);
             char *right_code = generate_code(ast->expression.right);
 
