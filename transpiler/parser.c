@@ -379,9 +379,9 @@ void push_statement(AST *block, AST *statement)
 }
 
 // TODO make this more specific
-int is_block(Parser *p, int level)
+int is_block(Parser *p)
 {
-    if (level == 0) return 1;
+    if (p->level == 0) return 1;
 
     if (parser_peek(p, 0)->type != TOKEN_LBRACE) return 0;
 
@@ -501,7 +501,7 @@ AST * parse_if(Parser *p, int level)
     AST *node = create_ast_node(AST_IF);
     parser_advance(p, 1);
     node->if_statement.expression = parse_expression(p);
-    node->if_statement.if_block = parse_block(p, level);
+    node->if_statement.if_block = parse_block(p);
 
     return node;
 }
@@ -518,7 +518,7 @@ AST * parse_case(Parser *p, int level)
         node->case_statement.value = NULL;
     else
         node->case_statement.value = parse_expression(p);
-    node->case_statement.block = parse_block(p, level);
+    node->case_statement.block = parse_block(p);
 
     return node;
 }
@@ -531,7 +531,7 @@ AST * parse_switch(Parser *p, int level)
     if (token->type != TOKEN_IDENTIFIER)
         parser_report_error(p, token, "Identifier needed on switch value");
     node->switch_statement.value = parse_name(p);
-    node->switch_statement.block = parse_block(p, level);
+    node->switch_statement.block = parse_block(p);
 
     return node;
 }
@@ -541,7 +541,7 @@ AST * parse_while(Parser *p, int level)
     AST *node = create_ast_node(AST_WHILE);
     parser_advance(p, 1);
     node->while_statement.expression = parse_expression(p);
-    node->while_statement.block = parse_block(p, level);
+    node->while_statement.block = parse_block(p);
 
     return node;
 }
@@ -583,7 +583,7 @@ AST * parse_for(Parser *p, int level)
     parser_advance(p, 1);
 
     node->for_statement.end = parse_expression(p);
-    node->for_statement.block = parse_block(p, level+1);
+    node->for_statement.block = parse_block(p);
 
     return node;
 }
@@ -635,7 +635,7 @@ AST * parse_func_def(Parser *p, int level)
     }
 
     parser_advance(p, 1);
-    node->func_def.block = parse_block(p, level+1);
+    node->func_def.block = parse_block(p);
 
     return node;
 }
@@ -644,13 +644,21 @@ AST * parse_statement(Parser *p, int level)
 {
     AST *node;
 
+    if ((node = parse_command(p))) {
+    } else {
+        parser_show_error(p);
+        exit(1);
+    }
+
+    return node;
+
     if (is_func_def(p)) {
         node = parse_func_def(p,  level + 1);
         parser_advance(p, 1);
     } else if (is_command(p)) {
         node = parse_command(p);
-    } else if (is_block(p, level + 1)) {
-        node = parse_block(p, level + 1);
+    } else if (is_block(p)) {
+        node = parse_block(p);
         parser_match(p, TOKEN_RBRACE, "} expected to define a block");
         parser_advance(p, 1);
     } else if (parser_peek(p, 0)->type == TOKEN_IF) {
@@ -681,30 +689,34 @@ AST * parse_statement(Parser *p, int level)
     return node;
 }
 
-AST * parse_block(Parser *p, int level)
+AST * parse_block(Parser *p)
 {
+    int level = p->level;
     AST *block = create_ast_node(AST_BLOCK);
     block->block.statements = (AST **) malloc(sizeof(AST *));
     block->block.size = 0;
     block->block.capacity = 1;
     block->block.level = level;
-    
+
     if (level > 0) parser_advance(p, 1);
+    p->level++;
 
     while (parser_peek(p, 0)->type != ((level > 0) ? TOKEN_RBRACE : TOKEN_EOF)) {
         p->error_info.progress = -1;
         push_statement(block, parse_statement(p, level));
     }
+    p->level--;
 
     return block;
 }
 
 AST * parse(ArrayList *list, char *source, char *file)
 {
-    Parser p = { list, 0, source, file };
+    Parser p = { list, 0, source, file, 0 };
+
     p.error_info.progress = -1;
 
-    AST *ast = parse_block(&p, 0);
+    AST *ast = parse_block(&p);
 
     Token *t = parser_peek(&p, 0);
     if (t->type != TOKEN_EOF) {

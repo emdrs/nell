@@ -157,8 +157,8 @@ int is_assign(Token *token);
 int is_assignment(Parser *p);
 AST * parse_assignment(Parser *p);
 
-int is_block(Parser *p, int level);
-AST * parse_block(Parser *p, int level);
+int is_block(Parser *p);
+AST * parse_block(Parser *p);
 
 int is_const_def(Parser *p);
 AST * parse_const_def(Parser *p);

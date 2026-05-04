@@ -74,6 +74,7 @@ typedef struct {
     int pos;
     char *source;
     char *file;
+    int level;
     ErrorInfo error_info;
 } Parser;
 
