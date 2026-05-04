@@ -510,8 +510,10 @@ AST * parse_command(Parser *p)
 
 AST * parse_if(Parser *p)
 {
+    if (parser_peek(p, 0)->type != TOKEN_IF) return NULL;
+
     AST *node = create_ast_node(AST_IF);
-    parser_advance(p, 1);
+    parser_advance(p, 1); // if
     node->if_statement.expression = parse_expression(p);
     node->if_statement.if_block = parse_block(p);
 
@@ -520,6 +522,9 @@ AST * parse_if(Parser *p)
 
 AST * parse_case(Parser *p)
 {
+    if (parser_peek(p, 0)->type != TOKEN_CASE &&
+        parser_peek(p, 0)->type != TOKEN_DEFAULT) return NULL;
+
     AST *node = create_ast_node(AST_CASE);
     node->case_statement.is_default = parser_peek(p, 0)->type == TOKEN_DEFAULT;
     parser_advance(p, 1);
@@ -530,15 +535,20 @@ AST * parse_case(Parser *p)
         node->case_statement.value = NULL;
     else
         node->case_statement.value = parse_expression(p);
+
+    p->in_case = 1;
     node->case_statement.block = parse_block(p);
+    p->in_case = 0;
 
     return node;
 }
 
 AST * parse_switch(Parser *p)
 {
+    if (parser_peek(p, 0)->type != TOKEN_SWITCH) return NULL;
+
     AST *node = create_ast_node(AST_SWITCH);
-    parser_advance(p, 1);
+    parser_advance(p, 1); // switch
     Token *token = parser_peek(p, 0);
     if (token->type != TOKEN_IDENTIFIER)
         parser_report_error(p, token, "Identifier needed on switch value");
@@ -550,6 +560,8 @@ AST * parse_switch(Parser *p)
 
 AST * parse_while(Parser *p)
 {
+    if (parser_peek(p, 0)->type != TOKEN_WHILE) return NULL;
+
     AST *node = create_ast_node(AST_WHILE);
     parser_advance(p, 1);
     node->while_statement.expression = parse_expression(p);
@@ -560,6 +572,8 @@ AST * parse_while(Parser *p)
 
 AST * parse_for(Parser *p)
 {
+    if (parser_peek(p, 0)->type != TOKEN_FOR) return NULL;
+
     AST *node = create_ast_node(AST_FOR);
     parser_advance(p, 1);
 
@@ -661,43 +675,17 @@ AST * parse_statement(Parser *p)
     ParseFunction parses[] = {
         parse_func_def,
         parse_command,
-        parse_block
+        parse_block,
+        parse_if,
+        parse_switch,
+        parse_case,
+        parse_while,
+        parse_for
     };
 
     AST *node = try_parses(p, parses, parses_count(parses));
 
     if (node == NULL) {
-        parser_show_error(p);
-        exit(1);
-    }
-
-    return node;
-
-    if (is_block(p)) {
-        node = parse_block(p);
-        parser_match(p, TOKEN_RBRACE, "} expected to define a block");
-        parser_advance(p, 1);
-    } else if (parser_peek(p, 0)->type == TOKEN_IF) {
-        node = parse_if(p);
-        parser_match(p, TOKEN_RBRACE, "} expected to define a if block");
-        parser_advance(p, 1);
-    } else if (parser_peek(p, 0)->type == TOKEN_SWITCH) {
-        node = parse_switch(p);
-        parser_match(p, TOKEN_RBRACE, "} expected to define a switch block");
-        parser_advance(p, 1);
-    } else if (parser_peek(p, 0)->type == TOKEN_CASE || is_default(p)) {
-        node = parse_case(p);
-        parser_match(p, TOKEN_RBRACE, "} expected to define a case block");
-        parser_advance(p, 1);
-    } else if (parser_peek(p, 0)->type == TOKEN_WHILE) {
-        node = parse_while(p);
-        parser_match(p, TOKEN_RBRACE, "} expected to define a while block");
-        parser_advance(p, 1);
-    } else if (parser_peek(p, 0)->type == TOKEN_FOR) {
-        node = parse_for(p);
-        parser_match(p, TOKEN_RBRACE, "} expected to define a for block");
-        parser_advance(p, 1);
-    } else {
         parser_show_error(p);
         exit(1);
     }
