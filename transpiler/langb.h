@@ -65,11 +65,6 @@ typedef struct {
 } ErrorInfo;
 
 typedef struct {
-    int type;
-    char *message;
-} ExpectedToken;
-
-typedef struct {
     ArrayList *list;
     int pos;
     char *source;
@@ -83,6 +78,8 @@ typedef struct {
 
 typedef struct AST AST; // YOU NEED TO IMPLEMENT THIS
 
+typedef AST * (*ParseFunction)(Parser *);
+
 AST * create_ast_node(int type);
 
 void parser_set_error(Parser *p, float progress, char *error_message, Token *token, int priority);
@@ -93,8 +90,7 @@ Token * parser_peek(Parser *p, int offset);
 void parser_report_error(Parser *p, Token *token, char *error_msg);
 void parser_match(Parser* p, int token_type, char* error_msg);
 
-#define sizeof_expected_tokens(expected_tokens) \
-    sizeof(expected_tokens) / sizeof(ExpectedToken)
+#define parses_count(functions) sizeof(functions) / sizeof(ParseFunction)
 
 int is_number(Token *token);
 int is_string(Token *token);
@@ -103,6 +99,8 @@ int is_name(Token *token);
 AST * parse_number(Parser *p);
 AST * parse_name(Parser *p);
 AST * parse_string(Parser *p);
+
+AST * try_parses(Parser *p, ParseFunction functions[], int count);
 
 #endif // LANGB_H
 
@@ -412,6 +410,14 @@ AST * parse_string(Parser *p)
     Token *str = parser_peek(p, 0);
     node->str = str->text;
     parser_advance(p, 1);
+
+    return node;
+}
+
+AST * try_parses(Parser *p, ParseFunction functions[], int count)
+{
+    AST *node = NULL;
+    for (int i = 0; node == NULL && i < count; i++) node = functions[i](p);
 
     return node;
 }

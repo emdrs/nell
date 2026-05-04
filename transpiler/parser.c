@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-typedef AST * (*ParseFunction)(Parser *);
-
 void print_indent(int level) { for (int i = 0; i < level; i++) printf("  "); }
 
 void show_ast(AST* node, int indent)
@@ -44,7 +42,7 @@ void show_ast(AST* node, int indent)
             break;
         }
         case AST_BLOCK: {
-            printf("BLOCK(%d)\n", node->block.size);
+            printf("BLOCK(%d)\n", node->block.level);
             for (int i = 0; i < node->block.size; i++)
                 show_ast(node->block.statements[i], indent + 1);
             break;
@@ -396,16 +394,6 @@ void push_statement(AST *block, AST *statement)
     block->block.statements[block->block.size++] = statement;
 }
 
-// TODO make this more specific
-int is_block(Parser *p)
-{
-    if (p->level == 0) return 1;
-
-    if (parser_peek(p, 0)->type != TOKEN_LBRACE) return 0;
-
-    return 1;
-}
-
 int is_const_def(Parser *p)
 {
     if (parser_peek(p, 0)->type != TOKEN_CONST) return 0;
@@ -497,8 +485,7 @@ int is_command(Parser *p)
 
 AST * parse_command(Parser *p)
 {
-    AST *node = NULL;
-    ParseFunction functions[] = {
+    ParseFunction parses[] = {
         parse_identifier_update,
         parse_assignment,
         parse_var_def,
@@ -508,8 +495,7 @@ AST * parse_command(Parser *p)
         parse_func_exec
     };
 
-    for (int i = 0; node == NULL && i < sizeof(functions) / sizeof(ParseFunction); i++)
-        node = functions[i](p);
+    AST *node = try_parses(p, parses, parses_count(parses));
 
     if (node == NULL) return NULL;
 
@@ -522,7 +508,7 @@ AST * parse_command(Parser *p)
     return command;
 }
 
-AST * parse_if(Parser *p, int level)
+AST * parse_if(Parser *p)
 {
     AST *node = create_ast_node(AST_IF);
     parser_advance(p, 1);
@@ -532,7 +518,7 @@ AST * parse_if(Parser *p, int level)
     return node;
 }
 
-AST * parse_case(Parser *p, int level)
+AST * parse_case(Parser *p)
 {
     AST *node = create_ast_node(AST_CASE);
     node->case_statement.is_default = parser_peek(p, 0)->type == TOKEN_DEFAULT;
@@ -549,7 +535,7 @@ AST * parse_case(Parser *p, int level)
     return node;
 }
 
-AST * parse_switch(Parser *p, int level)
+AST * parse_switch(Parser *p)
 {
     AST *node = create_ast_node(AST_SWITCH);
     parser_advance(p, 1);
@@ -562,7 +548,7 @@ AST * parse_switch(Parser *p, int level)
     return node;
 }
 
-AST * parse_while(Parser *p, int level)
+AST * parse_while(Parser *p)
 {
     AST *node = create_ast_node(AST_WHILE);
     parser_advance(p, 1);
@@ -572,7 +558,7 @@ AST * parse_while(Parser *p, int level)
     return node;
 }
 
-AST * parse_for(Parser *p, int level)
+AST * parse_for(Parser *p)
 {
     AST *node = create_ast_node(AST_FOR);
     parser_advance(p, 1);
@@ -645,8 +631,10 @@ AST * parse_func_def_param(Parser *p)
     return node;
 }
 
-AST * parse_func_def(Parser *p, int level)
+AST * parse_func_def(Parser *p)
 {
+    if (!is_func_def(p)) return NULL;
+
     AST *node = create_ast_node(AST_FUNC_DEF);
     node->func_def.params = (AST **) malloc(sizeof(AST *));
     node->func_def.size = 0;
@@ -661,21 +649,22 @@ AST * parse_func_def(Parser *p, int level)
     }
 
     parser_advance(p, 1);
+    p->in_func = 1;
     node->func_def.block = parse_block(p);
+    p->in_func = 0;
 
     return node;
 }
 
-
-AST * parse_statement(Parser *p, int level)
+AST * parse_statement(Parser *p)
 {
-    AST *node = NULL;
-    ParseFunction functions[] = {
-        parse_command
+    ParseFunction parses[] = {
+        parse_func_def,
+        parse_command,
+        parse_block
     };
 
-    for (int i = 0; node == NULL && i < sizeof(functions) / sizeof(ParseFunction); i++)
-        node = functions[i](p);
+    AST *node = try_parses(p, parses, parses_count(parses));
 
     if (node == NULL) {
         parser_show_error(p);
@@ -684,33 +673,28 @@ AST * parse_statement(Parser *p, int level)
 
     return node;
 
-    if (is_func_def(p)) {
-        node = parse_func_def(p,  level + 1);
-        parser_advance(p, 1);
-    } else if (is_command(p)) {
-        node = parse_command(p);
-    } else if (is_block(p)) {
+    if (is_block(p)) {
         node = parse_block(p);
         parser_match(p, TOKEN_RBRACE, "} expected to define a block");
         parser_advance(p, 1);
     } else if (parser_peek(p, 0)->type == TOKEN_IF) {
-        node = parse_if(p,  level + 1);
+        node = parse_if(p);
         parser_match(p, TOKEN_RBRACE, "} expected to define a if block");
         parser_advance(p, 1);
     } else if (parser_peek(p, 0)->type == TOKEN_SWITCH) {
-        node = parse_switch(p,  level + 1);
+        node = parse_switch(p);
         parser_match(p, TOKEN_RBRACE, "} expected to define a switch block");
         parser_advance(p, 1);
     } else if (parser_peek(p, 0)->type == TOKEN_CASE || is_default(p)) {
-        node = parse_case(p,  level + 1);
+        node = parse_case(p);
         parser_match(p, TOKEN_RBRACE, "} expected to define a case block");
         parser_advance(p, 1);
     } else if (parser_peek(p, 0)->type == TOKEN_WHILE) {
-        node = parse_while(p,  level + 1);
+        node = parse_while(p);
         parser_match(p, TOKEN_RBRACE, "} expected to define a while block");
         parser_advance(p, 1);
     } else if (parser_peek(p, 0)->type == TOKEN_FOR) {
-        node = parse_for(p,  level + 1);
+        node = parse_for(p);
         parser_match(p, TOKEN_RBRACE, "} expected to define a for block");
         parser_advance(p, 1);
     } else {
@@ -721,8 +705,20 @@ AST * parse_statement(Parser *p, int level)
     return node;
 }
 
+// TODO make this more specific
+int is_block(Parser *p)
+{
+    if (p->level == 0) return 1;
+
+    if (parser_peek(p, 0)->type != TOKEN_LBRACE) return 0;
+
+    return 1;
+}
+
 AST * parse_block(Parser *p)
 {
+    if (!is_block(p)) return NULL;
+
     int level = p->level;
     AST *block = create_ast_node(AST_BLOCK);
     block->block.statements = (AST **) malloc(sizeof(AST *));
