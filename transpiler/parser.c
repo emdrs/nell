@@ -485,7 +485,8 @@ AST * parse_command(Parser *p)
         parse_const_def,
         parse_return,
         parse_break,
-        parse_func_exec
+        parse_func_exec,
+        parse_struct_def
     };
 
     AST *node = try_parses(p, parses, parses_count(parses));
@@ -662,8 +663,7 @@ AST * parse_statement(Parser *p)
         parse_switch,
         parse_case,
         parse_while,
-        parse_for,
-        parse_struct_def
+        parse_for
     };
 
     AST *node = try_parses(p, parses, parses_count(parses));
@@ -674,53 +674,6 @@ AST * parse_statement(Parser *p)
     }
 
     return node;
-}
-
-AST * parse_struct_command(Parser *p)
-{
-    ParseFunction parses[] = {
-        parse_var_def,
-        parse_const_def
-    };
-
-    AST *node = try_parses(p, parses, parses_count(parses));
-
-    if (node == NULL) return NULL;
-
-    parser_match(p, TOKEN_SEMICOLON, "; expected to define a command");
-    parser_advance(p, 1);
-
-    AST *command = create_ast_node(AST_COMMAND);
-    command->command = node;
-
-    return command;
-}
-
-AST * parse_struct_def_block(Parser *p)
-{
-    AST *block = create_ast_node(AST_BLOCK);
-    block->block.level = p->level;
-    block->block.statements = array_list_create(sizeof(AST), 1);
-
-    parser_advance(p, 1); // {
-
-    ParseFunction parses[] = {
-        // parse_func_def,
-        parse_struct_command
-    };
-
-    while (parser_peek(p, 0)->type != TOKEN_RBRACE) {
-        AST *node = try_parses(p, parses, parses_count(parses));
-
-        if (node == NULL) {
-            parser_show_error(p);
-            exit(1);
-        }
-
-        array_list_add(block->block.statements, node);
-    }
-    parser_advance(p, 1); // }
-    return block;
 }
 
 int is_struct_def(Parser *p)
@@ -746,10 +699,7 @@ AST * parse_struct_def(Parser *p)
     node->struct_def.name = parser_peek(p, 0)->text;
     parser_advance(p, 1); // identifier
 
-    node->struct_def.block = parse_struct_def_block(p);
-
-    parser_match(p, TOKEN_SEMICOLON, "';' needed to define a struct");
-    parser_advance(p, 1);
+    node->struct_def.block = parse_block(p);
 
     return node;
 }
