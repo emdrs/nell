@@ -147,19 +147,19 @@ void token_show(Token *token)
 
 void skip_whitespaces(Lexer *l)
 {
-    while (l->ch == ' ' || l->ch == '\n' || l->ch == '\t') advance(l);
+    while (l->ch == ' ' || l->ch == '\n' || l->ch == '\t') lexer_advance(l);
 }
 
 void skip_comment(Lexer *l)
 {
     if (l->ch == '/' && l->next_ch == '/') {
-        while (l->ch != '\n' && l->ch != '\0') advance(l);
+        while (l->ch != '\n' && l->ch != '\0') lexer_advance(l);
         skip_whitespaces(l);
     }
     if (l->ch == '/' && l->next_ch == '*') {
-        while (l->ch != '*' || l->next_ch != '/') advance(l);
-        advance(l); // *
-        advance(l); // /
+        while (l->ch != '*' || l->next_ch != '/') lexer_advance(l);
+        lexer_advance(l); // *
+        lexer_advance(l); // /
         skip_whitespaces(l);
     }
 }
@@ -181,21 +181,21 @@ Token get_token(Lexer *l)
     }
 
     if (l->ch == '|' && l->next_ch == '|') {
-        advance(l);
+        lexer_advance(l);
         return (Token){ TOKEN_OR, "||" };
     }
     if (l->ch == '&' && l->next_ch == '&') {
-        advance(l);
+        lexer_advance(l);
         return (Token){ TOKEN_AND, "&&" };
     }
 
     if (l->ch == '+') {
         if (l->next_ch == '+') {
-            advance(l);
+            lexer_advance(l);
             return (Token){ TOKEN_INCREMENT, "++" };
         }
         if (l->next_ch == '=') {
-            advance(l);
+            lexer_advance(l);
             return (Token){ TOKEN_PLUS_ASSIGN, "+=" };
         }
         return (Token){ TOKEN_PLUS, "+" };
@@ -203,11 +203,11 @@ Token get_token(Lexer *l)
 
     if (l->ch == '-') {
         if (l->next_ch == '-') {
-            advance(l);
+            lexer_advance(l);
             return (Token){ TOKEN_DECREMENT, "--" };
         }
         if (l->next_ch == '=') {
-            advance(l);
+            lexer_advance(l);
             return (Token){ TOKEN_MINUS_ASSIGN, "-=" };
         }
         return (Token){ TOKEN_MINUS, "-" };
@@ -215,7 +215,7 @@ Token get_token(Lexer *l)
 
     if (l->ch == '*') {
         if (l->next_ch == '=') {
-            advance(l);
+            lexer_advance(l);
             return (Token){ TOKEN_STAR_ASSIGN, "*=" };
         }
         return (Token){ TOKEN_STAR, "*" };
@@ -223,7 +223,7 @@ Token get_token(Lexer *l)
 
     if (l->ch == '/') {
         if (l->next_ch == '=') {
-            advance(l);
+            lexer_advance(l);
             return (Token){ TOKEN_SLASH_ASSIGN, "/=" };
         }
         return (Token){ TOKEN_SLASH, "/" };
@@ -233,15 +233,15 @@ Token get_token(Lexer *l)
 
     if (l->ch == '>') {
         if (l->next_ch == '=') {
-            advance(l);
+            lexer_advance(l);
             return (Token){ TOKEN_GREATER_EQUALS, ">=" };
         }
         if (l->next_ch == '.') {
-            advance(l);
+            lexer_advance(l);
             return (Token){ TOKEN_GREATER_DOT, ">." };
         }
         if (l->next_ch == '<') {
-            advance(l);
+            lexer_advance(l);
             return (Token){ TOKEN_GREATER_LESS, "><" };
         }
         return (Token){ TOKEN_GREATER, ">" };
@@ -249,7 +249,7 @@ Token get_token(Lexer *l)
     
     if (l->ch == '<') {
         if (l->next_ch == '=') {
-            advance(l);
+            lexer_advance(l);
             return (Token){ TOKEN_LESS_EQUALS, "<=" };
         }
         return (Token){ TOKEN_LESS, "<" };
@@ -257,7 +257,7 @@ Token get_token(Lexer *l)
 
     if (l->ch == '=') {
         if (l->next_ch == '=') {
-            advance(l);
+            lexer_advance(l);
             return (Token){ TOKEN_EQUALS, "==" };
         }
         return (Token){ TOKEN_ASSIGN, "=" };
@@ -265,11 +265,11 @@ Token get_token(Lexer *l)
 
     if (l->ch == '.') {
         if (l->next_ch == '.') {
-            advance(l);
+            lexer_advance(l);
             return (Token){ TOKEN_DOUBLE_DOT, ".." };
         }
         if (l->next_ch == '<') {
-            advance(l);
+            lexer_advance(l);
             return (Token){ TOKEN_DOT_LESS, ".<" };
         }
     }
