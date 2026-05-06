@@ -705,7 +705,7 @@ AST * parse_struct_def_block(Parser *p)
     parser_advance(p, 1); // {
 
     ParseFunction parses[] = {
-        parse_func_def,
+        // parse_func_def,
         parse_struct_command
     };
 

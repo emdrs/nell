@@ -1,4 +1,7 @@
-struct pessoa {
+struct person {
     char name;
-    int age;
+    
+    void speak() {
+        printf("Pessoa falou\n");
+    }
 };
