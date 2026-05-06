@@ -5,6 +5,20 @@
 #ifndef LANGB_H
 #define LANGB_H
 
+// ==================== UTILS ====================
+
+typedef struct {
+    void *data;
+    size_t elementSize;
+    size_t size;
+    size_t capacity;
+} ArrayList;
+
+ArrayList * array_list_create(size_t elementSize, size_t initialCapacity);
+void array_list_add(ArrayList *list, void *element);
+void * array_list_get(ArrayList *list, size_t index);
+void token_list_show(ArrayList *list); 
+
 // ==================== LEXER ====================
 
 typedef struct {
@@ -17,19 +31,6 @@ typedef struct {
 void token_show(Token *token); // YOU NEED TO IMPLEMENT THIS FUNCTION.
 
 typedef struct {
-    void *data;
-    size_t elementSize;
-    size_t size;
-    size_t capacity;
-} ArrayList;
-
-ArrayList* array_list_create(size_t elementSize, size_t initialCapacity);
-void array_list_add(ArrayList *list, void *element);
-void * array_list_get(ArrayList *list, size_t index);
-
-void token_list_show(ArrayList *list); 
-
-typedef struct {
     char *source;
     unsigned int pos;
     unsigned int line;
@@ -38,16 +39,15 @@ typedef struct {
     char next_ch;
 } Lexer;
 
-void advance(Lexer *l);
-void rollback(Lexer *l, int pos);
+void lexer_advance(Lexer *l);
+void lexer_rollback(Lexer *l, int pos);
 
-int is_identifier(Lexer *l);
+int is_char(char ch);
 Token get_identifier(Lexer *l);
 
 int is_digit(char ch);
 Token get_number(Lexer *l);
 
-int is_char(char ch);
 int is_keyword(Lexer *l, char *keyword);
 
 Token get_string(Lexer *l);
@@ -106,7 +106,7 @@ AST * try_parses(Parser *p, ParseFunction functions[], int count);
 
 #ifdef LANGB_IMPLEMENTATION
 
-// ==================== LEXER IMPLEMENTATIONS ====================
+// ==================== UTILS IMPLEMENTATIONS ====================
 
 ArrayList * array_list_create(size_t element_size, size_t initial_capacity) {
     ArrayList *list = (ArrayList *) malloc(sizeof(ArrayList));
@@ -143,7 +143,9 @@ void token_list_show(ArrayList *list)
     printf("\n");
 }
 
-void advance(Lexer *l)
+// ==================== LEXER IMPLEMENTATIONS ====================
+
+void lexer_advance(Lexer *l)
 {
     l->ch = l->source[++l->pos];
     if (l->next_ch != '\0') l->next_ch = l->source[l->pos+1];
@@ -155,7 +157,7 @@ void advance(Lexer *l)
     }
 }
 
-void rollback(Lexer *l, int pos)
+void lexer_rollback(Lexer *l, int pos)
 {
     l->column -= (l->pos - pos) + 1;
     l->pos = pos-1;
