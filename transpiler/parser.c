@@ -39,6 +39,15 @@ ASTNode * parse_type(Parser *p)
     return node;
 }
 
+int is_assign(Token *token)
+{
+    return token->type == TOKEN_ASSIGN       ||
+           token->type == TOKEN_PLUS_ASSIGN  ||
+           token->type == TOKEN_MINUS_ASSIGN ||
+           token->type == TOKEN_STAR_ASSIGN  ||
+           token->type == TOKEN_SLASH_ASSIGN;
+}
+
 ASTNode * parse_var_def(Parser *p)
 {
     if(!is_type(p)) return NULL;
@@ -54,6 +63,27 @@ ASTNode * parse_var_def(Parser *p)
     node->token = token;
     parser_advance(p, 1);
 
+    if (!is_assign(parser_peek(p, 0))) return node;
+
+    return node;
+}
+
+ASTNode * parse_command(Parser *p)
+{
+    ParseFunction parses[] = {
+        parse_var_def
+    };
+
+    ASTNode *node = try_parses(p, parses, parses_count(parses));
+
+    if (node == NULL) {
+        parser_show_error(p);
+        exit(1);
+    }
+
+    parser_match(p, TOKEN_SEMICOLON, "';' needed end a command");
+    parser_advance(p, 1);
+
     return node;
 }
 
@@ -65,9 +95,7 @@ ASTNode * parse(ArrayList *list, char *source, char *file)
     p.file = file;
     p.error_info.progress = -1;
 
-    ASTNode *ast = parse_var_def(&p);
-    parser_match(&p, TOKEN_SEMICOLON, "';' needed to define a variable");
-    parser_advance(&p, 1);
+    ASTNode *ast = parse_command(&p);
 
     Token *t = parser_peek(&p, 0);
     if (t->type != TOKEN_EOF) {

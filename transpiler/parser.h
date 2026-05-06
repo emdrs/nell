@@ -20,6 +20,8 @@ void show_ast_node(ASTNode *node, int indent);
 int is_type(Parser *p);
 ASTNode * parse_type(Parser *p);
 
+int is_assign(Token *token);
+
 int is_var_def(Parser *p);
 ASTNode * parse_var_def(Parser *p);
 
