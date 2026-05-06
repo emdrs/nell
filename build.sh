@@ -1,1 +1,1 @@
-gcc -g transpiler/transpiler.c transpiler/lexer.c transpiler/parser.c -Wall -o build/nell
+gcc -g transpiler/*.c -Wall -o build/nell

@@ -40,6 +40,7 @@ typedef enum {
     TOKEN_CASE,           // case
     TOKEN_DEFAULT,        // default
     TOKEN_RETURN,         // return
+    TOKEN_STRUCT,         // struct
     TOKEN_COMMA,          // ,
     TOKEN_DOUBLE_DOT,     // ..
     TOKEN_GREATER_DOT,    // >.

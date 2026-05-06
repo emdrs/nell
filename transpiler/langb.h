@@ -330,6 +330,10 @@ Token * parser_peek(Parser *p, int offset)
 
 void parser_report_error(Parser *p, Token *token, char *error_msg)
 {
+    if (token == NULL) {
+        printf("Unexpected error.\n");
+        exit(1);
+    }
     int offset = 0;
     // Use token previous EOF and add 1 char offset to better visualization
     if(token->type == TOKEN_EOF) {

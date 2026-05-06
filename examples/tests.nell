@@ -1,7 +1,4 @@
-int a = 10 + a++;
-const int a = 10 + 5;
-a++;
---a;
-random(1, random(10, a++ - 15));
-
-int soma(int a, int b) { return a+ b; }
+struct pessoa {
+    char name;
+    int age;
+};

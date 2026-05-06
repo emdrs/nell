@@ -124,6 +124,9 @@ void token_show(Token *token)
         case TOKEN_RETURN:
             printf("RETURN");
             break;
+        case TOKEN_STRUCT:
+            printf("STRUCT");
+            break;
         case TOKEN_ARROW:
             printf("ARROW");
             break;
@@ -297,6 +300,7 @@ Token get_token(Lexer *l)
     if (is_keyword(l, "default")) return (Token){ TOKEN_DEFAULT, "default" };
     if (is_keyword(l, "return"))  return (Token){ TOKEN_RETURN, "return" };
     if (is_keyword(l, "break"))   return (Token){ TOKEN_BREAK, "break" };
+    if (is_keyword(l, "struct"))  return (Token){ TOKEN_STRUCT, "struct" };
 
     if (is_digit(l->ch)) return get_number(l);
     if (is_char(l->ch)) return get_identifier(l);
