@@ -16,6 +16,9 @@ void token_show(Token *token)
         case TOKEN_FLOAT:
             printf("FLOAT(%s)", token->text);
             break;
+        case TOKEN_STRING:
+            printf("STRING(%s)", token->text);
+            break;
         case TOKEN_ASSIGN:
             printf("ASSIGN");
             break;
@@ -57,9 +60,6 @@ void token_show(Token *token)
             break;
         case TOKEN_RBRACE:
             printf("RBRACE");
-            break;
-        case TOKEN_DOUBLE_COLON:
-            printf("DOUBLE_COLON");
             break;
         case TOKEN_INCREMENT:
             printf("INCREMENT");
@@ -127,14 +127,8 @@ void token_show(Token *token)
         case TOKEN_STRUCT:
             printf("STRUCT");
             break;
-        case TOKEN_ARROW:
-            printf("ARROW");
-            break;
         case TOKEN_COMMA:
             printf("COMMA");
-            break;
-        case TOKEN_STRING:
-            printf("STRING(%s)", token->text);
             break;
         case TOKEN_SWITCH:
             printf("SWITCH");
@@ -178,6 +172,7 @@ Token get_token(Lexer *l)
     switch (l->ch) {
         case ',':  return (Token) { TOKEN_COMMA,     "," };
         case ';':  return (Token) { TOKEN_SEMICOLON, ";" };
+        case ':':  return (Token) { TOKEN_COLON,     ":" };
         case '{':  return (Token) { TOKEN_LBRACE,    "{" };
         case '}':  return (Token) { TOKEN_RBRACE,    "}" };
         case '(':  return (Token) { TOKEN_LPAREN,    "(" };
@@ -192,14 +187,6 @@ Token get_token(Lexer *l)
     if (l->ch == '&' && l->next_ch == '&') {
         advance(l);
         return (Token){ TOKEN_AND, "&&" };
-    }
-
-    if (l->ch == ':') {
-        if (l->next_ch == ':') {
-            advance(l);
-            return (Token){ TOKEN_DOUBLE_COLON, "::" };
-        }
-        return (Token){ TOKEN_COLON, strdup(":") };
     }
 
     if (l->ch == '+') {
@@ -222,10 +209,6 @@ Token get_token(Lexer *l)
         if (l->next_ch == '=') {
             advance(l);
             return (Token){ TOKEN_MINUS_ASSIGN, "-=" };
-        }
-        if (l->next_ch == '>') {
-            advance(l);
-            return (Token){ TOKEN_ARROW, "->" };
         }
         return (Token){ TOKEN_MINUS, "-" };
     }
@@ -291,16 +274,16 @@ Token get_token(Lexer *l)
         }
     }
 
-    if (is_keyword(l, "const"))   return (Token){ TOKEN_CONST, "const" };
-    if (is_keyword(l, "if"))      return (Token){ TOKEN_IF, "if" };
-    if (is_keyword(l, "while"))   return (Token){ TOKEN_WHILE, "while" };
-    if (is_keyword(l, "for"))     return (Token){ TOKEN_FOR, "for" };
-    if (is_keyword(l, "switch"))  return (Token){ TOKEN_SWITCH, "switch" };
-    if (is_keyword(l, "case"))    return (Token){ TOKEN_CASE, "case" };
+    if (is_keyword(l, "const"))   return (Token){ TOKEN_CONST,     "const" };
+    if (is_keyword(l, "if"))      return (Token){ TOKEN_IF,           "if" };
+    if (is_keyword(l, "while"))   return (Token){ TOKEN_WHILE,     "while" };
+    if (is_keyword(l, "for"))     return (Token){ TOKEN_FOR,         "for" };
+    if (is_keyword(l, "switch"))  return (Token){ TOKEN_SWITCH,   "switch" };
+    if (is_keyword(l, "case"))    return (Token){ TOKEN_CASE,       "case" };
     if (is_keyword(l, "default")) return (Token){ TOKEN_DEFAULT, "default" };
-    if (is_keyword(l, "return"))  return (Token){ TOKEN_RETURN, "return" };
-    if (is_keyword(l, "break"))   return (Token){ TOKEN_BREAK, "break" };
-    if (is_keyword(l, "struct"))  return (Token){ TOKEN_STRUCT, "struct" };
+    if (is_keyword(l, "return"))  return (Token){ TOKEN_RETURN,   "return" };
+    if (is_keyword(l, "break"))   return (Token){ TOKEN_BREAK,     "break" };
+    if (is_keyword(l, "struct"))  return (Token){ TOKEN_STRUCT,   "struct" };
 
     if (is_digit(l->ch)) return get_number(l);
     if (is_char(l->ch)) return get_identifier(l);
