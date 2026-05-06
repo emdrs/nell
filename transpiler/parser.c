@@ -80,11 +80,6 @@ int is_assign(Token *token)
            token->type == TOKEN_SLASH_ASSIGN;
 }
 
-int is_expression(Parser *p)
-{
-    return is_factor(parser_peek(p, 0));
-}
-
 ASTNode * parse_var_def(Parser *p)
 {
     if(!is_type(p)) return NULL;
@@ -109,7 +104,8 @@ ASTNode * parse_var_def(Parser *p)
     
     parser_advance(p, 1); // =
     
-    if (!is_expression(p)) {
+    token = parser_peek(p, 0);
+    if (!is_factor(token)) {
         parser_set_error_and_abort(p, 3.0f/4.0f,
                 "Expression needed to initializa a variable", token);
     }
