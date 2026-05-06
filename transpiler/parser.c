@@ -485,8 +485,7 @@ AST * parse_command(Parser *p)
         parse_const_def,
         parse_return,
         parse_break,
-        parse_func_exec,
-        parse_struct_def
+        parse_func_exec
     };
 
     AST *node = try_parses(p, parses, parses_count(parses));
@@ -663,7 +662,8 @@ AST * parse_statement(Parser *p)
         parse_switch,
         parse_case,
         parse_while,
-        parse_for
+        parse_for,
+        parse_struct_def
     };
 
     AST *node = try_parses(p, parses, parses_count(parses));
@@ -674,20 +674,6 @@ AST * parse_statement(Parser *p)
     }
 
     return node;
-}
-
-int is_struct_def(Parser *p)
-{
-    if(parser_peek(p, 0)->type != TOKEN_STRUCT) return 0;
-    Token *token = parser_peek(p, 1);
-    if(!is_name(token))
-        parser_set_error_and_abort(p, 1.0f/3.0f, "Name needed on struct definition",
-                token);
-    if((token = parser_peek(p, 2))->type != TOKEN_LBRACE)
-        parser_set_error_and_abort(p, 2.0f/3.0f, "Block needed on struct definition",
-                token);
-
-    return 1;
 }
 
 AST * parse_struct_command(Parser *p)
@@ -737,6 +723,20 @@ AST * parse_struct_def_block(Parser *p)
     return block;
 }
 
+int is_struct_def(Parser *p)
+{
+    if(parser_peek(p, 0)->type != TOKEN_STRUCT) return 0;
+    Token *token = parser_peek(p, 1);
+    if(!is_name(token))
+        parser_set_error_and_abort(p, 1.0f/3.0f, "Name needed on struct definition",
+                token);
+    if((token = parser_peek(p, 2))->type != TOKEN_LBRACE)
+        parser_set_error_and_abort(p, 2.0f/3.0f, "Block needed on struct definition",
+                token);
+
+    return 1;
+}
+
 AST * parse_struct_def(Parser *p)
 {
     if (!is_struct_def(p)) return NULL;
@@ -747,6 +747,9 @@ AST * parse_struct_def(Parser *p)
     parser_advance(p, 1); // identifier
 
     node->struct_def.block = parse_struct_def_block(p);
+
+    parser_match(p, TOKEN_SEMICOLON, "';' needed to define a struct");
+    parser_advance(p, 1);
 
     return node;
 }
