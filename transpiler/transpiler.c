@@ -242,7 +242,15 @@ char * generate_code(AST *ast)
         case AST_BREAK:
             asprintf(&result, "break");
             break;
+        case AST_STRUCT: {
+            char *block = generate_code(ast->struct_def.block);
+            if (ast->case_statement.is_default) {
+                asprintf(&result, "struct %s %s", ast->struct_def.name, block);
+            }
+            free(block);
+            break;
         }
+    }
 
     return result;
 }
