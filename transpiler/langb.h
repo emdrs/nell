@@ -79,6 +79,7 @@ typedef struct {
 typedef struct ASTNode {
     int type;
     Token *token;
+    int pointer_level;
     
     struct ASTNode *left;
     struct ASTNode *right;

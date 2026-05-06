@@ -12,9 +12,22 @@ void show_ast_node(ASTNode *node, int indent)
 
     print_indent(indent);
 
+    char *old;
+
     switch (node->type) {
+        case AST_NUMBER: {
+            printf("NUMBER(%s)\n", node->token->text);
+            break;
+        }
         case AST_TYPE: {
-            printf("TYPE(%s)\n", node->token->text);
+            char *name = strdup(node->token->text);
+            for (int i = 0; i < node->pointer_level; i++) {
+                old = name;
+                asprintf(&name, "%s%c", name, '*');
+                free(old);
+            }
+            printf("TYPE(%s)\n", name);
+            free(name);
             break;
         }
         case AST_VAR_DEF: {
@@ -35,8 +48,27 @@ ASTNode * parse_type(Parser *p)
 
     ASTNode *node = create_ast_node(AST_TYPE);
     node->token = parser_peek(p, 0);
-    parser_advance(p, 1);
+    parser_advance(p, 1); // name
+
+    while (parser_peek(p, 0)->type == TOKEN_STAR) {
+        node->pointer_level++;
+        parser_advance(p, 1); // *
+    }
+
     return node;
+}
+
+int is_factor(Token *token) { return is_number(token) || is_name(token); }
+
+ASTNode * parse_factor(Parser *p)
+{
+    Token *token = parser_peek(p, 0);
+    if(!is_factor(token)) return NULL;
+
+    if (token->type == TOKEN_INT || token->type == TOKEN_FLOAT) return parse_number(p);
+    if (is_name(token)) return parse_name(p);
+
+    return NULL;
 }
 
 int is_assign(Token *token)
@@ -46,6 +78,11 @@ int is_assign(Token *token)
            token->type == TOKEN_MINUS_ASSIGN ||
            token->type == TOKEN_STAR_ASSIGN  ||
            token->type == TOKEN_SLASH_ASSIGN;
+}
+
+int is_expression(Parser *p)
+{
+    return is_factor(parser_peek(p, 0));
 }
 
 ASTNode * parse_var_def(Parser *p)
@@ -61,9 +98,23 @@ ASTNode * parse_var_def(Parser *p)
                 token);
 
     node->token = token;
-    parser_advance(p, 1);
+    parser_advance(p, 1); // name
 
-    if (!is_assign(parser_peek(p, 0))) return node;
+    token = parser_peek(p, 0);
+    if (!is_assign(token)) return node;
+
+    if (token->type != TOKEN_ASSIGN) 
+        parser_set_error_and_abort(p, 2.0f/4.0f,
+                "Assign operator not allowed to define a variable", token);
+    
+    parser_advance(p, 1); // =
+    
+    if (!is_expression(p)) {
+        parser_set_error_and_abort(p, 3.0f/4.0f,
+                "Expression needed to initializa a variable", token);
+    }
+
+    node->right = parse_factor(p);
 
     return node;
 }
