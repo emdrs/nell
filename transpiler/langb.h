@@ -76,11 +76,22 @@ typedef struct {
     ErrorInfo error_info;
 } Parser;
 
-typedef struct AST AST; // YOU NEED TO IMPLEMENT THIS
+typedef struct ASTNode {
+    int type;
+    Token *token;
+    
+    struct ASTNode *left;
+    struct ASTNode *right;
+    ArrayList *children;
+    
+    char *resolved_type;
+} ASTNode;
 
-typedef AST * (*ParseFunction)(Parser *);
+ASTNode * create_ast_node(int type);
 
-AST * create_ast_node(int type);
+typedef ASTNode * (*ParseFunction)(Parser *);
+
+ASTNode * create_ast_node(int type);
 
 void parser_set_error(Parser *p, float progress, char *error_message, Token *token, int priority);
 void parser_set_error_and_abort(Parser *p, float progress, char *error_message, Token *token);
@@ -96,11 +107,11 @@ int is_number(Token *token);
 int is_string(Token *token);
 int is_name(Token *token);
 
-AST * parse_number(Parser *p);
-AST * parse_name(Parser *p);
-AST * parse_string(Parser *p);
+ASTNode * parse_number(Parser *p);
+ASTNode * parse_name(Parser *p);
+ASTNode * parse_string(Parser *p);
 
-AST * try_parses(Parser *p, ParseFunction functions[], int count);
+ASTNode * try_parses(Parser *p, ParseFunction functions[], int count);
 
 #endif // LANGB_H
 
@@ -161,7 +172,7 @@ void lexer_rollback(Lexer *l, int pos)
 {
     l->column -= (l->pos - pos) + 1;
     l->pos = pos-1;
-    advance(l);
+    lexer_advance(l);
 }
 
 Token get_number(Lexer *l)
@@ -169,12 +180,12 @@ Token get_number(Lexer *l)
     int start = l->pos;
     int is_float = 0;
 
-    while (is_digit(l->next_ch)) advance(l);
+    while (is_digit(l->next_ch)) lexer_advance(l);
 
     if (l->next_ch == '.') {
-        advance(l);
+        lexer_advance(l);
         if (l->next_ch == '.' || l->next_ch == '<') {
-            rollback(l, l->pos - 1);
+            lexer_rollback(l, l->pos - 1);
         } else {
             is_float = 1;
             if (!is_digit(l->next_ch)) {
@@ -182,7 +193,7 @@ Token get_number(Lexer *l)
                 exit(1);
             }
 
-            while (is_digit(l->next_ch)) advance(l);
+            while (is_digit(l->next_ch)) lexer_advance(l);
         }
     }
 
@@ -207,7 +218,7 @@ Token get_identifier(Lexer *l)
 {
     int start = l->pos;
 
-    while (is_char(l->next_ch) || is_digit(l->next_ch)) advance(l);
+    while (is_char(l->next_ch) || is_digit(l->next_ch)) lexer_advance(l);
 
     return (Token) {
         TOKEN_IDENTIFIER,
@@ -219,12 +230,12 @@ int is_keyword(Lexer *l, char *keyword)
 {
     if (l->ch == keyword[0]) {
         int start = l->pos;
-        while (is_char(l->next_ch)) advance(l);
+        while (is_char(l->next_ch)) lexer_advance(l);
 
         int is =
             strcmp(keyword, strndup(l->source + start, (l->pos - start) + 1)) == 0;
 
-        if (!is) rollback(l, start);
+        if (!is) lexer_rollback(l, start);
         return is;
     }
     return 0;
@@ -232,12 +243,12 @@ int is_keyword(Lexer *l, char *keyword)
 
 Token get_string(Lexer *l)
 {
-    advance(l);
+    lexer_advance(l);
     int start = l->pos;
     while (1) {
         if (l->ch == '\\') {
-            advance(l);
-            advance(l);
+            lexer_advance(l);
+            lexer_advance(l);
             continue;
         }
 
@@ -247,7 +258,7 @@ Token get_string(Lexer *l)
             printf("String withous '\"' on end");
             exit(1);
         }
-        advance(l);
+        lexer_advance(l);
     }
     return (Token) { TOKEN_STRING, strndup(l->source + start, (l->pos - start)) };
 }
@@ -274,7 +285,7 @@ ArrayList * tokenize(char *source)
 
         array_list_add(list, &tk);
 
-        advance(&l);
+        lexer_advance(&l);
     } while(tk.type != TOKEN_EOF);
 
     return list;
@@ -304,9 +315,10 @@ char * get_token_source_line(Parser *p, Token *token)
     }
 }
 
-AST * create_ast_node(int type)
+ASTNode * create_ast_node(int type)
 {
-    AST *node = (AST *) malloc(sizeof(AST));
+    ASTNode *node = (ASTNode *) malloc(sizeof(ASTNode));
+    memset(node, 0, sizeof(ASTNode));
     node->type = type;
     return node;
 }
@@ -390,39 +402,36 @@ int is_string(Token *token)
     return token->type == TOKEN_STRING;
 }
 
-AST * parse_number(Parser *p)
+ASTNode * parse_number(Parser *p)
 {
-    AST *node = create_ast_node(AST_NUMBER);
-    Token *number = parser_peek(p, 0);
-    node->number.type = strdup(number->type == TOKEN_INT ? "int" : "float");
-    node->number.value = number->text;
+    ASTNode *node = create_ast_node(AST_NUMBER);
+    node->token = parser_peek(p, 0);
     parser_advance(p, 1);
 
     return node;
 }
 
-AST * parse_name(Parser *p)
+ASTNode * parse_name(Parser *p)
 {
-    AST *node = create_ast_node(AST_NAME);
-    node->name = parser_peek(p, 0)->text;
+    ASTNode *node = create_ast_node(AST_NAME);
+    node->token = parser_peek(p, 0);
     parser_advance(p, 1);
 
     return node;
 }
 
-AST * parse_string(Parser *p)
+ASTNode * parse_string(Parser *p)
 {
-    AST *node = create_ast_node(AST_STRING);
-    Token *str = parser_peek(p, 0);
-    node->str = str->text;
+    ASTNode *node = create_ast_node(AST_STRING);
+    node->token = parser_peek(p, 0);
     parser_advance(p, 1);
 
     return node;
 }
 
-AST * try_parses(Parser *p, ParseFunction functions[], int count)
+ASTNode * try_parses(Parser *p, ParseFunction functions[], int count)
 {
-    AST *node = NULL;
+    ASTNode *node = NULL;
     for (int i = 0; node == NULL && i < count; i++) node = functions[i](p);
 
     return node;
