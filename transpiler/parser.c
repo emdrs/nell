@@ -31,6 +31,8 @@ int is_type(Parser *p) { return is_name(parser_peek(p, 0)); }
 
 ASTNode * parse_type(Parser *p)
 {
+    if(!is_type(p)) return NULL;
+
     ASTNode *node = create_ast_node(AST_TYPE);
     node->token = parser_peek(p, 0);
     parser_advance(p, 1);

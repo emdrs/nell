@@ -17,6 +17,7 @@ void show_ast_node(ASTNode *node, int indent);
 
 // =================== GRAMMAR ===================
 
+int is_type(Parser *p);
 ASTNode * parse_type(Parser *p);
 
 int is_var_def(Parser *p);
