@@ -243,11 +243,25 @@ char * generate_code(AST *ast)
             asprintf(&result, "break");
             break;
         case AST_STRUCT: {
-            char *block = generate_code(ast->struct_def.block);
-            if (ast->case_statement.is_default) {
-                asprintf(&result, "struct %s %s", ast->struct_def.name, block);
+            char *attributes = NULL;
+            char *old;
+            AST *statement;
+            for (int i = 0; i < ast->struct_def.block->block.statements->size; i++) {
+                statement = array_list_get(ast->struct_def.block->block.statements, i);
+                char *statement_code = generate_code(statement);
+
+                if (attributes == NULL) {
+                    asprintf(&attributes, "%s", statement_code);
+                } else {
+                    old = attributes;
+                    asprintf(&attributes, "%s %s", attributes, statement_code);
+                    free(old);
+                }
+                free(statement_code);
             }
-            free(block);
+            asprintf(&result, "struct %s { %s };", ast->struct_def.name, attributes);
+
+            free(attributes);
             break;
         }
     }
