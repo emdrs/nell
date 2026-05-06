@@ -19,6 +19,10 @@ void show_ast_node(ASTNode *node, int indent)
             printf("NUMBER(%s)\n", node->token->text);
             break;
         }
+        case AST_NAME: {
+            printf("NAME(%s)\n", node->token->text);
+            break;
+        }
         case AST_TYPE: {
             char *name = strdup(node->token->text);
             for (int i = 0; i < node->pointer_level; i++) {
