@@ -13,6 +13,7 @@ typedef enum {
     AST_CONST_DEF,
     AST_UPDATE_IDENTIFIER,
     AST_BLOCK,
+    AST_STRUCT,
     AST_COMMAND,
     AST_IF,
     AST_SWITCH,
@@ -123,6 +124,12 @@ typedef struct AST {
             ArrayList *params;
         } func_exec;
 
+        struct {
+            char *name;
+            ArrayList *attributes;
+            AST *block;
+        } struct_def;
+
         struct AST *return_statement;
     };
 } AST;
@@ -183,6 +190,9 @@ AST * parse_for(Parser *p);
 int is_func_def(Parser *p);
 AST * parse_func_def(Parser *p);
 AST * parse_func_def_param(Parser *p);
+
+int is_struct_def(Parser *p);
+AST * parse_struct_def(Parser *p);
 
 AST * parse_statement(Parser *p);
 

@@ -135,7 +135,11 @@ void show_ast(AST* node, int indent)
             printf("BREAK\n");
             break;
         }
-    }
+        case AST_STRUCT:
+            printf("STRUCT(%s)\n", node->struct_def.name);
+            show_ast(node->struct_def.block, indent + 1);
+            break;
+        }
 }
 
 int is_var_def(Parser *p)
@@ -481,7 +485,8 @@ AST * parse_command(Parser *p)
         parse_const_def,
         parse_return,
         parse_break,
-        parse_func_exec
+        parse_func_exec,
+        parse_struct_def
     };
 
     AST *node = try_parses(p, parses, parses_count(parses));
@@ -671,6 +676,81 @@ AST * parse_statement(Parser *p)
     return node;
 }
 
+int is_struct_def(Parser *p)
+{
+    if(parser_peek(p, 0)->type != TOKEN_STRUCT) return 0;
+    Token *token = parser_peek(p, 1);
+    if(!is_name(token))
+        parser_set_error_and_abort(p, 1.0f/3.0f, "Name needed on struct definition",
+                token);
+    if((token = parser_peek(p, 2))->type != TOKEN_LBRACE)
+        parser_set_error_and_abort(p, 2.0f/3.0f, "Block needed on struct definition",
+                token);
+
+    return 1;
+}
+
+AST * parse_struct_command(Parser *p)
+{
+    ParseFunction parses[] = {
+        parse_var_def,
+        parse_const_def
+    };
+
+    AST *node = try_parses(p, parses, parses_count(parses));
+
+    if (node == NULL) return NULL;
+
+    parser_match(p, TOKEN_SEMICOLON, "; expected to define a command");
+    parser_advance(p, 1);
+
+    AST *command = create_ast_node(AST_COMMAND);
+    command->command = node;
+
+    return command;
+}
+
+AST * parse_struct_def_block(Parser *p)
+{
+    AST *block = create_ast_node(AST_BLOCK);
+    block->block.level = p->level;
+    block->block.statements = array_list_create(sizeof(AST), 1);
+
+    parser_advance(p, 1); // {
+
+    ParseFunction parses[] = {
+        parse_func_def,
+        parse_struct_command
+    };
+
+    while (parser_peek(p, 0)->type != TOKEN_RBRACE) {
+        AST *node = try_parses(p, parses, parses_count(parses));
+
+        if (node == NULL) {
+            parser_show_error(p);
+            exit(1);
+        }
+
+        array_list_add(block->block.statements, node);
+    }
+    parser_advance(p, 1); // }
+    return block;
+}
+
+AST * parse_struct_def(Parser *p)
+{
+    if (!is_struct_def(p)) return NULL;
+    parser_advance(p, 1); // struct
+
+    AST *node = create_ast_node(AST_STRUCT);
+    node->struct_def.name = parser_peek(p, 0)->text;
+    parser_advance(p, 1); // identifier
+
+    node->struct_def.block = parse_struct_def_block(p);
+
+    return node;
+}
+
 // TODO make this more specific
 int is_block(Parser *p)
 {
@@ -709,8 +789,10 @@ AST * parse_block(Parser *p)
 
 AST * parse(ArrayList *list, char *source, char *file)
 {
-    Parser p = { list, 0, source, file, 0, 0, 0, 0 };
-
+    Parser p = {0}; 
+    p.list = list;
+    p.source = source;
+    p.file = file;
     p.error_info.progress = -1;
 
     AST *ast = parse_block(&p);
