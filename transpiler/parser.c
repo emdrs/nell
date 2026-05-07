@@ -34,6 +34,18 @@ void show_ast_node(ASTNode *node, int indent)
             free(name);
             break;
         }
+        case AST_EXPRESSION: {
+            if (node->token != NULL) {
+                printf("EXPRESSION(%s)\n", node->token->text);
+                show_ast_node(node->left, indent + 1);
+                show_ast_node(node->right, indent + 1);
+                break;
+            }
+
+            printf("EXPRESSION\n");
+            show_ast_node(node->left, indent + 1);
+            break;
+        }
         case AST_VAR_DEF: {
             printf("VAR_DEF(%s)\n", node->token->text);
             show_ast_node(node->left, indent+1);
@@ -104,6 +116,39 @@ ASTNode * parse_factor(Parser *p)
     return NULL;
 }
 
+int is_operator(Token *token)
+{
+    return token->type == TOKEN_MINUS ||
+           token->type == TOKEN_PLUS  ||
+           token->type == TOKEN_STAR  ||
+           token->type == TOKEN_SLASH;
+}
+
+ASTNode * parse_expression(Parser *p)
+{
+    Token *token = parser_peek(p, 0);
+
+    ASTNode *factor = parse_factor(p);
+
+    if (factor == NULL) {
+        parser_set_error(p, 0, "Factor needed on expression", token, 0);
+        return NULL;
+    }
+
+    token = parser_peek(p, 0);
+
+    if (!is_operator(token)) return factor;
+    parser_advance(p, 1); // operator
+
+    ASTNode *expression = create_ast_node(AST_EXPRESSION);
+    expression->left = factor;
+    expression->token = token;
+    expression->right = parse_expression(p);
+
+    return expression;
+}
+
+
 int is_assign(Token *token)
 {
     return token->type == TOKEN_ASSIGN       ||
@@ -136,13 +181,13 @@ ASTNode * parse_var_def(Parser *p)
                 "Assign operator not allowed to define a variable", token);
     
     parser_advance(p, 1); // =
-    
+
     token = parser_peek(p, 0);
-    if (!is_factor(token))
+    node->right = parse_expression(p);
+    
+    if (node->right == NULL)
         parser_set_error_and_abort(p, 3.0f/4.0f,
                 "Expression needed to initializa a variable", token);
-
-    node->right = parse_factor(p);
 
     return node;
 }
@@ -186,11 +231,11 @@ ASTNode * parse_const_def(Parser *p)
     parser_advance(p, 1); // =
     
     token = parser_peek(p, 0);
-    if (!is_factor(token))
+    node->right = parse_factor(p);
+
+    if (node->right == NULL)
         parser_set_error_and_abort(p, 4.0f/4.0f, "Expression needed to define a const",
                 token);
-
-    node->right = parse_factor(p);
 
     return node;
 }
