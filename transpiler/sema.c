@@ -58,7 +58,7 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             sema_analize_node(sema, node->left);
 
             if (node->right != NULL) {
-                if (sema_analize_node(sema, node->right)) return 0;
+                if (!sema_analize_node(sema, node->right)) return 0;
 
                 if (!compare_types(node->left->resolved_type, node->right->resolved_type)) {
                     sema_report_error(sema, node->left->token, "Incompatible types");
@@ -116,8 +116,6 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
                         node->pointer_level, node->token);
 
             sema_scope_push(sema, node->token->text);
-            for (int i = 0; i < node->children->size; i++)
-                sema_analize_node(sema, array_list_get(node->children, i));
             sema_analize_node(sema, node->right);
             sema_scope_pop(sema);
 
