@@ -46,6 +46,23 @@ void show_ast_node(ASTNode *node, int indent)
             show_ast_node(node->right, indent+1);
             break;
         }
+        case AST_FUNC_DEF_PARAM: {
+            printf("PARAM\n");
+            show_ast_node(node->left, indent+1);
+            print_indent(indent + 1);
+            printf("NAME(%s)\n", node->token->text);
+            break;
+        }
+        case AST_FUNC_DEF: {
+            printf("FUNC_DEF(%s)\n", node->token->text);
+            show_ast_node(node->left, indent + 1);
+            print_indent(indent+1);
+            printf("PARAMS:\n");
+            for (int i = 0; i < node->children->size; i++)
+                show_ast_node(array_list_get(node->children, i), indent+2);
+            show_ast_node(node->right, indent + 1);
+            break;
+        }
         case AST_BLOCK: {
             printf("BLOCK\n");
             for (int i = 0; i < node->children->size; i++)
