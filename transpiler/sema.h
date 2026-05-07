@@ -3,6 +3,7 @@
 
 typedef enum {
     SK_VARIABLE,
+    SK_CONSTANT,
     SK_STRUCT
 } SymbolKind;
 

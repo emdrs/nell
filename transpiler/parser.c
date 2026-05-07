@@ -40,6 +40,12 @@ void show_ast_node(ASTNode *node, int indent)
             show_ast_node(node->right, indent+1);
             break;
         }
+        case AST_CONST_DEF: {
+            printf("CONST_DEF(%s)\n", node->token->text);
+            show_ast_node(node->left, indent+1);
+            show_ast_node(node->right, indent+1);
+            break;
+        }
         case AST_BLOCK: {
             printf("BLOCK\n");
             for (int i = 0; i < node->children->size; i++)
@@ -50,11 +56,11 @@ void show_ast_node(ASTNode *node, int indent)
 }
 
 // name, struct name, type (*name)(type, type)
-int is_type(Parser *p) { return is_name(parser_peek(p, 0)); }
+int is_type(Parser *p, int offset) { return is_name(parser_peek(p, offset)); }
 
 ASTNode * parse_type(Parser *p)
 {
-    if(!is_type(p)) return NULL;
+    if(!is_type(p, 0)) return NULL;
 
     ASTNode *node = create_ast_node(AST_TYPE);
     node->token = parser_peek(p, 0);
@@ -92,7 +98,7 @@ int is_assign(Token *token)
 
 ASTNode * parse_var_def(Parser *p)
 {
-    if(!is_type(p)) return NULL;
+    if(!is_type(p, 0)) return NULL;
 
     ASTNode *node = create_ast_node(AST_VAR_DEF);
     node->left = parse_type(p);
@@ -115,10 +121,57 @@ ASTNode * parse_var_def(Parser *p)
     parser_advance(p, 1); // =
     
     token = parser_peek(p, 0);
-    if (!is_factor(token)) {
+    if (!is_factor(token))
         parser_set_error_and_abort(p, 3.0f/4.0f,
                 "Expression needed to initializa a variable", token);
-    }
+
+    node->right = parse_factor(p);
+
+    return node;
+}
+
+int is_const_def(Parser *p)
+{
+    if(parser_peek(p, 0)->type != TOKEN_CONST) return 0;
+    return 1;
+}
+
+ASTNode * parse_const_def(Parser *p)
+{
+    if (!is_const_def(p)) return NULL;
+
+    parser_advance(p, 1); // const
+
+    if(!is_type(p, 0))
+        parser_set_error_and_abort(p, 1.0f/5.0f, "Type needed to define a const", parser_peek(p, 1));
+
+    ASTNode *node = create_ast_node(AST_CONST_DEF);
+    node->left = parse_type(p);
+
+    Token *token = parser_peek(p, 0);
+    if(!is_name(token))
+        parser_set_error_and_abort(p, 2.0f/5.0f, "Name needed to define a const",
+                token);
+
+    node->token = token;
+    parser_advance(p, 1); // name
+
+    token = parser_peek(p, 0);
+    if (!is_assign(token)) {
+        parser_set_error_and_abort(p, 3.0f/5.0f, "Assign is needed to define a const",
+                token);
+    };
+
+    if (token->type != TOKEN_ASSIGN) 
+        parser_set_error_and_abort(p, 3.0f/5.0f,
+                "Assign operator not allowed to define a const", token);
+    
+    parser_advance(p, 1); // =
+    
+    token = parser_peek(p, 0);
+    if (!is_factor(token))
+        parser_set_error_and_abort(p, 4.0f/4.0f, "Expression needed to define a const",
+                token);
 
     node->right = parse_factor(p);
 
@@ -128,7 +181,8 @@ ASTNode * parse_var_def(Parser *p)
 ASTNode * parse_command(Parser *p)
 {
     ParseFunction parses[] = {
-        parse_var_def
+        parse_var_def,
+        parse_const_def
     };
 
     ASTNode *node = try_parses(p, parses, parses_count(parses));

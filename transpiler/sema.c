@@ -47,5 +47,19 @@ void sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
                         node->pointer_level, node->token);
             break;
         }
+        case AST_CONST_DEF: {
+            if (sema_check_node_type(sema, node->left) == NULL) break;
+
+            if (node->right != NULL) {
+                sema_analize_node(sema, node->right);
+                if (strcmp(node->left->token->text, node->right->resolved_type) != 0) {
+                    sema_report_error(sema, node->right->token, "Incompatible types");
+                }
+            }
+
+            sema_define(sema, node->token->text, SK_CONSTANT, node->left->token->text,
+                        node->pointer_level, node->token);
+            break;
+        }
     }
 }

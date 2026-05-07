@@ -9,6 +9,7 @@ typedef enum {
     AST_STRING,            /*NEEDED*/
     AST_TYPE,
     AST_VAR_DEF,
+    AST_CONST_DEF,
     AST_BLOCK,
 } ASTType;
 
@@ -18,12 +19,19 @@ void show_ast_node(ASTNode *node, int indent);
 
 // =================== GRAMMAR ===================
 
-int is_type(Parser *p);
+int is_type(Parser *p, int offset);
 ASTNode * parse_type(Parser *p);
 
 int is_assign(Token *token);
 
 int is_var_def(Parser *p);
 ASTNode * parse_var_def(Parser *p);
+
+int is_const_def(Parser *p);
+ASTNode * parse_const_def(Parser *p);
+
+ASTNode * parse_command(Parser *p);
+
+ASTNode * parse_statement(Parser *p);
 
 #endif
