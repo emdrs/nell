@@ -51,12 +51,71 @@ void compile_code(char *code_path)
     free(command);
 }
 
-char * generate_code(ASTNode *ast)
+char * generate_code(ASTNode *node, int level)
 {
-    if(ast == NULL) return strdup("");
-    char *result = NULL;
+    if(node == NULL) return NULL;
 
-    switch (ast->type) { }
+    char *result = NULL;
+    char *old = NULL;
+
+
+    switch (node->type) {
+        case AST_NUMBER: {
+            asprintf(&result, "%s", node->token->text);
+            break;
+        }
+        case AST_TYPE: {
+            asprintf(&result, "%s", node->token->text);
+            break;
+        }
+        case AST_NAME: {
+            asprintf(&result, "%s", node->token->text);
+            break;
+        }
+        case AST_VAR_DEF: {
+            char *type = generate_code(node->left, level);
+            char *value = generate_code(node->right, level);
+            if (value == NULL)
+                asprintf(&result, "%s %s;", type, node->token->text);
+            else
+                asprintf(&result, "%s %s = %s;", type, node->token->text, value);
+
+            free(type);
+            free(value);
+            break;
+        }
+        case AST_CONST_DEF: {
+            char *type = generate_code(node->left, level);
+            char *value = generate_code(node->right, level);
+
+            asprintf(&result, "const %s %s = %s;", type, node->token->text, value);
+
+            free(type);
+            free(value);
+            break;
+        }
+        case AST_BLOCK: {
+            for (int i = 0; i < node->children->size; i++) {
+                char *statement =
+                    generate_code(array_list_get(node->children, i), level+1);
+                if (result == NULL)
+                    asprintf(&result, "%s", statement);
+                else {
+                    old = result;
+                    asprintf(&result, "%s %s", result, statement);
+                    free(old);
+                }
+
+                free(statement);
+            }
+            if (level > 0) {
+                old = result;
+                asprintf(&result, "{ %s }", result);
+                free(old);
+            }
+            break;
+        }
+    }
 
     return result;
 }
@@ -83,15 +142,15 @@ int main(int argc, char *argv[])
 
     sema_analize(argv[1], source, ast);
     
-    // char *code = generate_code(ast);
-    //
-    // printf("\n");
-    //
-    // printf("source: %s\n", source);
-    //
-    // printf("Ccode:  %s\n", code);
-    //
-    // write_file("out.c", code);
+    char *code = generate_code(ast, 0);
+
+    printf("\n");
+
+    printf("source:\n%s\n", source);
+
+    printf("Ccode:\n%s\n", code);
+
+    write_file("out.c", code);
 
     return 0;
 }
