@@ -197,9 +197,83 @@ ASTNode * parse_command(Parser *p)
     return node;
 }
 
+ASTNode * parse_func_def_param(Parser *p)
+{
+    ASTNode *type = parse_type(p);
+
+    if (type == NULL)
+        parser_set_error_and_abort(p, 0, "Type needed on parameter definition",
+                parser_peek(p, 0));
+
+    ASTNode *name = parse_name(p);
+
+    if (name == NULL)
+        parser_set_error_and_abort(p, 0, "Name needed on parameter definition",
+                parser_peek(p, 0));
+
+    ASTNode *node = create_ast_node(AST_FUNC_DEF_PARAM);
+    node->left = type;
+    node->token = name->token;
+
+    return node;
+}
+
+ArrayList * parse_func_def_params(Parser *p)
+{
+    Token *token = parser_peek(p, 0);
+    if (token->type != TOKEN_LPAREN) return NULL;
+
+    parser_advance(p, 1); // (
+
+    ArrayList *params = array_list_create(sizeof(ASTNode), 1);
+
+    while (parser_peek(p, 0)->type != TOKEN_RPAREN) {
+        array_list_add(params, parse_func_def_param(p));
+
+        token = parser_peek(p, 0);
+        if (token->type == TOKEN_COMMA) {
+            parser_advance(p, 1); // ,
+            continue;
+        }
+
+        if (token->type != TOKEN_RPAREN)
+            parser_set_error_and_abort(p, 2.0f/3.0f,
+                    "')' needed to end parameters definition", token);
+    }
+
+    parser_advance(p, 1); // )
+    
+    return params;
+}
+
+ASTNode * parse_func_def(Parser *p)
+{
+    ASTNode *type = parse_type(p);
+
+    if (type == NULL) return NULL;
+
+    ASTNode *name = parse_name(p);
+
+    if (name == NULL) return NULL;
+
+    ArrayList *params = parse_func_def_params(p);
+
+    if (params == NULL) return NULL;
+
+    ASTNode *node = create_ast_node(AST_FUNC_DEF);
+    node->left = type;
+    node->token = name->token;
+    node->children = params;
+    node->right = parse_block(p);
+
+    return node;
+
+}
+
 ASTNode * parse_statement(Parser *p)
 {
     ParseFunction parses[] = {
+        parse_func_def,
         parse_command
     };
 
@@ -220,7 +294,7 @@ ASTNode * parse_block(Parser *p)
     };
 
     int is_root = p->level == 0;
-    if (!is_root) parser_match(p, TOKEN_SEMICOLON, "'{' needed start a block");
+    if (!is_root) parser_match(p, TOKEN_LBRACE, "'{' needed start a block");
 
     ASTNode *block = create_ast_node(AST_BLOCK);
     block->children = array_list_create(sizeof(ASTNode), 1);
@@ -238,7 +312,7 @@ ASTNode * parse_block(Parser *p)
         array_list_add(block->children, node);
     }
 
-    if (!is_root) parser_match(p, TOKEN_SEMICOLON, "'}' needed end a block");
+    if (!is_root) parser_match(p, TOKEN_RBRACE, "'}' needed end a block");
 
     p->level--;
 

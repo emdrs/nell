@@ -10,6 +10,8 @@ typedef enum {
     AST_TYPE,
     AST_VAR_DEF,
     AST_CONST_DEF,
+    AST_FUNC_DEF,
+    AST_FUNC_DEF_PARAM,
     AST_BLOCK,
 } ASTType;
 
@@ -33,5 +35,7 @@ ASTNode * parse_const_def(Parser *p);
 ASTNode * parse_command(Parser *p);
 
 ASTNode * parse_statement(Parser *p);
+
+ASTNode * parse_block(Parser *p);
 
 #endif
