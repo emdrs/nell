@@ -1,2 +1,7 @@
 float a = 10.5;
 const int b = a;
+
+
+int soma(int a, int b) {
+    int res = a;
+}

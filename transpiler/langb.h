@@ -469,7 +469,11 @@ ASTNode * parse_string(Parser *p)
 ASTNode * try_parses(Parser *p, ParseFunction functions[], int count)
 {
     ASTNode *node = NULL;
-    for (int i = 0; node == NULL && i < count; i++) node = functions[i](p);
+    int start = p->pos;
+    for (int i = 0; node == NULL && i < count; i++) {
+        p->pos = start; // Reset in case a parser consume a token and got error.
+        node = functions[i](p);
+    }
 
     return node;
 }
