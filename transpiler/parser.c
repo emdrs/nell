@@ -134,7 +134,7 @@ ASTNode * parse_command(Parser *p)
     ASTNode *node = try_parses(p, parses, parses_count(parses));
 
     if (node == NULL) {
-        parser_show_error(p);
+        parser_report_error(p);
         exit(1);
     }
 
@@ -161,7 +161,7 @@ ASTNode * parse_block(Parser *p)
         ASTNode *node = try_parses(p, parses, parses_count(parses));
 
         if (node == NULL) {
-            parser_show_error(p);
+            parser_report_error(p);
             exit(1);
         }
 
@@ -175,12 +175,12 @@ ASTNode * parse_block(Parser *p)
     return block;
 }
 
-ASTNode * parse(ArrayList *list, char *source, char *file)
+ASTNode * parse(ArrayList *list, char *source, char *file_name)
 {
     Parser p = {0}; 
     p.list = list;
     p.source = source;
-    p.file = file;
+    p.file_name = file_name;
     p.error_info.progress = -1;
 
     ASTNode *ast = parse_block(&p);

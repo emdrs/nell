@@ -72,7 +72,7 @@ typedef struct {
     ArrayList *list;
     int pos;
     char *source;
-    char *file;
+    char *file_name;
     int level;
     int in_func;
     int in_case;
@@ -100,10 +100,11 @@ ASTNode * create_ast_node(int type);
 
 void parser_set_error(Parser *p, float progress, char *error_message, Token *token, int priority);
 void parser_set_error_and_abort(Parser *p, float progress, char *error_message, Token *token);
-void parser_show_error(Parser *p);
+void parser_report_error(Parser *p);
 void parser_advance(Parser *p, int amount);
 Token * parser_peek(Parser *p, int offset);
 void parser_match(Parser* p, int token_type, char* error_msg);
+
 
 #define parses_count(functions) sizeof(functions) / sizeof(ParseFunction)
 
@@ -159,6 +160,8 @@ void sema_scope_pop(SemanticAnalyzer *sema);
 void sema_define(SemanticAnalyzer *sema, Token *token, SymbolKind kind, Token *type,
         int pointer_level);
 Symbol * sema_lookup(SemanticAnalyzer *sema, char *name);
+
+void sema_report_error(SemanticAnalyzer *sema, Token *token, char *error_msg);
 
 #endif // LANGB_H
 
@@ -421,13 +424,8 @@ void parser_set_error(Parser *p, float progress, char *error_message, Token *tok
 void parser_set_error_and_abort(Parser *p, float progress, char *error_message, Token *token)
 {
     parser_set_error(p, progress, error_message, token, 1);
-    parser_show_error(p);
+    parser_report_error(p);
     exit(1);
-}
-
-void parser_show_error(Parser *p)
-{
-    report_error(p->file, p->source, p->error_info.token, p->error_info.message);
 }
 
 int is_number(Token *token)
@@ -478,6 +476,11 @@ ASTNode * try_parses(Parser *p, ParseFunction functions[], int count)
     for (int i = 0; node == NULL && i < count; i++) node = functions[i](p);
 
     return node;
+}
+
+void parser_report_error(Parser *p)
+{
+    report_error(p->file_name, p->source, p->error_info.token, p->error_info.message);
 }
 
 // ==================== SEMA IMPLEMENTATIONS ====================
@@ -564,6 +567,11 @@ void sema_analize(char *file_name, char *source, ASTNode *root) {
         printf("\nErrors: %d\n", sema.error_count);
         exit(1);
     }
+}
+
+void sema_report_error(SemanticAnalyzer *sema, Token *token, char *error_msg)
+{
+    report_error(sema->file_name, sema->source, token, error_msg);
 }
 
 #endif // LANGB_IMPLEMENTATION
