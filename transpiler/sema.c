@@ -19,13 +19,23 @@ Symbol * sema_check_node_type(SemanticAnalyzer *sema, ASTNode *node)
     return symbol;
 }
 
-void sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
+int compare_types(char *type1, char *type2)
 {
-    if (node == NULL) return;
+    if (type1 == NULL || type2 == NULL) return 0;
+    return strcmp(type1, type2) == 0;
+}
+
+int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
+{
+    if (node == NULL) return 0;
 
     switch (node->type) {
         case AST_NUMBER: {
             node->resolved_type = node->token->type == TOKEN_INT ? "int" : "float";
+            break;
+        }
+        case AST_TYPE: {
+            node->resolved_type = node->token->text;
             break;
         }
         case AST_NAME: {
@@ -33,7 +43,7 @@ void sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
 
             if (symbol == NULL) {
                 sema_report_error(sema, node->token, "Undefined symbol");
-                exit(1);
+                return 0;
             }
 
             node->resolved_type = symbol->type_name;
@@ -94,4 +104,6 @@ void sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             break;
         }
     }
+
+    return 1;
 }

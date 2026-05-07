@@ -150,7 +150,7 @@ typedef struct {
 
 unsigned int hash(char *name);
 
-void sema_analize_node(SemanticAnalyzer *sema, ASTNode *node); // YOU NEED TO IMPLEMENT THIS
+int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node); // YOU NEED TO IMPLEMENT THIS
 
 void sema_analize(char *file_name, char *source, ASTNode *root);
 void sema_scope_push(SemanticAnalyzer *sema, char *name);
