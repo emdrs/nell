@@ -148,6 +148,8 @@ typedef struct {
     char *source;
 } SemanticAnalyzer;
 
+unsigned int hash(char *name);
+
 void sema_analize_node(SemanticAnalyzer *sema, ASTNode *node); // YOU NEED TO IMPLEMENT THIS
 
 void sema_analize(char *file_name, char *source, ASTNode *root);
