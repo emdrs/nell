@@ -28,6 +28,16 @@ void sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             node->resolved_type = node->token->type == TOKEN_INT ? "int" : "float";
             break;
         }
+        case AST_NAME: {
+            Symbol *symbol = sema_lookup(sema, node->token->text);
+            if (symbol == NULL) {
+                sema_report_error(sema, node->token, "Undefined symbol");
+                exit(1);
+            }
+
+            node->resolved_type = symbol->type_name;
+            break;
+        }
         case AST_BLOCK: {
             for (int i = 0; i < node->children->size; i++)
                 sema_analize_node(sema, array_list_get(node->children, i));

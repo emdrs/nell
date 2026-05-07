@@ -1,3 +1,2 @@
-int a;
-int b = 10.0;
-const int c = 20.0;
+float a = 10.5;
+const int b = a;
