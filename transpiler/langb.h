@@ -7,6 +7,8 @@
 
 // ==================== UTILS ====================
 
+typedef struct token Token;
+
 typedef struct {
     void *data;
     size_t elementSize;
@@ -19,9 +21,11 @@ void array_list_add(ArrayList *list, void *element);
 void * array_list_get(ArrayList *list, size_t index);
 void token_list_show(ArrayList *list); 
 
+void report_error(char *file_path, char *source, Token *token, char *error_msg);
+
 // ==================== LEXER ====================
 
-typedef struct {
+typedef struct token {
     int type; // An enum
     char *text;
     unsigned int line;
@@ -99,7 +103,6 @@ void parser_set_error_and_abort(Parser *p, float progress, char *error_message, 
 void parser_show_error(Parser *p);
 void parser_advance(Parser *p, int amount);
 Token * parser_peek(Parser *p, int offset);
-void parser_report_error(Parser *p, Token *token, char *error_msg);
 void parser_match(Parser* p, int token_type, char* error_msg);
 
 #define parses_count(functions) sizeof(functions) / sizeof(ParseFunction)
@@ -154,6 +157,29 @@ void token_list_show(ArrayList *list)
     }
     printf("\n");
 }
+
+char * get_token_source_line(char *source, Token *token)
+{
+    int pos = 0;
+    int line = 1;
+    char ch;
+    while (1) {
+        ch = source[pos];
+        if (ch == '\n') {
+            line++;
+            pos++;
+            continue;
+        }
+
+        if (line == token->line) {
+            int start = pos;
+            while(source[pos++] != '\n');
+            return strndup(source + start, (pos - start));
+        }
+        pos++;
+    }
+}
+
 
 // ==================== LEXER IMPLEMENTATIONS ====================
 
@@ -294,28 +320,6 @@ ArrayList * tokenize(char *source)
 
 // ==================== PARSER IMPLEMENTATIONS ====================
 
-char * get_token_source_line(Parser *p, Token *token)
-{
-    int pos = 0;
-    int line = 1;
-    char ch;
-    while (1) {
-        ch = p->source[pos];
-        if (ch == '\n') {
-            line++;
-            pos++;
-            continue;
-        }
-
-        if (line == token->line) {
-            int start = pos;
-            while(p->source[pos++] != '\n');
-            return strndup(p->source + start, (pos - start));
-        }
-        pos++;
-    }
-}
-
 ASTNode * create_ast_node(int type)
 {
     ASTNode *node = (ASTNode *) malloc(sizeof(ASTNode));
@@ -343,29 +347,23 @@ Token * parser_peek(Parser *p, int offset)
     exit(1);
 }
 
-void parser_report_error(Parser *p, Token *token, char *error_msg)
+void parser_report_error(char *file_path, char *source, Token *token, char *error_msg)
 {
     if (token == NULL) {
         printf("Unexpected error.\n");
         exit(1);
     }
-    int offset = 0;
-    // Use token previous EOF and add 1 char offset to better visualization
-    if(token->type == TOKEN_EOF) {
-        token = array_list_get(p->list, p->list->size-2);
-        offset = 1;
-    }
 
-    printf("%s:%d:%d: error: %s\n", p->file, token->line, token->column, error_msg);
-    printf("%4d | %s", token->line, get_token_source_line(p, token));
-    printf("%4c | %*c\n", ' ', token->column + offset, '^');
+    printf("%s:%d:%d: error: %s\n", file_path, token->line, token->column, error_msg);
+    printf("%4d | %s", token->line, get_token_source_line(source, token));
+    printf("%4c | %*c\n", ' ', token->column, '^');
 }
 
 void parser_match(Parser* p, int type, char* error_msg)
 {
     Token *token = parser_peek(p, 0);
     if (token->type != type) {
-        parser_report_error(p, token, error_msg);
+        parser_set_error_and_abort(p, 0, error_msg, token);
         exit(1);
     }
 }
@@ -385,7 +383,7 @@ void parser_set_error_and_abort(Parser *p, float progress, char *error_message, 
 
 void parser_show_error(Parser *p)
 {
-    parser_report_error(p, p->error_info.token, p->error_info.message);
+    parser_report_error(p->file, p->source, p->error_info.token, p->error_info.message);
 }
 
 int is_number(Token *token)
