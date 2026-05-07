@@ -8,6 +8,7 @@ typedef enum {
     AST_NAME,              /*NEEDED*/
     AST_STRING,            /*NEEDED*/
     AST_TYPE,
+    AST_EXPRESSION,
     AST_VAR_DEF,
     AST_CONST_DEF,
     AST_FUNC_DEF,
@@ -25,6 +26,9 @@ int is_type(Parser *p, int offset);
 ASTNode * parse_type(Parser *p);
 
 int is_assign(Token *token);
+
+int is_operator(Token *token);
+ASTNode * parse_expression(Parser *p);
 
 int is_var_def(Parser *p);
 ASTNode * parse_var_def(Parser *p);

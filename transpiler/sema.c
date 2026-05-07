@@ -54,12 +54,30 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
                 sema_analize_node(sema, array_list_get(node->children, i));
             break;
         }
-        case AST_VAR_DEF: {
-            if (sema_check_node_type(sema, node->left) == NULL) break;
+        case AST_EXPRESSION: {
+            sema_analize_node(sema, node->left);
 
             if (node->right != NULL) {
-                sema_analize_node(sema, node->right);
-                if (strcmp(node->left->token->text, node->right->resolved_type) != 0) {
+                if (sema_analize_node(sema, node->right)) return 0;
+
+                if (!compare_types(node->left->resolved_type, node->right->resolved_type)) {
+                    sema_report_error(sema, node->left->token, "Incompatible types");
+                    return 0;
+                }
+            }
+
+            node->resolved_type = node->left->resolved_type;
+            break;
+        }
+        case AST_VAR_DEF: {
+            if (sema_check_node_type(sema, node->left) == NULL) return 0;
+
+            sema_analize_node(sema, node->left);
+            if (node->right != NULL) {
+                if (!sema_analize_node(sema, node->right)) return 0;
+
+                if (!compare_types(node->left->resolved_type,
+                            node->right->resolved_type)) {
                     sema_report_error(sema, node->right->token, "Incompatible types");
                 }
             }
@@ -72,9 +90,11 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             if (sema_check_node_type(sema, node->left) == NULL) break;
 
             if (node->right != NULL) {
-                sema_analize_node(sema, node->right);
-                if (strcmp(node->left->token->text, node->right->resolved_type) != 0) {
+                if(!sema_analize_node(sema, node->right)) return 0;
+
+                if (!compare_types(node->left->resolved_type, node->right->resolved_type)) {
                     sema_report_error(sema, node->right->token, "Incompatible types");
+                    return 0;
                 }
             }
 
