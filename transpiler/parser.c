@@ -40,6 +40,12 @@ void show_ast_node(ASTNode *node, int indent)
             show_ast_node(node->right, indent+1);
             break;
         }
+        case AST_BLOCK: {
+            printf("BLOCK\n");
+            for (int i = 0; i < node->children->size; i++)
+                show_ast_node(array_list_get(node->children, i), indent+1);
+            break;
+        }
     }
 }
 
@@ -133,9 +139,40 @@ ASTNode * parse_command(Parser *p)
     }
 
     parser_match(p, TOKEN_SEMICOLON, "';' needed end a command");
-    parser_advance(p, 1);
 
     return node;
+}
+
+ASTNode * parse_block(Parser *p)
+{
+    ParseFunction parses[] = {
+        parse_command
+    };
+
+    int is_root = p->level == 0;
+    if (!is_root) parser_match(p, TOKEN_SEMICOLON, "'{' needed start a block");
+
+    ASTNode *block = create_ast_node(AST_BLOCK);
+    block->children = array_list_create(sizeof(ASTNode), 1);
+
+    p->level++;
+
+    while (parser_peek(p, 0)->type != (is_root ? TOKEN_EOF : TOKEN_RBRACE)) {
+        ASTNode *node = try_parses(p, parses, parses_count(parses));
+
+        if (node == NULL) {
+            parser_show_error(p);
+            exit(1);
+        }
+
+        array_list_add(block->children, node);
+    }
+
+    if (!is_root) parser_match(p, TOKEN_SEMICOLON, "'}' needed end a block");
+
+    p->level--;
+
+    return block;
 }
 
 ASTNode * parse(ArrayList *list, char *source, char *file)
@@ -146,7 +183,7 @@ ASTNode * parse(ArrayList *list, char *source, char *file)
     p.file = file;
     p.error_info.progress = -1;
 
-    ASTNode *ast = parse_command(&p);
+    ASTNode *ast = parse_block(&p);
 
     Token *t = parser_peek(&p, 0);
     if (t->type != TOKEN_EOF) {

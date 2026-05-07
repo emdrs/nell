@@ -9,6 +9,7 @@ typedef enum {
     AST_STRING,            /*NEEDED*/
     AST_TYPE,
     AST_VAR_DEF,
+    AST_BLOCK,
 } ASTType;
 
 ASTNode * parse(ArrayList *list, char *source, char *file);
