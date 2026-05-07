@@ -79,6 +79,8 @@ int main(int argc, char *argv[])
 
     ASTNode *ast = parse(tokens, source, argv[1]);
     show_ast_node(ast, 0);
+
+    sema_analize(argv[1], source, ast);
     
     // char *code = generate_code(ast);
     //

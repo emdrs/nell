@@ -117,6 +117,49 @@ ASTNode * parse_string(Parser *p);
 
 ASTNode * try_parses(Parser *p, ParseFunction functions[], int count);
 
+// ==================== SEMA ====================
+
+#define BUCKET_SIZE 256
+
+typedef enum {
+    SK_VARIABLE,
+} SymbolKind;
+
+typedef struct Symbol {
+    char *name;
+    SymbolKind kind;
+    char *type_name;
+    int pointer_level;
+    
+    struct SymbolTable *nested_scope;
+    
+    struct Symbol *next;
+} Symbol;
+
+typedef struct SymbolTable {
+    Symbol *buckets[BUCKET_SIZE];
+    struct SymbolTable *parent;
+    char *scope_name;
+} SymbolTable;
+
+typedef struct {
+    SymbolTable *global_scope;
+    SymbolTable *current_scope;
+
+    int error_count;
+    char *file_name;
+    char *source;
+} SemanticAnalyzer;
+
+void sema_analize_node(SemanticAnalyzer *sema, ASTNode *node); // YOU NEED TO IMPLEMENT THIS
+
+void sema_analize(char *file_name, char *source, ASTNode *root);
+void sema_scope_push(SemanticAnalyzer *sema, char *name);
+void sema_scope_pop(SemanticAnalyzer *sema);
+void sema_define(SemanticAnalyzer *sema, Token *token, SymbolKind kind, Token *type,
+        int pointer_level);
+Symbol * sema_lookup(SemanticAnalyzer *sema, char *name);
+
 #endif // LANGB_H
 
 #ifdef LANGB_IMPLEMENTATION
@@ -435,6 +478,92 @@ ASTNode * try_parses(Parser *p, ParseFunction functions[], int count)
     for (int i = 0; node == NULL && i < count; i++) node = functions[i](p);
 
     return node;
+}
+
+// ==================== SEMA IMPLEMENTATIONS ====================
+
+unsigned int hash(char *name)
+{
+    unsigned int h = 0;
+    while (*name != '\0') h = (h << 5) + *name++;
+    return h % BUCKET_SIZE;
+}
+
+void sema_scope_push(SemanticAnalyzer *sema, char *name)
+{
+    SymbolTable *new_scope = calloc(1, sizeof(SymbolTable));
+    new_scope->parent = sema->current_scope;
+    new_scope->scope_name = strdup(name);
+    
+    sema->current_scope = new_scope;
+    
+    if (sema->global_scope == NULL) sema->global_scope = new_scope;
+}
+
+void sema_scope_pop(SemanticAnalyzer *sema)
+{
+    if (sema->current_scope->parent == NULL) return; // Root
+    
+    sema->current_scope = sema->current_scope->parent;
+}
+
+void sema_define(SemanticAnalyzer *sema, Token *token, SymbolKind kind, Token *type,
+        int pointer_level)
+{
+    char *name = token->text;
+    unsigned int h = hash(name);
+
+    Symbol *s = sema->current_scope->buckets[h];
+    while (s != NULL) {
+        if (strcmp(s->name, name) == 0) {
+            char *error_msg = NULL;
+            asprintf(&error_msg, "Redefinition of '%s' in %s", name,
+                    sema->current_scope->scope_name);
+            report_error(sema->file_name, sema->source, token, error_msg);
+            sema->error_count++;
+            return;
+        }
+        s = s->next;
+    }
+
+    Symbol *symbol = malloc(sizeof(Symbol));
+    symbol->name = strdup(name);
+    symbol->kind = kind;
+    symbol->type_name = strdup(type->text);
+    symbol->pointer_level = pointer_level;
+
+    symbol->next = sema->current_scope->buckets[h];
+    sema->current_scope->buckets[h] = symbol;
+}
+
+Symbol * sema_lookup(SemanticAnalyzer *sema, char *name)
+{
+    SymbolTable *current_scope = sema->current_scope;
+    
+    while (current_scope != NULL) {
+        unsigned int h = hash(name);
+        Symbol *symbol = current_scope->buckets[h];
+        while (symbol != NULL) {
+            if (strcmp(symbol->name, name) == 0) return symbol;
+            symbol = symbol->next;
+        }
+        current_scope = current_scope->parent;
+    }
+    return NULL;
+}
+
+void sema_analize(char *file_name, char *source, ASTNode *root) {
+    SemanticAnalyzer sema = {0};
+    sema.file_name = file_name;
+    sema.source = source;
+    sema_scope_push(&sema, "global");
+    
+    sema_analize_node(&sema, root);
+
+    if (sema.error_count > 0) {
+        printf("\nErrors: %d\n", sema.error_count);
+        exit(1);
+    }
 }
 
 #endif // LANGB_IMPLEMENTATION
