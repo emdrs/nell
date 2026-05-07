@@ -30,6 +30,7 @@ void sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
         }
         case AST_NAME: {
             Symbol *symbol = sema_lookup(sema, node->token->text);
+
             if (symbol == NULL) {
                 sema_report_error(sema, node->token, "Undefined symbol");
                 exit(1);
@@ -69,6 +70,27 @@ void sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
 
             sema_define(sema, node->token->text, SK_CONSTANT, node->left->token->text,
                         node->pointer_level, node->token);
+            break;
+        }
+        case AST_FUNC_DEF_PARAM: {
+            if (sema_check_node_type(sema, node->left) == NULL) break;
+
+            sema_define(sema, node->token->text, SK_VARIABLE, node->left->token->text,
+                        node->pointer_level, node->token);
+            break;
+        }
+        case AST_FUNC_DEF: {
+            if (sema_check_node_type(sema, node->left) == NULL) break;
+
+            sema_define(sema, node->token->text, SK_FUNCTION, node->token->text,
+                        node->pointer_level, node->token);
+
+            sema_scope_push(sema, node->token->text);
+            for (int i = 0; i < node->children->size; i++)
+                sema_analize_node(sema, array_list_get(node->children, i));
+            sema_analize_node(sema, node->right);
+            sema_scope_pop(sema);
+
             break;
         }
     }
