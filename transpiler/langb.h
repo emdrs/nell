@@ -143,6 +143,8 @@ typedef struct {
     SymbolTable *global_scope;
     SymbolTable *current_scope;
 
+    int anonymous_block_count;
+
     int error_count;
     char *file_name;
     char *source;

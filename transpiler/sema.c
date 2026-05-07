@@ -5,24 +5,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-Symbol * sema_check_node_type(SemanticAnalyzer *sema, ASTNode *node)
+Symbol * sema_check_type(SemanticAnalyzer *sema, Token *token)
 {
-    Symbol *symbol = sema_lookup(sema, node->token->text);
+    Symbol *symbol = sema_lookup(sema, token->text);
 
     if (symbol == NULL) {
         char *msg = NULL;
-        asprintf(&msg, "Undefined type: %s", node->token->text);
-        sema_report_error(sema, node->token, msg);
+        asprintf(&msg, "Undefined type: %s", token->text);
+        sema_report_error(sema, token, msg);
         free(msg);
     }
 
     return symbol;
 }
 
-int compare_types(char *type1, char *type2)
+int compare_nodes_types(ASTNode *node1, ASTNode *node2)
 {
-    if (type1 == NULL || type2 == NULL) return 0;
-    return strcmp(type1, type2) == 0;
+    if (node1->resolved_type == NULL || node2->resolved_type == NULL) return 0;
+    return strcmp(node1->resolved_type, node2->resolved_type) == 0;
 }
 
 int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
@@ -35,6 +35,7 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             break;
         }
         case AST_TYPE: {
+            if (sema_check_type(sema, node->token) == NULL) return 0;
             node->resolved_type = node->token->text;
             break;
         }
@@ -50,8 +51,15 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             break;
         }
         case AST_BLOCK: {
+            char *scope_name;
+            if (node->token == NULL)
+                asprintf(&scope_name, "%d", sema->anonymous_block_count++);
+            else
+                scope_name = node->token->text;
+            sema_scope_push(sema, scope_name);
             for (int i = 0; i < node->children->size; i++)
                 sema_analize_node(sema, array_list_get(node->children, i));
+            sema_scope_pop(sema);
             break;
         }
         case AST_EXPRESSION: {
@@ -60,7 +68,7 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             if (node->right != NULL) {
                 if (!sema_analize_node(sema, node->right)) return 0;
 
-                if (!compare_types(node->left->resolved_type, node->right->resolved_type)) {
+                if (!compare_nodes_types(node->left, node->right)) {
                     sema_report_error(sema, node->left->token, "Incompatible types");
                     return 0;
                 }
@@ -70,54 +78,53 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             break;
         }
         case AST_VAR_DEF: {
-            if (sema_check_node_type(sema, node->left) == NULL) return 0;
-
-            sema_analize_node(sema, node->left);
-            if (node->right != NULL) {
-                if (!sema_analize_node(sema, node->right)) return 0;
-
-                if (!compare_types(node->left->resolved_type,
-                            node->right->resolved_type)) {
-                    sema_report_error(sema, node->right->token, "Incompatible types");
-                }
-            }
+            if(!sema_analize_node(sema, node->left)) return 0; // Undefined type
 
             sema_define(sema, node->token->text, SK_VARIABLE, node->left->token->text,
                         node->pointer_level, node->token);
-            break;
-        }
-        case AST_CONST_DEF: {
-            if (sema_check_node_type(sema, node->left) == NULL) break;
 
             if (node->right != NULL) {
-                if(!sema_analize_node(sema, node->right)) return 0;
+                if (!sema_analize_node(sema, node->right)) return 0;
 
-                if (!compare_types(node->left->resolved_type, node->right->resolved_type)) {
+                if (!compare_nodes_types(node->left, node->right)) {
                     sema_report_error(sema, node->right->token, "Incompatible types");
                     return 0;
                 }
             }
 
+            break;
+        }
+        case AST_CONST_DEF: {
+            if(!sema_analize_node(sema, node->left)) return 0; // Undefined type
+
             sema_define(sema, node->token->text, SK_CONSTANT, node->left->token->text,
                         node->pointer_level, node->token);
+
+            if (node->right != NULL) {
+                if(!sema_analize_node(sema, node->right)) return 0;
+
+                if (!compare_nodes_types(node->left, node->right)) {
+                    sema_report_error(sema, node->right->token, "Incompatible types");
+                    return 0;
+                }
+            }
+
             break;
         }
         case AST_FUNC_DEF_PARAM: {
-            if (sema_check_node_type(sema, node->left) == NULL) break;
+            if(!sema_analize_node(sema, node->left)) return 0; // Undefined return type
 
             sema_define(sema, node->token->text, SK_VARIABLE, node->left->token->text,
                         node->pointer_level, node->token);
             break;
         }
         case AST_FUNC_DEF: {
-            if (sema_check_node_type(sema, node->left) == NULL) break;
+            if(!sema_analize_node(sema, node->left)) return 0; // Undefined type
 
             sema_define(sema, node->token->text, SK_FUNCTION, node->token->text,
                         node->pointer_level, node->token);
 
-            sema_scope_push(sema, node->token->text);
             sema_analize_node(sema, node->right);
-            sema_scope_pop(sema);
 
             break;
         }
