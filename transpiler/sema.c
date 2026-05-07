@@ -1,3 +1,4 @@
+#include "sema.h"
 #include "langb.h"
 #include "lexer.h"
 #include "parser.h"
@@ -33,9 +34,7 @@ void sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             break;
         }
         case AST_VAR_DEF: {
-            if (strcmp(node->left->token->text, "int") != 0) {
-                if (sema_check_node_type(sema, node->left) == NULL) break;
-            }
+            if (sema_check_node_type(sema, node->left) == NULL) break;
 
             if (node->right != NULL) {
                 sema_analize_node(sema, node->right);
@@ -44,8 +43,8 @@ void sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
                 }
             }
 
-            sema_define(sema, node->token, SK_VARIABLE, node->left->token,
-                        node->pointer_level);
+            sema_define(sema, node->token->text, SK_VARIABLE, node->left->token->text,
+                        node->pointer_level, node->token);
             break;
         }
     }

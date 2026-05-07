@@ -122,13 +122,9 @@ ASTNode * try_parses(Parser *p, ParseFunction functions[], int count);
 
 #define BUCKET_SIZE 256
 
-typedef enum {
-    SK_VARIABLE,
-} SymbolKind;
-
 typedef struct Symbol {
     char *name;
-    SymbolKind kind;
+    int kind;
     char *type_name;
     int pointer_level;
     
@@ -157,8 +153,8 @@ void sema_analize_node(SemanticAnalyzer *sema, ASTNode *node); // YOU NEED TO IM
 void sema_analize(char *file_name, char *source, ASTNode *root);
 void sema_scope_push(SemanticAnalyzer *sema, char *name);
 void sema_scope_pop(SemanticAnalyzer *sema);
-void sema_define(SemanticAnalyzer *sema, Token *token, SymbolKind kind, Token *type,
-        int pointer_level);
+void sema_define(SemanticAnalyzer *sema, char *name, int kind, char *type,
+        int pointer_level, Token *token);
 Symbol * sema_lookup(SemanticAnalyzer *sema, char *name);
 
 void sema_report_error(SemanticAnalyzer *sema, Token *token, char *error_msg);
@@ -510,10 +506,9 @@ void sema_scope_pop(SemanticAnalyzer *sema)
     sema->current_scope = sema->current_scope->parent;
 }
 
-void sema_define(SemanticAnalyzer *sema, Token *token, SymbolKind kind, Token *type,
-        int pointer_level)
+void sema_define(SemanticAnalyzer *sema, char *name, int kind, char *type,
+        int pointer_level, Token *token)
 {
-    char *name = token->text;
     unsigned int h = hash(name);
 
     Symbol *s = sema->current_scope->buckets[h];
@@ -532,7 +527,7 @@ void sema_define(SemanticAnalyzer *sema, Token *token, SymbolKind kind, Token *t
     Symbol *symbol = malloc(sizeof(Symbol));
     symbol->name = strdup(name);
     symbol->kind = kind;
-    symbol->type_name = strdup(type->text);
+    symbol->type_name = strdup(type);
     symbol->pointer_level = pointer_level;
 
     symbol->next = sema->current_scope->buckets[h];
@@ -560,6 +555,10 @@ void sema_analize(char *file_name, char *source, ASTNode *root) {
     sema.file_name = file_name;
     sema.source = source;
     sema_scope_push(&sema, "global");
+
+    sema_define(&sema, "int", SK_STRUCT, "int", 0, NULL);
+    sema_define(&sema, "float", SK_STRUCT, "int", 0, NULL);
+    sema_define(&sema, "char", SK_STRUCT, "int", 0, NULL);
     
     sema_analize_node(&sema, root);
 
