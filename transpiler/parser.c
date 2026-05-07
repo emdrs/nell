@@ -197,10 +197,26 @@ ASTNode * parse_command(Parser *p)
     return node;
 }
 
-ASTNode * parse_block(Parser *p)
+ASTNode * parse_statement(Parser *p)
 {
     ParseFunction parses[] = {
         parse_command
+    };
+
+    ASTNode *node = try_parses(p, parses, parses_count(parses));
+
+    if (node == NULL) {
+        parser_report_error(p);
+        exit(1);
+    }
+
+    return node;
+}
+
+ASTNode * parse_block(Parser *p)
+{
+    ParseFunction parses[] = {
+        parse_statement
     };
 
     int is_root = p->level == 0;
