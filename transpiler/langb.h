@@ -518,7 +518,6 @@ void sema_define(SemanticAnalyzer *sema, char *name, int kind, char *type,
             asprintf(&error_msg, "Redefinition of '%s' in %s", name,
                     sema->current_scope->scope_name);
             report_error(sema->file_name, sema->source, token, error_msg);
-            sema->error_count++;
             return;
         }
         s = s->next;
@@ -571,6 +570,7 @@ void sema_analize(char *file_name, char *source, ASTNode *root) {
 void sema_report_error(SemanticAnalyzer *sema, Token *token, char *error_msg)
 {
     report_error(sema->file_name, sema->source, token, error_msg);
+    sema->error_count++;
 }
 
 #endif // LANGB_IMPLEMENTATION
