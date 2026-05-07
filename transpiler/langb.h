@@ -347,7 +347,7 @@ Token * parser_peek(Parser *p, int offset)
     exit(1);
 }
 
-void parser_report_error(char *file_path, char *source, Token *token, char *error_msg)
+void report_error(char *file_path, char *source, Token *token, char *error_msg)
 {
     if (token == NULL) {
         printf("Unexpected error.\n");
@@ -366,6 +366,7 @@ void parser_match(Parser* p, int type, char* error_msg)
         parser_set_error_and_abort(p, 0, error_msg, token);
         exit(1);
     }
+    parser_advance(p, 1);
 }
 
 void parser_set_error(Parser *p, float progress, char *error_message, Token *token, int priority)
@@ -383,7 +384,7 @@ void parser_set_error_and_abort(Parser *p, float progress, char *error_message, 
 
 void parser_show_error(Parser *p)
 {
-    parser_report_error(p->file, p->source, p->error_info.token, p->error_info.message);
+    report_error(p->file, p->source, p->error_info.token, p->error_info.message);
 }
 
 int is_number(Token *token)
