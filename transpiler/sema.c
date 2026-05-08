@@ -124,7 +124,12 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             sema_define(sema, node->token->text, SK_FUNCTION, node->token->text,
                         node->pointer_level, node->token);
 
+            sema_scope_push(sema, node->token->text);
+            for (int i = 0; i < node->children->size; i++)
+                sema_analize_node(sema, array_list_get(node->children, i));
+
             sema_analize_node(sema, node->right);
+            sema_scope_pop(sema);
 
             break;
         }

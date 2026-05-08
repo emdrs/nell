@@ -1,9 +1,5 @@
 float a = 10.5;
-const int b = a;
-float c = 1.2;
 
 int soma(int a, int b) {
-    float c = 10.0;
-    int res = a + c;
-    int res = 0;
+    int res = a + b;
 }
