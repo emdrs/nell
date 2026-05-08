@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 char * read_all_file(char *path)
 {
     FILE *f = fopen(path, "rb");
@@ -126,7 +127,7 @@ char * generate_code(ASTNode *node, int level)
         }
         case AST_FUNC_DEF_PARAM: {
             char *type = generate_code(node->left, level);
-            asprintf(&result, "%s, %s", type, node->token->text);
+            asprintf(&result, "%s %s", type, node->token->text);
             free(type);
             break;
         }
