@@ -3,4 +3,5 @@ float a = 10.5;
 int soma(int a, int b) {
     int a = 10;
     int res = a + b;
+    res += 10;
 }

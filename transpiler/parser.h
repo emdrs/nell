@@ -12,6 +12,7 @@ typedef enum {
     AST_VAR_DEF,
     AST_CONST_DEF,
     AST_FUNC_DEF,
+    AST_ASSIGNMENT,
     AST_FUNC_DEF_PARAM,
     AST_BLOCK,
 } ASTType;

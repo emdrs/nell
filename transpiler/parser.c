@@ -75,6 +75,12 @@ void show_ast_node(ASTNode *node, int indent)
             show_ast_node(node->right, indent + 1);
             break;
         }
+        case AST_ASSIGNMENT: {
+            printf("ASSIGNMENT\n");
+            show_ast_node(node->left, indent + 1);
+            show_ast_node(node->right, indent + 1);
+            break;
+        }
         case AST_BLOCK: {
             printf("BLOCK\n");
             for (int i = 0; i < node->children->size; i++)
@@ -166,9 +172,10 @@ ASTNode * parse_var_def(Parser *p)
     node->left = parse_type(p);
 
     Token *token = parser_peek(p, 0);
-    if(!is_name(token))
-        parser_set_error_and_abort(p, 1.0f/4.0f, "Name needed to define a variable",
-                token);
+    if(!is_name(token)) {
+        parser_set_error(p, 1.0f/4.0f, "Name needed to define a variable", token, 0);
+        return NULL;
+    }
 
     node->token = token;
     parser_advance(p, 1); // name
@@ -240,11 +247,42 @@ ASTNode * parse_const_def(Parser *p)
     return node;
 }
 
+ASTNode * parse_assignment(Parser *p)
+{
+    ASTNode *name = parse_name(p);
+
+    if (name == NULL) return NULL;
+
+    Token *token = parser_peek(p, 0);
+    if (!is_assign(token)) {
+        parser_set_error(p, 1.0f/3.0f, "Assign needed on assignment", token, 0);
+        return NULL;
+    }
+
+    parser_advance(p, 1); // assign
+
+    ASTNode *node = create_ast_node(AST_ASSIGNMENT);
+    node->token = token;
+
+    token = parser_peek(p, 0);
+
+    ASTNode *expression = parse_expression(p);
+    if (expression == NULL)
+        parser_set_error_and_abort(p, 2.0f/3.0f, "Expression needed on assignment",
+                token);
+
+    node->left = name;
+    node->right = expression;
+
+    return node;
+}
+
 ASTNode * parse_command(Parser *p)
 {
     ParseFunction parses[] = {
         parse_var_def,
-        parse_const_def
+        parse_const_def,
+        parse_assignment,
     };
 
     ASTNode *node = try_parses(p, parses, parses_count(parses));

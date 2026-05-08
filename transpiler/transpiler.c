@@ -1,6 +1,7 @@
 #include "sema.h"
 #include "lexer.h"
 #include "parser.h"
+#include <_stdio.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -123,6 +124,15 @@ char * generate_code(ASTNode *node, int level)
                 asprintf(&result, "%s %s %s", result, node->token->text, right);
                 free(right);
             }
+            break;
+        }
+        case AST_ASSIGNMENT: {
+            char *left = generate_code(node->left, level);
+            char *right = generate_code(node->right, level);
+
+            asprintf(&result, "%s %s %s;", left, node->token->text, right);
+            free(left);
+            free(right);
             break;
         }
         case AST_FUNC_DEF_PARAM: {
