@@ -115,6 +115,43 @@ char * generate_code(ASTNode *node, int level)
             }
             break;
         }
+        case AST_EXPRESSION: {
+            result = generate_code(node->left, level);
+            if (node->token != NULL) {
+                char *right = generate_code(node->right, level);
+                asprintf(&result, "%s %s %s", result, node->token->text, right);
+                free(right);
+            }
+            break;
+        }
+        case AST_FUNC_DEF_PARAM: {
+            char *type = generate_code(node->left, level);
+            asprintf(&result, "%s, %s", type, node->token->text);
+            free(type);
+            break;
+        }
+        case AST_FUNC_DEF: {
+            char *type = generate_code(node->left, level);
+            char *params = NULL;
+            for (int i = 0; i < node->children->size; i++) {
+                char *param = generate_code(array_list_get(node->children, i), level);
+                old = params;
+                if (params == NULL)
+                    asprintf(&params, "%s", param);
+                else
+                    asprintf(&params, "%s, %s", params, param);
+                free(param);
+                free(old);
+            }
+
+            char *block = generate_code(node->right, level);
+
+            asprintf(&result, "%s %s(%s) %s", type, node->token->text,
+                    params == NULL ? "" : params, block);
+            free(block);
+
+            break;
+        }
     }
 
     return result;
