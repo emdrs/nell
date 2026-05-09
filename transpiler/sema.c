@@ -95,6 +95,18 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
 
             break;
         }
+        case AST_ASSIGNMENT: {
+            if(!sema_analize_node(sema, node->left)) return 0; // Undefined type
+            if(!sema_analize_node(sema, node->right)) return 0; // Undefined type
+
+            if (!compare_nodes_types(node->left, node->right)) {
+                sema_report_error(sema, node->token,
+                        "Incompatible types on assignment");
+                return 0;
+            }
+
+            break;
+        }
         case AST_CONST_DEF: {
             if(!sema_analize_node(sema, node->left)) return 0; // Undefined type
 
