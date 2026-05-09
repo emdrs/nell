@@ -2,6 +2,7 @@
 #include "langb.h"
 #include "lexer.h"
 #include "parser.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -132,6 +133,10 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             sema_scope_pop(sema);
 
             break;
+        }
+        default: {
+            printf("NOT IMPLEMENTED SEMA AST.\n");
+            show_ast_node(node, 0);
         }
     }
 

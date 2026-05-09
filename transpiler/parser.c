@@ -87,6 +87,9 @@ void show_ast_node(ASTNode *node, int indent)
                 show_ast_node(array_list_get(node->children, i), indent+1);
             break;
         }
+        default: {
+            printf("NOT IMPLEMENTED SHOW AST\n");
+        }
     }
 }
 
