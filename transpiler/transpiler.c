@@ -168,11 +168,17 @@ char * generate_code(ASTNode *node, int level)
     return result;
 }
 
+int verbose = 0;
+
 int main(int argc, char *argv[])
 {
     if (argc < 2) {
         printf("./transpiler file.nell");
         return 1;
+    }
+
+    for (int i = 1 ; i < argc; i++) {
+        if(strcmp(argv[i], "--verbose") == 0) verbose = 1;
     }
 
     char *source = read_all_file(argv[1]);
@@ -181,14 +187,17 @@ int main(int argc, char *argv[])
 
     ArrayList *tokens = tokenize(source);
 
-    token_list_show(tokens);
-
-    printf("\n");
+    if (verbose) {
+        token_list_show(tokens);
+        printf("\n");
+    }
 
     ASTNode *ast = parse(tokens, source, argv[1]);
-    show_ast_node(ast, 0);
 
-    printf("\n");
+    if (verbose) {
+        show_ast_node(ast, 0);
+        printf("\n");
+    }
 
     sema_analize(argv[1], source, ast);
     
@@ -196,9 +205,10 @@ int main(int argc, char *argv[])
 
     printf("\n");
 
-    printf("source:\n%s\n", source);
-
-    printf("Ccode:\n%s\n", code);
+    if (verbose) {
+        printf("source:\n%s\n", source);
+        printf("Ccode:\n%s\n", code);
+    }
 
     write_file("out.c", code);
 
