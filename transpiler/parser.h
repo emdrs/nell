@@ -15,6 +15,7 @@ typedef enum {
     AST_ASSIGNMENT,
     AST_FUNC_DEF_PARAM,
     AST_BLOCK,
+    AST_RETURN,
 } ASTType;
 
 ASTNode * parse(ArrayList *list, char *source, char *file);

@@ -143,6 +143,8 @@ typedef struct {
     SymbolTable *global_scope;
     SymbolTable *current_scope;
 
+    char *current_return_type;
+
     int anonymous_block_count;
 
     int error_count;
@@ -563,6 +565,7 @@ void sema_analize(char *file_name, char *source, ASTNode *root) {
     sema.source = source;
     sema_scope_push(&sema, "global");
 
+    sema_define(&sema, "void", SK_STRUCT, "void", 0, NULL);
     sema_define(&sema, "int", SK_STRUCT, "int", 0, NULL);
     sema_define(&sema, "float", SK_STRUCT, "int", 0, NULL);
     sema_define(&sema, "char", SK_STRUCT, "int", 0, NULL);

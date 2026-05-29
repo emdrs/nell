@@ -134,16 +134,51 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
         case AST_FUNC_DEF: {
             if(!sema_analize_node(sema, node->left)) return 0; // Undefined type
 
-            sema_define(sema, node->token->text, SK_FUNCTION, node->token->text,
+            sema_define(sema, node->token->text, SK_FUNCTION, node->left->resolved_type,
                         node->pointer_level, node->token);
+
 
             sema_scope_push(sema, node->token->text);
             for (int i = 0; i < node->children->size; i++)
                 sema_analize_node(sema, array_list_get(node->children, i));
 
+            sema->current_return_type = node->left->resolved_type;
             sema_analize_node(sema, node->right);
+            sema->current_return_type = NULL;
+
             sema_scope_pop(sema);
 
+            break;
+        }
+        case AST_RETURN: {
+            char *return_type = sema->current_return_type;
+
+            if (return_type == NULL) {
+                sema_report_error(sema, node->token, "return outside function");
+                return 0;
+            }
+
+            int is_void = strcmp(return_type, "void") == 0;
+
+            if(is_void && node->right != NULL) {
+                sema_report_error(sema, node->right->token,
+                        "Void function cannot return expression");
+                return 0;
+            }
+
+            if(!is_void && node->right == NULL) {
+                sema_report_error(sema, node->token,
+                        "Non void function needs return expression");
+                return 0;
+            }
+
+            if (node->right != NULL) {
+                if (!sema_analize_node(sema, node->right)) return 0;
+                if (strcmp(return_type, node->right->resolved_type) != 0) {
+                    sema_report_error(sema, node->token, "Incompatible return type");
+                    return 0;
+                }
+            }
             break;
         }
         default: {
