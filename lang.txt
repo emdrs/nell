@@ -1,0 +1,372 @@
+=======================================================================================
+
+// Variables
+int a;
+int b = 10;
+
+// Pointers
+int *a;
+int **b = &a;
+int *c = *b;
+
+// Constants
+const int a = 10;
+const b = 10; // Maybe type infer
+
+=======================================================================================
+
+// Conditions
+if a < b {} // Optional parentheses
+else if a < b {}
+
+switch a { // Optional parentheses
+    case 10:
+        break;
+    default:
+        break
+}
+
+// Repeats
+while a > 10 {} // Optional parentheses
+do { } while a > 10; // Optional parentheses
+for(int i = 0: i < a; i++) {} // Traditional for
+
+for i : 0..5 { } // From 0 to 5 inclusive
+for i : 0.<5 { } // From 0 to 5 exclusive
+for i : 0>.5 { } // From 1 to 5 inclusive
+for i : 0><5 { } // From 1 to 5 exclusive
+
+for 0..5 { a += it; } // You can use "it" if not specify the iterator name.
+// Possible translation
+for(int it = 0: i < 5+1; it++) {} // Traditional for
+
+=======================================================================================
+
+// Functions
+int soma(int a, int b) { return a + b; }
+int soma(int a, float b) { return a + b; } // Function overload
+
+//Possible translation
+int soma1(int a, int b) { return a + b; }
+int soma2(int a, float b) { return a + b; }
+// And choose in compile time based on parameters type on function overload
+
+// Default parameters
+int get_element(list *a, int index = 0) { return list[index]; }
+
+get_element(list); // Using index default (0)
+
+//Possible translation
+int get_element(list *a, int index) { return list[index]; }
+
+get_element(list, 0); // Put 0 on default
+
+=======================================================================================
+
+// Structs
+struct Vector2 {
+    float x = 0; // Default values
+    float y;
+
+    // Method just inject a pointer of struct as first parameter
+    float magnitude() {
+        return sqrt((self.x * self.x) + (self.y * self.y));
+    }
+
+    Vector2 normalized() {
+        float mag = self.magnitude();
+        return (Vector2) { self.x / mag, self.y / mag };
+    }
+
+    void normalize() {
+        float mag = self.magnitude();
+        self.x /= mag;
+        self.y /= mag;
+    }
+}
+
+// Possible translation
+struct Vector2 {
+    float x;
+    float y;
+}
+
+// Method just inject a pointer of struct as first parameter
+float vec2_magnitude(Vector2 *self) {
+    return sqrt((self->x * self->x) + (self->y * self->y));
+}
+
+Vector2 vec2_normalized(Vector2 *self) {
+    float mag = vec2_magnitude(self);
+    return (Vector2) { self->x / mag, self->y / mag };
+}
+
+void vec2_normalize(Vector2 *self) {
+    float mag = vec2_magnitude(self);
+    self->x /= mag;
+    self->y /= mag;
+}
+
+// Create a vector
+Vector2 a;
+
+// Possible translation
+Vector2 a = { .x = 0 }; // y keep unitialized
+
+=======================================================================================
+
+struct Node {
+    char *name;
+};
+
+struct Node2D {
+    using Node node; // Node2D.name is Node2D.Node.name
+
+    Vector2 position;
+};
+
+struct Sprite2D {
+    using Node2D node2d; // Sprite2D.name is Sprite2D.Node2D.Node.name
+
+    Image image;
+};
+
+// Possible translation
+struct Sprite2D {
+    // Node
+    char *name;
+
+    // Node2D
+    Vector2 position;
+
+    Image image;
+};
+
+// This aproach keep allowing c to do this (if using is on top of struct):
+Node *nodes[10];
+nodes[0] = (Node *) &sprite2d;
+
+// Usage
+Sprite2D sprite2d;
+// Access directly
+sprite2d.name = "Big Node";
+// Or
+sprite2d.node2d.name = "Big Node";
+// Or
+sprite2d.node2d.node.name = "Big Node";
+
+struct Character {
+    using Node2D node2d; // Character.node2d.name is needed because Character has name
+
+    char *name;
+};
+
+// Character2.name is ambiguous causing compilation error
+struct Character2 {
+    using Node2D node2d;
+    using Character char;
+};
+
+=======================================================================================
+
+// collide operator
+int collide (Square a, Circle b) { }
+
+if square collide circle { }
+
+// Possible translation
+int collide1 (Square a, Circle b) { }
+
+if (collide1(square, circle)) { }
+
+// Examples
+
+struct Circle {
+    Vector2 position;
+    float radius;
+};
+
+int collide(Circle a, Circle b) {
+    return (a.position - b.position).magnitude() <= (a.radius + b.radius);
+}
+
+struct Rectangle {
+    Vector2 position;
+    float size;
+};
+
+int collide(Rectangle a, Rectangle b) {
+    float a_half_size = a.size / 2;
+    float a_min_x = a.position.x - a_half_size;
+    float a_max_x = a.position.x + a_half_size;
+    float a_min_y = a.position.y - a_half_size;
+    float a_max_y = a.position.y + a_half_size;
+
+    float b_half_size = b.size / 2;
+    float b_min_x = b.position.x - b_half_size;
+    float b_max_x = b.position.x + b_half_size;
+    float b_min_y = b.position.y - b_half_size;
+    float b_max_y = b.position.y + b_half_size;
+
+    return a_min_x < b_max_x &&
+           a_max_x > b_min_x &&
+           a_min_y < b_max_y &&
+           a_max_y > b_min_y;
+}
+
+int collide(Rectangle a, Circle b) {
+    float a_half_size = a.size / 2;
+    float a_min_x = a.position.x - a_half_size;
+    float a_max_x = a.position.x + a_half_size;
+    float a_min_y = a.position.y - a_half_size;
+    float a_max_y = a.position.y + a_half_size;
+
+    float x = max(a_min_x, min(b.position.x, a_max_x));
+    float y = max(a_min_y, min(b.position.y, a_max_y));
+    
+    float distance_x = b.position.x - x;
+    float distance_y = b.position.y - y;
+    
+    float square_distance = (distancia_x * distance_x) + (distancia_y * distancia_y);
+    
+    return square_distance <= (b.radius * b.radius);
+}
+
+// Operator overload
+Vector2 + (Vector2 a, Vector2 b) { return (Vector2) { a.x + b.x, a.y + b.y }; }
+Vector2 * (Vector2 a, float n)   { return (Vector2) { a.x * n, a.y * n }; }
+
+// Possible translation
+Vector2 sum1  (Vector2 a, Vector2 b) { return (Vector2) { a.x + b.x, a.y + b.y }; }
+Vector2 mult1 (Vector2 a, float n)   { return (Vector2) { a.x * n, a.y * n }; }
+// And put the right parameter order in case: circle collide square
+
+// Also operator + assignment
+cube.position += movement * delta;
+
+// Possible translation
+cube.position = sum1(cube.position, mult1(movement, delta));
+
+=======================================================================================
+
+// Extension
+extension Vector2 {
+    int is_normalized() {
+        return self.magnitude() == 1;
+    }
+}
+
+// Possible translation
+int vec2_is_normalized(Vector2 *self) { // Add to struct methods in semantic analyzer
+    return vec2_magnitude(self) == 1;
+}
+
+=======================================================================================
+
+// Signals
+signal collided(Collision);
+
+// Possible translation
+
+// Pre coded in c (Signals)
+typedef struct signal {
+    ArrayList *connections;
+} Signal;
+
+void signal_connect(Signal *signal, SignalCollidedCallback *callback)
+{
+    array_list_add(signal->connections, callback);
+}
+// End pre coded c
+
+Signal collided = {
+    array_list_create(sizeof(SignalCollidedCallback), 1)
+};
+
+typedef void (*SignalCollidedCallback)(Collision);
+
+void signal_collided_emit(Signal *signal, Collision collision)
+{
+    for(int i = 0; i < signal->connections->size; i++)
+        ((SignalCollidedCallback *) array_list_get(signal->connections, i))(collision);
+}
+
+// Emit
+collided.emit(collision);
+
+// Possible translation
+signal_collided_emit(collided, collision);
+
+=======================================================================================
+
+// Named blocks
+struct Hotbar View { // A different syntax
+    Horizontal {
+        for 1..9 {
+            Square(10)
+    }
+    .gap(10)
+}
+
+View * get_hud() View {
+    Vertical {
+        Hotbar
+    }
+    .expand()
+    .align(.bottom)
+}
+
+// Possible translation
+struct Hotbar { } // Maybe "using View" translating not for c yet
+
+View * create_Hotbar()
+{
+    View *h = create_horizontal_view();
+    for(int i = 1; i < 9; i++) view_add_child(h, create_square_view(10));
+    h->gap = 10;
+    return h
+}
+
+View * get_hud()
+{
+    // The "View" was translated, "View * get_hud()" keep the same.
+    View *v = create_view();
+
+    View *v = create_vertical_view();
+    view_add_child(v, create_Hotbar());
+    view_expand(v);
+    view_align(v, ALIGN_BOTTOM);
+
+    return v
+}
+
+// Using in C
+void render_hud(Render *render) 
+{
+    render.draw(get_hud());
+}
+
+=======================================================================================
+
+// Gamepad integration
+#include "gamepad.h";
+
+// Block with special rules
+GAMEPAD {
+    left_stick {
+        player.movement = axis.normalized();
+    }
+
+    x { player.jump(); }
+}
+
+// Possible translation
+void left_stick_func1(Axis axis)
+{
+    player.movement = axis_normalized(axis);
+}
+
+// Using signals maybe
+gamepad_connect(GAMEPAD_LEFT_STICK, left_stick_func1);
+
+=======================================================================================
