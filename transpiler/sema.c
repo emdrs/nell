@@ -40,6 +40,9 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             node->resolved_type = node->token->text;
             break;
         }
+        case AST_STRING: {
+            break;
+        }
         case AST_NAME: {
             Symbol *symbol = sema_lookup(sema, node->token->text);
 
@@ -179,6 +182,25 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
                     return 0;
                 }
             }
+            break;
+        }
+        case AST_FUNC_EXEC_PARAM: {
+            if(!sema_analize_node(sema, node->right)) return 0; // Undefined return type
+            break;
+        }
+        case AST_FUNC_EXEC: {
+            Symbol *symbol = sema_lookup(sema, node->token->text);
+
+            if (symbol == NULL) {
+                sema_report_error(sema, node->token, "Undefined symbol");
+                return 0;
+            }
+
+            node->resolved_type = symbol->type_name;
+
+            for (int i = 0; i < node->children->size; i++)
+                sema_analize_node(sema, array_list_get(node->children, i));
+
             break;
         }
         default: {

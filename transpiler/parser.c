@@ -23,6 +23,10 @@ void show_ast_node(ASTNode *node, int indent)
             printf("NAME(%s)\n", node->token->text);
             break;
         }
+        case AST_STRING: {
+            printf("STRING(%s)\n", node->token->text);
+            break;
+        }
         case AST_TYPE: {
             char *name = strdup(node->token->text);
             for (int i = 0; i < node->pointer_level; i++) {
@@ -92,6 +96,19 @@ void show_ast_node(ASTNode *node, int indent)
             show_ast_node(node->right, indent+1);
             break;
         }
+        case AST_FUNC_EXEC_PARAM: {
+            printf("PARAM\n");
+            show_ast_node(node->right, indent + 1);
+            break;
+        }
+        case AST_FUNC_EXEC: {
+            printf("FUNC_EXEC\n");
+            print_indent(indent+1);
+            printf("PARAMS:\n");
+            for (int i = 0; i < node->children->size; i++)
+                show_ast_node(array_list_get(node->children, i), indent+2);
+            break;
+        }
         default: {
             printf("NOT IMPLEMENTED SHOW AST\n");
         }
@@ -121,13 +138,21 @@ int is_factor(Token *token) { return is_number(token) || is_name(token); }
 
 ASTNode * parse_factor(Parser *p)
 {
-    Token *token = parser_peek(p, 0);
-    if(!is_factor(token)) return NULL;
+    ParseFunction parses[] = {
+        parse_func_exec,
+        parse_string,
+        parse_number,
+        parse_name,
+    };
 
-    if (token->type == TOKEN_INT || token->type == TOKEN_FLOAT) return parse_number(p);
-    if (is_name(token)) return parse_name(p);
+    ASTNode *node = try_parses(p, parses, parses_count(parses));
 
-    return NULL;
+    if (node == NULL) {
+        parser_report_error(p);
+        exit(1);
+    }
+
+    return node;
 }
 
 int is_operator(Token *token)
@@ -292,10 +317,12 @@ ASTNode * parse_return(Parser *p)
     if (token->type != TOKEN_RETURN) return NULL;
     parser_advance(p, 1); // return
 
-
     ASTNode *node = create_ast_node(AST_RETURN);
     node->token = token;
-    node->right = parse_expression(p); // Can be null
+
+    Token *next = parser_peek(p, 0);           
+    if (next->type != TOKEN_SEMICOLON)         
+        node->right = parse_expression(p);     
 
     return node;
 }
@@ -307,6 +334,7 @@ ASTNode * parse_command(Parser *p)
         parse_const_def,
         parse_return,
         parse_assignment,
+        parse_factor,
     };
 
     ASTNode *node = try_parses(p, parses, parses_count(parses));
@@ -392,6 +420,59 @@ ASTNode * parse_func_def(Parser *p)
 
     return node;
 
+}
+
+ASTNode * parse_func_exec_param(Parser *p)
+{
+    ASTNode *node = create_ast_node(AST_FUNC_EXEC_PARAM);
+    node->right = parse_expression(p);
+
+    return node;
+}
+
+ArrayList * parse_func_exec_params(Parser *p)
+{
+    Token *token = parser_peek(p, 0);
+    if (token->type != TOKEN_LPAREN) return NULL;
+
+    parser_advance(p, 1); // (
+
+    ArrayList *params = array_list_create(sizeof(ASTNode), 1);
+
+    while (parser_peek(p, 0)->type != TOKEN_RPAREN) {
+        array_list_add(params, parse_func_exec_param(p));
+
+        token = parser_peek(p, 0);
+        if (token->type == TOKEN_COMMA) {
+            parser_advance(p, 1); // ,
+            continue;
+        }
+
+        if (token->type != TOKEN_RPAREN)
+            parser_set_error_and_abort(p, 2.0f/3.0f,
+                    "')' needed to end parameters execution", token);
+    }
+
+    parser_advance(p, 1); // )
+    
+    return params;
+}
+
+ASTNode * parse_func_exec(Parser *p)
+{
+    ASTNode *func_name = parse_name(p);
+
+    if (func_name == NULL) return NULL;
+
+    ArrayList *params = parse_func_exec_params(p);
+
+    if (params == NULL) return NULL;
+
+    ASTNode *node = create_ast_node(AST_FUNC_EXEC);
+    node->token = func_name->token;
+    node->children = params;
+
+    return node;
 }
 
 ASTNode * parse_statement(Parser *p)

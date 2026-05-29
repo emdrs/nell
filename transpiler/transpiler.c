@@ -162,11 +162,37 @@ char * generate_code(ASTNode *node, int level)
 
             break;
         }
+        case AST_FUNC_EXEC_PARAM: {
+            char *code = generate_code(node->right, level);
+            asprintf(&result, "%s", code);
+            free(code);
+            break;
+        }
+        case AST_FUNC_EXEC: {
+            char *params = NULL;
+            for (int i = 0; i < node->children->size; i++) {
+                char *param = generate_code(array_list_get(node->children, i), level);
+                old = params;
+                if (params == NULL)
+                    asprintf(&params, "%s", param);
+                else
+                    asprintf(&params, "%s, %s", params, param);
+                free(param);
+                free(old);
+            }
+
+            asprintf(&result, "%s(%s)", node->token->text,
+                    params == NULL ? "" : params);
+            break;
+        }
         case AST_RETURN: {
             char *expression = generate_code(node->right, level);
             asprintf(&result, "return %s;", expression);
             free(expression);
             break;
+        }
+        default: {
+            printf("NOT IMPLEMENTED TRANSLATION.\n");
         }
     }
 
