@@ -1,7 +1,6 @@
 #include "sema.h"
 #include "lexer.h"
 #include "parser.h"
-#include <_stdio.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -447,8 +447,12 @@ int is_string(Token *token)
 
 ASTNode * parse_number(Parser *p)
 {
+    Token *token = parser_peek(p, 0);
+
+    if (!is_number(token)) return NULL;
+
     ASTNode *node = create_ast_node(AST_NUMBER);
-    node->token = parser_peek(p, 0);
+    node->token = token;
     parser_advance(p, 1);
 
     return node;
@@ -456,8 +460,12 @@ ASTNode * parse_number(Parser *p)
 
 ASTNode * parse_name(Parser *p)
 {
+    Token *token = parser_peek(p, 0);
+
+    if (!is_name(token)) return NULL;
+
     ASTNode *node = create_ast_node(AST_NAME);
-    node->token = parser_peek(p, 0);
+    node->token = token;
     parser_advance(p, 1);
 
     return node;
@@ -465,8 +473,12 @@ ASTNode * parse_name(Parser *p)
 
 ASTNode * parse_string(Parser *p)
 {
+    Token *token = parser_peek(p, 0);
+
+    if (!is_string(token)) return NULL;
+
     ASTNode *node = create_ast_node(AST_STRING);
-    node->token = parser_peek(p, 0);
+    node->token = token;
     parser_advance(p, 1);
 
     return node;
