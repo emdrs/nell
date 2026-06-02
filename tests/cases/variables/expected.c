@@ -1,0 +1,1 @@
+int main() { int a = 10; int b; const int c = 5; return 0; }

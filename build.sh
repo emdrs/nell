@@ -1,1 +1,1 @@
-gcc -g transpiler/*.c -Wall -o build/nell
+gcc -g transpiler/*.c -Wall -o build/nell && ./tests/runner.sh
