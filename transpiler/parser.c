@@ -169,7 +169,9 @@ int is_bool_operator(Token *token)
            token->type == TOKEN_GREATER_EQUALS ||
            token->type == TOKEN_LESS           ||
            token->type == TOKEN_LESS_EQUALS    ||
-           token->type == TOKEN_EQUALS;
+           token->type == TOKEN_EQUALS         ||
+           token->type == TOKEN_AND         ||
+           token->type == TOKEN_OR;
 }
 
 ASTNode * parse_expression(Parser *p)
