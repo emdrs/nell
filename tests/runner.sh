@@ -11,7 +11,7 @@ for dir in tests/cases/*/; do
     [ -f "$input" ] || continue
 
     if [ -f "$dir/expected_error.txt" ]; then
-        output=$("$nell" "$input" 2>&1)
+        output=$("$nell" "$input" 2>&1 --verbose)
         expected_err=$(head -1 "$dir/expected_error.txt")
         rm -f out.c
         if echo "$output" | grep -qF "$expected_err"; then
@@ -24,7 +24,7 @@ for dir in tests/cases/*/; do
         continue
     fi
 
-    output=$("$nell" "$input" 2>&1)
+    output=$("$nell" "$input" 2>&1 --verbose)
     rc=$?
 
     if [ $rc -ne 0 ] || [ ! -f out.c ]; then

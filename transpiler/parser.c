@@ -163,6 +163,15 @@ int is_operator(Token *token)
            token->type == TOKEN_SLASH;
 }
 
+int is_bool_operator(Token *token)
+{
+    return token->type == TOKEN_GREATER        ||
+           token->type == TOKEN_GREATER_EQUALS ||
+           token->type == TOKEN_LESS           ||
+           token->type == TOKEN_LESS_EQUALS    ||
+           token->type == TOKEN_EQUALS;
+}
+
 ASTNode * parse_expression(Parser *p)
 {
     Token *token = parser_peek(p, 0);
@@ -176,7 +185,7 @@ ASTNode * parse_expression(Parser *p)
 
     token = parser_peek(p, 0);
 
-    if (!is_operator(token)) return factor;
+    if (!is_operator(token) && !is_bool_operator(token)) return factor;
     parser_advance(p, 1); // operator
 
     ASTNode *expression = create_ast_node(AST_EXPRESSION);
