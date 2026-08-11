@@ -39,7 +39,7 @@ void write_file(char *path, char *content)
         return;
     }
 
-    fprintf(f, "%s", content);
+    fprintf(f, "%s\n", content);
 
     fclose(f);
 }
