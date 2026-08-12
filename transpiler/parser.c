@@ -156,14 +156,7 @@ ASTNode * parse_factor(Parser *p)
         parse_name,
     };
 
-    ASTNode *node = try_parses(p, parses, parses_count(parses));
-
-    if (node == NULL) {
-        parser_report_error(p);
-        exit(1);
-    }
-
-    return node;
+    return try_parses(p, parses, parses_count(parses));
 }
 
 int is_operator(Token *token)
@@ -208,7 +201,6 @@ ASTNode * parse_expression(Parser *p)
 
     return expression;
 }
-
 
 int is_assign(Token *token)
 {
@@ -525,6 +517,9 @@ ASTNode * parse_if(Parser *p)
 
     ASTNode *node = create_ast_node(AST_IF);
     node->left = parse_expression(p);
+    if (node->left == NULL) {
+        parser_set_error_and_abort(p, 3.0/5.0, "if needs a condition", parser_peek(p, 0));
+    }
 
     parser_match(p, TOKEN_RPAREN, "')' needed in if condition");
 

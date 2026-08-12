@@ -3,12 +3,8 @@ int soma(int a, int b) {
 }
 
 int main() {
-    if(soma(a, b) > 10) {
+    if(a) {
         int a = 10;
-    } else if(10 == 10){
-        int a = 15;
-    } else {
-        int a = 67;
     }
 
     return 0;
