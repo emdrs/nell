@@ -119,6 +119,10 @@ void show_ast_node(ASTNode *node, int indent)
                 show_ast_node(array_list_get(node->children, i), indent+1);
             break;
         }
+        case AST_BREAK: {
+            printf("BREAK\n");
+            break;
+        }
         case AST_RETURN: {
             printf("RETURN\n");
             show_ast_node(node->right, indent+1);
@@ -346,6 +350,19 @@ ASTNode * parse_assignment(Parser *p)
     return node;
 }
 
+ASTNode * parse_break(Parser *p)
+{
+    Token *token = parser_peek(p, 0);
+
+    if (token->type != TOKEN_BREAK) return NULL;
+    parser_advance(p, 1); // return
+
+    ASTNode *node = create_ast_node(AST_BREAK);
+    node->token = token;
+
+    return node;
+}
+
 ASTNode * parse_return(Parser *p)
 {
     Token *token = parser_peek(p, 0);
@@ -368,6 +385,7 @@ ASTNode * parse_command(Parser *p)
     ParseFunction parses[] = {
         parse_var_def,
         parse_const_def,
+        parse_break,
         parse_return,
         parse_assignment,
         parse_factor,

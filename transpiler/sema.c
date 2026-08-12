@@ -68,8 +68,18 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             break;
         }
         case AST_WHILE: {
+            sema->loop_depth++;
             sema_analize_node(sema, node->left);
             sema_analize_node(sema, node->right);
+            sema->loop_depth--;
+            break;
+        }
+        case AST_FOR: {
+            sema->loop_depth++;
+            for (int i = 0; i < 3; i++)
+                sema_analize_node(sema, array_list_get(node->children, i));
+            sema_analize_node(sema, node->right);
+            sema->loop_depth--;
             break;
         }
         case AST_BLOCK: {
@@ -169,6 +179,13 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
 
             sema_scope_pop(sema);
 
+            break;
+        }
+        case AST_BREAK: {
+            if (sema->loop_depth == 0) {
+                sema_report_error(sema, node->token, "break outside loop and switch");
+                return 0;
+            }
             break;
         }
         case AST_RETURN: {

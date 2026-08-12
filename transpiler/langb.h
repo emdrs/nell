@@ -146,6 +146,7 @@ typedef struct {
     char *current_return_type;
 
     int anonymous_block_count;
+    int loop_depth;
 
     int error_count;
     char *file_name;

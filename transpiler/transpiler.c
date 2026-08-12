@@ -242,6 +242,10 @@ char * generate_code(ASTNode *node, int level)
                     params == NULL ? "" : params);
             break;
         }
+        case AST_BREAK: {
+            asprintf(&result, "break");
+            break;
+        }
         case AST_RETURN: {
             char *expression = generate_code(node->right, level);
             asprintf(&result, "return %s", expression);

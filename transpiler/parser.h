@@ -22,6 +22,7 @@ typedef enum {
     AST_WHILE,
     AST_FOR,
     AST_BLOCK,
+    AST_BREAK,
     AST_RETURN,
 
     AST_EMPTY, // for empty statements

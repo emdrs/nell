@@ -1,1 +1,1 @@
-int main() { for (int i = 0; i < 10; i += 1) { int a = i; } for (; ; ) { } }
+int main() { for (int i = 0; i < 10; i += 1) { int a = i; } for (; ; ) { break; } }
