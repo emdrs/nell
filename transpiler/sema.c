@@ -188,6 +188,13 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             }
             break;
         }
+        case AST_CONTINUE: {
+            if (sema->loop_depth == 0) {
+                sema_report_error(sema, node->token, "continue outside loop");
+                return 0;
+            }
+            break;
+        }
         case AST_RETURN: {
             char *return_type = sema->current_return_type;
 

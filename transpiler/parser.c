@@ -111,6 +111,7 @@ void show_ast_node(ASTNode *node, int indent)
             printf("FOR\n");
             for (int i = 0; i < 3; i++)
                 show_ast_node(array_list_get(node->children, i), indent + 1);
+            show_ast_node(node->right, indent + 1);
             break;
         }
         case AST_BLOCK: {
@@ -121,6 +122,10 @@ void show_ast_node(ASTNode *node, int indent)
         }
         case AST_BREAK: {
             printf("BREAK\n");
+            break;
+        }
+        case AST_CONTINUE: {
+            printf("CONTINUE\n");
             break;
         }
         case AST_RETURN: {
@@ -362,6 +367,18 @@ ASTNode * parse_break(Parser *p)
 
     return node;
 }
+ASTNode * parse_continue(Parser *p)
+{
+    Token *token = parser_peek(p, 0);
+
+    if (token->type != TOKEN_CONTINUE) return NULL;
+    parser_advance(p, 1); // return
+
+    ASTNode *node = create_ast_node(AST_CONTINUE);
+    node->token = token;
+
+    return node;
+}
 
 ASTNode * parse_return(Parser *p)
 {
@@ -383,11 +400,12 @@ ASTNode * parse_return(Parser *p)
 ASTNode * parse_command(Parser *p)
 {
     ParseFunction parses[] = {
+        parse_assignment,
         parse_var_def,
+        parse_return,
         parse_const_def,
         parse_break,
-        parse_return,
-        parse_assignment,
+        parse_continue,
         parse_factor,
     };
 
