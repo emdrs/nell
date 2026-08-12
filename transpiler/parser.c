@@ -96,6 +96,12 @@ void show_ast_node(ASTNode *node, int indent)
             show_ast_node(node->right, indent + 1);
             break;
         }
+        case AST_WHILE: {
+            printf("WHILE\n");
+            show_ast_node(node->left, indent + 1);
+            show_ast_node(node->right, indent + 1);
+            break;
+        }
         case AST_BLOCK: {
             printf("BLOCK\n");
             for (int i = 0; i < node->children->size; i++)
@@ -518,10 +524,29 @@ ASTNode * parse_if(Parser *p)
     ASTNode *node = create_ast_node(AST_IF);
     node->left = parse_expression(p);
     if (node->left == NULL) {
-        parser_set_error_and_abort(p, 3.0/5.0, "if needs a condition", parser_peek(p, 0));
+        parser_set_error_and_abort(p, 2.0/5.0, "if needs a condition", parser_peek(p, 0));
     }
 
     parser_match(p, TOKEN_RPAREN, "')' needed in if condition");
+
+    node->right = parse_block(p);
+
+    return node;
+}
+
+ASTNode * parse_while(Parser *p)
+{
+    if (parser_peek(p, 0)->type != TOKEN_WHILE) return NULL;
+    parser_advance(p, 1); // while
+
+    parser_match(p, TOKEN_LPAREN, "'(' needed in while condition");
+
+    ASTNode *node = create_ast_node(AST_WHILE);
+    node->left = parse_expression(p);
+    if (node->left == NULL)
+        parser_set_error_and_abort(p, 2.0/5.0, "while needs a condition", parser_peek(p, 0));
+
+    parser_match(p, TOKEN_RPAREN, "')' needed in while condition");
 
     node->right = parse_block(p);
 
@@ -534,6 +559,7 @@ ASTNode * parse_statement(Parser *p)
         parse_func_def,
         parse_if,
         parse_else,
+        parse_while,
         parse_command
     };
 

@@ -98,6 +98,7 @@ char * generate_code(ASTNode *node, int level)
         case AST_IF: {
             char *condition = generate_code(node->left, level);
             char *block = generate_code(node->right, level);
+
             asprintf(&result, "if (%s) %s", condition, block);
 
             free(condition);
@@ -110,6 +111,17 @@ char * generate_code(ASTNode *node, int level)
             asprintf(&result, "else %s", right);
 
             free(right);
+
+            break;
+        }
+        case AST_WHILE: {
+            char *condition = generate_code(node->left, level);
+            char *block = generate_code(node->right, level);
+
+            asprintf(&result, "while (%s) %s", condition, block);
+
+            free(condition);
+            free(block);
 
             break;
         }

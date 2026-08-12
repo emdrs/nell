@@ -18,6 +18,7 @@ typedef enum {
     AST_ASSIGNMENT,
     AST_IF,
     AST_ELSE,
+    AST_WHILE,
     AST_BLOCK,
     AST_RETURN,
 } ASTType;

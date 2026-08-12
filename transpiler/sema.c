@@ -54,6 +54,20 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             node->resolved_type = symbol->type_name;
             break;
         }
+        case AST_IF: {
+            sema_analize_node(sema, node->left);
+            sema_analize_node(sema, node->right);
+            break;
+        }
+        case AST_ELSE: {
+            sema_analize_node(sema, node->right);
+            break;
+        }
+        case AST_WHILE: {
+            sema_analize_node(sema, node->left);
+            sema_analize_node(sema, node->right);
+            break;
+        }
         case AST_BLOCK: {
             char *scope_name;
             if (node->token == NULL)

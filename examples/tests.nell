@@ -1,9 +1,6 @@
-int soma(int a, int b) {
-    return a + b;
-}
-
 int main() {
-    if(a) {
+    int a = 0;
+    while (a < 10) {
         int a = 10;
     }
 
