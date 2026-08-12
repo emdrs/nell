@@ -77,9 +77,9 @@ char * generate_code(ASTNode *node, int level)
             char *type = generate_code(node->left, level);
             char *value = generate_code(node->right, level);
             if (value == NULL)
-                asprintf(&result, "%s %s;", type, node->token->text);
+                asprintf(&result, "%s %s", type, node->token->text);
             else
-                asprintf(&result, "%s %s = %s;", type, node->token->text, value);
+                asprintf(&result, "%s %s = %s", type, node->token->text, value);
 
             free(type);
             free(value);
@@ -89,10 +89,16 @@ char * generate_code(ASTNode *node, int level)
             char *type = generate_code(node->left, level);
             char *value = generate_code(node->right, level);
 
-            asprintf(&result, "const %s %s = %s;", type, node->token->text, value);
+            asprintf(&result, "const %s %s = %s", type, node->token->text, value);
 
             free(type);
             free(value);
+            break;
+        }
+        case AST_COMMAND: {
+            char *instruction = generate_code(node->left, level);
+            asprintf(&result, "%s;", instruction);
+            free(instruction);
             break;
         }
         case AST_IF: {
@@ -125,6 +131,21 @@ char * generate_code(ASTNode *node, int level)
 
             break;
         }
+        case AST_FOR: {
+            char *start = generate_code(array_list_get(node->children, 0), level);
+            char *condition = generate_code(array_list_get(node->children, 1), level);
+            char *end = generate_code(array_list_get(node->children, 2), level);
+            char *block = generate_code(node->right, level);
+
+            asprintf(&result, "for (%s; %s; %s) %s", start, condition, end, block);
+
+            free(start);
+            free(condition);
+            free(end);
+            free(block);
+
+            break;
+        }
         case AST_BLOCK: {
             for (int i = 0; i < node->children->size; i++) {
                 char *statement =
@@ -139,7 +160,13 @@ char * generate_code(ASTNode *node, int level)
 
                 free(statement);
             }
+
             if (level > 0) {
+                if (node->children->size == 0) {
+                    asprintf(&result, "{ }");
+                    break;
+                }
+
                 old = result;
                 asprintf(&result, "{ %s }", result);
                 free(old);
@@ -159,7 +186,7 @@ char * generate_code(ASTNode *node, int level)
             char *left = generate_code(node->left, level);
             char *right = generate_code(node->right, level);
 
-            asprintf(&result, "%s %s %s;", left, node->token->text, right);
+            asprintf(&result, "%s %s %s", left, node->token->text, right);
             free(left);
             free(right);
             break;
@@ -217,8 +244,13 @@ char * generate_code(ASTNode *node, int level)
         }
         case AST_RETURN: {
             char *expression = generate_code(node->right, level);
-            asprintf(&result, "return %s;", expression);
+            asprintf(&result, "return %s", expression);
             free(expression);
+            break;
+        }
+
+        case AST_EMPTY: {
+            asprintf(&result, "");
             break;
         }
         default: {

@@ -192,7 +192,7 @@ void array_list_add(ArrayList *list, void *element) {
     list->size++;
 }
 
-void* array_list_get(ArrayList *list, size_t index) {
+void * array_list_get(ArrayList *list, size_t index) {
     if (index >= list->size) return NULL;
     return (char *)list->data + (index * list->elementSize);
 }

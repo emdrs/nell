@@ -54,6 +54,10 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             node->resolved_type = symbol->type_name;
             break;
         }
+        case AST_COMMAND: {
+            sema_analize_node(sema, node->left);
+            break;
+        }
         case AST_IF: {
             sema_analize_node(sema, node->left);
             sema_analize_node(sema, node->right);
@@ -215,6 +219,10 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             for (int i = 0; i < node->children->size; i++)
                 sema_analize_node(sema, array_list_get(node->children, i));
 
+            break;
+        }
+
+        case AST_EMPTY: {
             break;
         }
         default: {

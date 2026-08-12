@@ -8,6 +8,7 @@ typedef enum {
     AST_NAME,              /*NEEDED*/
     AST_STRING,            /*NEEDED*/
     AST_TYPE,
+    AST_COMMAND,
     AST_EXPRESSION,
     AST_VAR_DEF,
     AST_CONST_DEF,
@@ -19,8 +20,11 @@ typedef enum {
     AST_IF,
     AST_ELSE,
     AST_WHILE,
+    AST_FOR,
     AST_BLOCK,
     AST_RETURN,
+
+    AST_EMPTY, // for empty statements
 } ASTType;
 
 ASTNode * parse(ArrayList *list, char *source, char *file);

@@ -85,6 +85,11 @@ void show_ast_node(ASTNode *node, int indent)
             show_ast_node(node->right, indent + 1);
             break;
         }
+        case AST_COMMAND: {
+            printf("COMMAND\n");
+            show_ast_node(node->left, indent + 1);
+            break;
+        }
         case AST_IF: {
             printf("IF\n");
             show_ast_node(node->left, indent + 1);
@@ -100,6 +105,12 @@ void show_ast_node(ASTNode *node, int indent)
             printf("WHILE\n");
             show_ast_node(node->left, indent + 1);
             show_ast_node(node->right, indent + 1);
+            break;
+        }
+        case AST_FOR: {
+            printf("FOR\n");
+            for (int i = 0; i < 3; i++)
+                show_ast_node(array_list_get(node->children, i), indent + 1);
             break;
         }
         case AST_BLOCK: {
@@ -124,6 +135,11 @@ void show_ast_node(ASTNode *node, int indent)
             printf("PARAMS:\n");
             for (int i = 0; i < node->children->size; i++)
                 show_ast_node(array_list_get(node->children, i), indent+2);
+            break;
+        }
+
+        case AST_EMPTY: {
+            printf("EMPTY\n");
             break;
         }
         default: {
@@ -357,14 +373,17 @@ ASTNode * parse_command(Parser *p)
         parse_factor,
     };
 
-    ASTNode *node = try_parses(p, parses, parses_count(parses));
+    ASTNode *n = try_parses(p, parses, parses_count(parses));
 
-    if (node == NULL) {
+    if (n == NULL) {
         parser_report_error(p);
         exit(1);
     }
 
-    parser_match(p, TOKEN_SEMICOLON, "';' needed end a command");
+    parser_match(p, TOKEN_SEMICOLON, "';' needed to end a command");
+
+    ASTNode *node = create_ast_node(AST_COMMAND);
+    node->left = n;
 
     return node;
 }
@@ -553,6 +572,52 @@ ASTNode * parse_while(Parser *p)
     return node;
 }
 
+ASTNode * parse_for(Parser *p)
+{
+    if (parser_peek(p, 0)->type != TOKEN_FOR) return NULL;
+    parser_advance(p, 1); // for
+
+    parser_match(p, TOKEN_LPAREN, "'(' needed in for");
+
+    ASTNode *node = create_ast_node(AST_FOR);
+    node->children = array_list_create(sizeof(ASTNode), 3);
+
+    ParseFunction parses[] = {
+        parse_var_def,
+        parse_const_def,
+        parse_assignment,
+        parse_factor,
+    };
+
+    for (int i = 0; i < 3; i++) {
+        if (parser_peek(p, 0)->type == TOKEN_SEMICOLON) {
+            array_list_add(node->children, create_ast_node(AST_EMPTY));
+            parser_advance(p, 1); // semicolon
+            continue;
+        }
+
+        if (i == 1) {
+            array_list_add(node->children, parse_expression(p));
+        } else {
+            ASTNode *n = try_parses(p, parses, parses_count(parses));
+
+            if (n == NULL) n = create_ast_node(AST_EMPTY);
+
+            array_list_add(node->children, n);
+        }
+
+        if (i < 2)
+            parser_match(p, TOKEN_SEMICOLON,
+                    i == 0 ? "condition needed in for" : "expression expected in for");
+    }
+
+    parser_match(p, TOKEN_RPAREN, "')' needed in for");
+
+    node->right = parse_block(p);
+
+    return node;
+}
+
 ASTNode * parse_statement(Parser *p)
 {
     ParseFunction parses[] = {
@@ -560,6 +625,7 @@ ASTNode * parse_statement(Parser *p)
         parse_if,
         parse_else,
         parse_while,
+        parse_for,
         parse_command
     };
 
