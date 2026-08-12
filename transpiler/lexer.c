@@ -97,6 +97,9 @@ void token_show(Token *token)
         case TOKEN_IF:
             printf("IF");
             break;
+        case TOKEN_ELSE:
+            printf("ELSE");
+            break;
         case TOKEN_WHILE:
             printf("WHILE");
             break;
@@ -276,6 +279,7 @@ Token get_token(Lexer *l)
 
     if (is_keyword(l, "const"))   return (Token){ TOKEN_CONST,     "const" };
     if (is_keyword(l, "if"))      return (Token){ TOKEN_IF,           "if" };
+    if (is_keyword(l, "else"))    return (Token){ TOKEN_ELSE,       "else" };
     if (is_keyword(l, "while"))   return (Token){ TOKEN_WHILE,     "while" };
     if (is_keyword(l, "for"))     return (Token){ TOKEN_FOR,         "for" };
     if (is_keyword(l, "switch"))  return (Token){ TOKEN_SWITCH,   "switch" };

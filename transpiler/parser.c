@@ -85,6 +85,17 @@ void show_ast_node(ASTNode *node, int indent)
             show_ast_node(node->right, indent + 1);
             break;
         }
+        case AST_IF: {
+            printf("IF\n");
+            show_ast_node(node->left, indent + 1);
+            show_ast_node(node->right, indent + 1);
+            break;
+        }
+        case AST_ELSE: {
+            printf("ELSE\n");
+            show_ast_node(node->right, indent + 1);
+            break;
+        }
         case AST_BLOCK: {
             printf("BLOCK\n");
             for (int i = 0; i < node->children->size; i++)
@@ -170,7 +181,7 @@ int is_bool_operator(Token *token)
            token->type == TOKEN_LESS           ||
            token->type == TOKEN_LESS_EQUALS    ||
            token->type == TOKEN_EQUALS         ||
-           token->type == TOKEN_AND         ||
+           token->type == TOKEN_AND            ||
            token->type == TOKEN_OR;
 }
 
@@ -486,10 +497,48 @@ ASTNode * parse_func_exec(Parser *p)
     return node;
 }
 
+ASTNode * parse_if(Parser *p);
+
+ASTNode * parse_else(Parser *p)
+{
+    if (parser_peek(p, 0)->type != TOKEN_ELSE) return NULL;
+    parser_advance(p, 1); // else
+
+    ASTNode *node = create_ast_node(AST_ELSE);
+
+    if (parser_peek(p, 0)->type == TOKEN_IF) {
+        node->right = parse_if(p);
+        return node;
+    }
+
+    node->right = parse_block(p);
+
+    return node;
+}
+
+ASTNode * parse_if(Parser *p)
+{
+    if (parser_peek(p, 0)->type != TOKEN_IF) return NULL;
+    parser_advance(p, 1); // if
+
+    parser_match(p, TOKEN_LPAREN, "'(' needed in if condition");
+
+    ASTNode *node = create_ast_node(AST_IF);
+    node->left = parse_expression(p);
+
+    parser_match(p, TOKEN_RPAREN, "')' needed in if condition");
+
+    node->right = parse_block(p);
+
+    return node;
+}
+
 ASTNode * parse_statement(Parser *p)
 {
     ParseFunction parses[] = {
         parse_func_def,
+        parse_if,
+        parse_else,
         parse_command
     };
 

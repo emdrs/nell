@@ -56,3 +56,4 @@ done
 echo "---"
 echo "$passed passaram, $failed falharam"
 [ $failed -gt 0 ] && exit 1
+exit 0

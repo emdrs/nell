@@ -16,6 +16,8 @@ typedef enum {
     AST_FUNC_EXEC,
     AST_FUNC_EXEC_PARAM,
     AST_ASSIGNMENT,
+    AST_IF,
+    AST_ELSE,
     AST_BLOCK,
     AST_RETURN,
 } ASTType;

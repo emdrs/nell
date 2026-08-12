@@ -32,6 +32,7 @@ typedef enum {
     TOKEN_RPAREN,         // )
     TOKEN_CONST,          // const
     TOKEN_IF,             // if
+    TOKEN_ELSE,           // else
     TOKEN_WHILE,          // while
     TOKEN_FOR,            // for
     TOKEN_SWITCH,         // switch

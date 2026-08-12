@@ -95,6 +95,24 @@ char * generate_code(ASTNode *node, int level)
             free(value);
             break;
         }
+        case AST_IF: {
+            char *condition = generate_code(node->left, level);
+            char *block = generate_code(node->right, level);
+            asprintf(&result, "if (%s) %s", condition, block);
+
+            free(condition);
+            free(block);
+
+            break;
+        }
+        case AST_ELSE: {
+            char *right = generate_code(node->right, level);
+            asprintf(&result, "else %s", right);
+
+            free(right);
+
+            break;
+        }
         case AST_BLOCK: {
             for (int i = 0; i < node->children->size; i++) {
                 char *statement =
