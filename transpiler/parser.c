@@ -19,7 +19,7 @@ void show_ast_node(ASTNode *node, int indent)
             printf("NUMBER(%s)\n", node->token->text);
             break;
         }
-        case AST_NAME: {
+        case AST_IDENTIFIER: {
             printf("NAME(%s)\n", node->token->text);
             break;
         }
@@ -50,27 +50,27 @@ void show_ast_node(ASTNode *node, int indent)
             show_ast_node(node->left, indent + 1);
             break;
         }
-        case AST_VAR_DEF: {
-            printf("VAR_DEF(%s)\n", node->token->text);
+        case AST_VARIABLE: {
+            printf("VARIABLE(%s)\n", node->token->text);
             show_ast_node(node->left, indent+1);
             show_ast_node(node->right, indent+1);
             break;
         }
-        case AST_CONST_DEF: {
-            printf("CONST_DEF(%s)\n", node->token->text);
+        case AST_CONSTANT: {
+            printf("CONSTANT(%s)\n", node->token->text);
             show_ast_node(node->left, indent+1);
             show_ast_node(node->right, indent+1);
             break;
         }
-        case AST_FUNC_DEF_PARAM: {
-            printf("PARAM\n");
+        case AST_PARAMETER: {
+            printf("PARAMETER\n");
             show_ast_node(node->left, indent+1);
             print_indent(indent + 1);
             printf("NAME(%s)\n", node->token->text);
             break;
         }
-        case AST_FUNC_DEF: {
-            printf("FUNC_DEF(%s)\n", node->token->text);
+        case AST_FUNCTION: {
+            printf("FUNCTION(%s)\n", node->token->text);
             show_ast_node(node->left, indent + 1);
             print_indent(indent+1);
             printf("PARAMS:\n");
@@ -85,8 +85,8 @@ void show_ast_node(ASTNode *node, int indent)
             show_ast_node(node->right, indent + 1);
             break;
         }
-        case AST_COMMAND: {
-            printf("COMMAND\n");
+        case AST_STATEMENT: {
+            printf("STATEMENT\n");
             show_ast_node(node->left, indent + 1);
             break;
         }
@@ -133,13 +133,13 @@ void show_ast_node(ASTNode *node, int indent)
             show_ast_node(node->right, indent+1);
             break;
         }
-        case AST_FUNC_EXEC_PARAM: {
-            printf("PARAM\n");
+        case AST_ARGUMENT: {
+            printf("ARGUMENT\n");
             show_ast_node(node->right, indent + 1);
             break;
         }
-        case AST_FUNC_EXEC: {
-            printf("FUNC_EXEC\n");
+        case AST_CALL: {
+            printf("CALL\n");
             print_indent(indent+1);
             printf("PARAMS:\n");
             for (int i = 0; i < node->children->size; i++)
@@ -181,7 +181,7 @@ int is_factor(Token *token) { return is_number(token) || is_name(token); }
 ASTNode * parse_factor(Parser *p)
 {
     ParseFunction parses[] = {
-        parse_func_exec,
+        parse_call,
         parse_string,
         parse_number,
         parse_name,
@@ -242,16 +242,16 @@ int is_assign(Token *token)
            token->type == TOKEN_SLASH_ASSIGN;
 }
 
-ASTNode * parse_var_def(Parser *p)
+ASTNode * parse_variable(Parser *p)
 {
     if(!is_type(p, 0)) return NULL;
 
-    ASTNode *node = create_ast_node(AST_VAR_DEF);
+    ASTNode *node = create_ast_node(AST_VARIABLE);
     node->left = parse_type(p);
 
     Token *token = parser_peek(p, 0);
     if(!is_name(token)) {
-        parser_set_error(p, 1.0f/4.0f, "Name needed to define a variable", token, 0);
+        parser_set_error(p, 1.0f/4.0f, "Name needed in variable", token, 0);
         return NULL;
     }
 
@@ -263,7 +263,7 @@ ASTNode * parse_var_def(Parser *p)
 
     if (token->type != TOKEN_ASSIGN) 
         parser_set_error_and_abort(p, 2.0f/4.0f,
-                "Assign operator not allowed to define a variable", token);
+                "Assign operator needed to initialize a variable", token);
     
     parser_advance(p, 1); // =
 
@@ -272,32 +272,32 @@ ASTNode * parse_var_def(Parser *p)
     
     if (node->right == NULL)
         parser_set_error_and_abort(p, 3.0f/4.0f,
-                "Expression needed to initializa a variable", token);
+                "Expression needed in variable", token);
 
     return node;
 }
 
-int is_const_def(Parser *p)
+int is_constant(Parser *p)
 {
     if(parser_peek(p, 0)->type != TOKEN_CONST) return 0;
     return 1;
 }
 
-ASTNode * parse_const_def(Parser *p)
+ASTNode * parse_constant(Parser *p)
 {
-    if (!is_const_def(p)) return NULL;
+    if (!is_constant(p)) return NULL;
 
     parser_advance(p, 1); // const
 
     if(!is_type(p, 0))
-        parser_set_error_and_abort(p, 1.0f/5.0f, "Type needed to define a const", parser_peek(p, 1));
+        parser_set_error_and_abort(p, 1.0f/5.0f, "Type needed in constant", parser_peek(p, 1));
 
-    ASTNode *node = create_ast_node(AST_CONST_DEF);
+    ASTNode *node = create_ast_node(AST_CONSTANT);
     node->left = parse_type(p);
 
     Token *token = parser_peek(p, 0);
     if(!is_name(token))
-        parser_set_error_and_abort(p, 2.0f/5.0f, "Name needed to define a const",
+        parser_set_error_and_abort(p, 2.0f/5.0f, "Name needed in constant",
                 token);
 
     node->token = token;
@@ -305,13 +305,13 @@ ASTNode * parse_const_def(Parser *p)
 
     token = parser_peek(p, 0);
     if (!is_assign(token)) {
-        parser_set_error_and_abort(p, 3.0f/5.0f, "Assign is needed to define a const",
+        parser_set_error_and_abort(p, 3.0f/5.0f, "Assign needed in constant",
                 token);
     };
 
     if (token->type != TOKEN_ASSIGN) 
-        parser_set_error_and_abort(p, 3.0f/5.0f,
-                "Assign operator not allowed to define a const", token);
+        parser_set_error_and_abort(p, 3.0f/5.0f, "Assign operator needed in constant",
+                token);
     
     parser_advance(p, 1); // =
     
@@ -319,7 +319,7 @@ ASTNode * parse_const_def(Parser *p)
     node->right = parse_factor(p);
 
     if (node->right == NULL)
-        parser_set_error_and_abort(p, 4.0f/4.0f, "Expression needed to define a const",
+        parser_set_error_and_abort(p, 4.0f/4.0f, "Expression needed in constant",
                 token);
 
     return node;
@@ -397,65 +397,38 @@ ASTNode * parse_return(Parser *p)
     return node;
 }
 
-ASTNode * parse_command(Parser *p)
-{
-    ParseFunction parses[] = {
-        parse_assignment,
-        parse_var_def,
-        parse_return,
-        parse_const_def,
-        parse_break,
-        parse_continue,
-        parse_factor,
-    };
-
-    ASTNode *n = try_parses(p, parses, parses_count(parses));
-
-    if (n == NULL) {
-        parser_report_error(p);
-        exit(1);
-    }
-
-    parser_match(p, TOKEN_SEMICOLON, "';' needed to end a command");
-
-    ASTNode *node = create_ast_node(AST_COMMAND);
-    node->left = n;
-
-    return node;
-}
-
-ASTNode * parse_func_def_param(Parser *p)
+ASTNode * parse_parameter(Parser *p)
 {
     ASTNode *type = parse_type(p);
 
     if (type == NULL)
-        parser_set_error_and_abort(p, 0, "Type needed on parameter definition",
+        parser_set_error_and_abort(p, 0, "Type needed on parameter",
                 parser_peek(p, 0));
 
     ASTNode *name = parse_name(p);
 
     if (name == NULL)
-        parser_set_error_and_abort(p, 0, "Name needed on parameter definition",
+        parser_set_error_and_abort(p, 0, "Name needed on parameter",
                 parser_peek(p, 0));
 
-    ASTNode *node = create_ast_node(AST_FUNC_DEF_PARAM);
+    ASTNode *node = create_ast_node(AST_PARAMETER);
     node->left = type;
     node->token = name->token;
 
     return node;
 }
 
-ArrayList * parse_func_def_params(Parser *p)
+ArrayList * parse_parameters(Parser *p)
 {
     Token *token = parser_peek(p, 0);
     if (token->type != TOKEN_LPAREN) return NULL;
 
     parser_advance(p, 1); // (
 
-    ArrayList *params = array_list_create(sizeof(ASTNode), 1);
+    ArrayList *parameters = array_list_create(sizeof(ASTNode), 1);
 
     while (parser_peek(p, 0)->type != TOKEN_RPAREN) {
-        array_list_add(params, parse_func_def_param(p));
+        array_list_add(parameters, parse_parameter(p));
 
         token = parser_peek(p, 0);
         if (token->type == TOKEN_COMMA) {
@@ -470,10 +443,10 @@ ArrayList * parse_func_def_params(Parser *p)
 
     parser_advance(p, 1); // )
     
-    return params;
+    return parameters;
 }
 
-ASTNode * parse_func_def(Parser *p)
+ASTNode * parse_function(Parser *p)
 {
     ASTNode *type = parse_type(p);
 
@@ -483,39 +456,39 @@ ASTNode * parse_func_def(Parser *p)
 
     if (name == NULL) return NULL;
 
-    ArrayList *params = parse_func_def_params(p);
+    ArrayList *parameters = parse_parameters(p);
 
-    if (params == NULL) return NULL;
+    if (parameters == NULL) return NULL;
 
-    ASTNode *node = create_ast_node(AST_FUNC_DEF);
+    ASTNode *node = create_ast_node(AST_FUNCTION);
     node->left = type;
     node->token = name->token;
-    node->children = params;
+    node->children = parameters;
     node->right = parse_block(p);
 
     return node;
 
 }
 
-ASTNode * parse_func_exec_param(Parser *p)
+ASTNode * parse_argument(Parser *p)
 {
-    ASTNode *node = create_ast_node(AST_FUNC_EXEC_PARAM);
+    ASTNode *node = create_ast_node(AST_ARGUMENT);
     node->right = parse_expression(p);
 
     return node;
 }
 
-ArrayList * parse_func_exec_params(Parser *p)
+ArrayList * parse_arguments(Parser *p)
 {
     Token *token = parser_peek(p, 0);
     if (token->type != TOKEN_LPAREN) return NULL;
 
     parser_advance(p, 1); // (
 
-    ArrayList *params = array_list_create(sizeof(ASTNode), 1);
+    ArrayList *arguments = array_list_create(sizeof(ASTNode), 1);
 
     while (parser_peek(p, 0)->type != TOKEN_RPAREN) {
-        array_list_add(params, parse_func_exec_param(p));
+        array_list_add(arguments, parse_argument(p));
 
         token = parser_peek(p, 0);
         if (token->type == TOKEN_COMMA) {
@@ -530,27 +503,25 @@ ArrayList * parse_func_exec_params(Parser *p)
 
     parser_advance(p, 1); // )
     
-    return params;
+    return arguments;
 }
 
-ASTNode * parse_func_exec(Parser *p)
+ASTNode * parse_call(Parser *p)
 {
-    ASTNode *func_name = parse_name(p);
+    ASTNode *name = parse_name(p);
 
-    if (func_name == NULL) return NULL;
+    if (name == NULL) return NULL;
 
-    ArrayList *params = parse_func_exec_params(p);
+    ArrayList *arguments = parse_arguments(p);
 
-    if (params == NULL) return NULL;
+    if (arguments == NULL) return NULL;
 
-    ASTNode *node = create_ast_node(AST_FUNC_EXEC);
-    node->token = func_name->token;
-    node->children = params;
+    ASTNode *node = create_ast_node(AST_CALL);
+    node->token = name->token;
+    node->children = arguments;
 
     return node;
 }
-
-ASTNode * parse_if(Parser *p);
 
 ASTNode * parse_else(Parser *p)
 {
@@ -619,8 +590,8 @@ ASTNode * parse_for(Parser *p)
     node->children = array_list_create(sizeof(ASTNode), 3);
 
     ParseFunction parses[] = {
-        parse_var_def,
-        parse_const_def,
+        parse_variable,
+        parse_constant,
         parse_assignment,
         parse_factor,
     };
@@ -654,23 +625,47 @@ ASTNode * parse_for(Parser *p)
     return node;
 }
 
+ASTNode * parse_instruction(Parser *p)
+{
+    ParseFunction parses[] = {
+        parse_assignment,
+        parse_variable,
+        parse_return,
+        parse_constant,
+        parse_break,
+        parse_continue,
+        parse_factor,
+    };
+
+    return try_parses(p, parses, parses_count(parses));
+}
+
 ASTNode * parse_statement(Parser *p)
 {
     ParseFunction parses[] = {
-        parse_func_def,
+        parse_function,
         parse_if,
         parse_else,
         parse_while,
-        parse_for,
-        parse_command
+        parse_for
     };
 
     ASTNode *node = try_parses(p, parses, parses_count(parses));
 
-    if (node == NULL) {
+    if (node != NULL) return node;
+
+    ASTNode *instruction = parse_instruction(p);
+
+    if (instruction == NULL) {
         parser_report_error(p);
         exit(1);
     }
+
+    show_ast_node(instruction, 0);
+    parser_match(p, TOKEN_SEMICOLON, "';' needed to end a instruction");
+
+    node = create_ast_node(AST_STATEMENT);
+    node->left = instruction;
 
     return node;
 }

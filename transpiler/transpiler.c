@@ -69,11 +69,11 @@ char * generate_code(ASTNode *node, int level)
             asprintf(&result, "%s", node->token->text);
             break;
         }
-        case AST_NAME: {
+        case AST_IDENTIFIER: {
             asprintf(&result, "%s", node->token->text);
             break;
         }
-        case AST_VAR_DEF: {
+        case AST_VARIABLE: {
             char *type = generate_code(node->left, level);
             char *value = generate_code(node->right, level);
             if (value == NULL)
@@ -85,7 +85,7 @@ char * generate_code(ASTNode *node, int level)
             free(value);
             break;
         }
-        case AST_CONST_DEF: {
+        case AST_CONSTANT: {
             char *type = generate_code(node->left, level);
             char *value = generate_code(node->right, level);
 
@@ -95,7 +95,7 @@ char * generate_code(ASTNode *node, int level)
             free(value);
             break;
         }
-        case AST_COMMAND: {
+        case AST_STATEMENT: {
             char *instruction = generate_code(node->left, level);
             asprintf(&result, "%s;", instruction);
             free(instruction);
@@ -191,13 +191,13 @@ char * generate_code(ASTNode *node, int level)
             free(right);
             break;
         }
-        case AST_FUNC_DEF_PARAM: {
+        case AST_PARAMETER: {
             char *type = generate_code(node->left, level);
             asprintf(&result, "%s %s", type, node->token->text);
             free(type);
             break;
         }
-        case AST_FUNC_DEF: {
+        case AST_FUNCTION: {
             char *type = generate_code(node->left, level);
             char *params = NULL;
             for (int i = 0; i < node->children->size; i++) {
@@ -219,13 +219,13 @@ char * generate_code(ASTNode *node, int level)
 
             break;
         }
-        case AST_FUNC_EXEC_PARAM: {
+        case AST_ARGUMENT: {
             char *code = generate_code(node->right, level);
             asprintf(&result, "%s", code);
             free(code);
             break;
         }
-        case AST_FUNC_EXEC: {
+        case AST_CALL: {
             char *params = NULL;
             for (int i = 0; i < node->children->size; i++) {
                 char *param = generate_code(array_list_get(node->children, i), level);

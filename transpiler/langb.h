@@ -465,7 +465,7 @@ ASTNode * parse_name(Parser *p)
 
     if (!is_name(token)) return NULL;
 
-    ASTNode *node = create_ast_node(AST_NAME);
+    ASTNode *node = create_ast_node(AST_IDENTIFIER);
     node->token = token;
     parser_advance(p, 1);
 

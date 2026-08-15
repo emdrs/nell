@@ -5,17 +5,17 @@
 
 typedef enum {
     AST_NUMBER,            /*NEEDED*/
-    AST_NAME,              /*NEEDED*/
+    AST_IDENTIFIER,        /*NEEDED*/
     AST_STRING,            /*NEEDED*/
     AST_TYPE,
-    AST_COMMAND,
+    AST_STATEMENT,
     AST_EXPRESSION,
-    AST_VAR_DEF,
-    AST_CONST_DEF,
-    AST_FUNC_DEF,
-    AST_FUNC_DEF_PARAM,
-    AST_FUNC_EXEC,
-    AST_FUNC_EXEC_PARAM,
+    AST_VARIABLE,
+    AST_CONSTANT,
+    AST_FUNCTION,
+    AST_PARAMETER,
+    AST_CALL,
+    AST_ARGUMENT,
     AST_ASSIGNMENT,
     AST_IF,
     AST_ELSE,
@@ -44,19 +44,27 @@ int is_operator(Token *token);
 ASTNode * parse_expression(Parser *p);
 
 int is_var_def(Parser *p);
-ASTNode * parse_var_def(Parser *p);
+ASTNode * parse_variable(Parser *p);
 
 int is_const_def(Parser *p);
-ASTNode * parse_const_def(Parser *p);
+ASTNode * parse_constant(Parser *p);
 
-ASTNode * parse_command(Parser *p);
+ASTNode * parse_instruction(Parser *p);
 
 ASTNode * parse_statement(Parser *p);
 
 ASTNode * parse_block(Parser *p);
 
-ASTNode * parse_func_def(Parser *p);
+ASTNode * parse_function(Parser *p);
 
-ASTNode * parse_func_exec(Parser *p);
+ASTNode * parse_call(Parser *p);
+
+ASTNode * parse_else(Parser *p);
+
+ASTNode * parse_if(Parser *p);
+
+ASTNode * parse_while(Parser *p);
+
+ASTNode * parse_for(Parser *p);
 
 #endif

@@ -43,7 +43,7 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
         case AST_STRING: {
             break;
         }
-        case AST_NAME: {
+        case AST_IDENTIFIER: {
             Symbol *symbol = sema_lookup(sema, node->token->text);
 
             if (symbol == NULL) {
@@ -54,7 +54,7 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             node->resolved_type = symbol->type_name;
             break;
         }
-        case AST_COMMAND: {
+        case AST_STATEMENT: {
             sema_analize_node(sema, node->left);
             break;
         }
@@ -109,7 +109,7 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             node->resolved_type = node->left->resolved_type;
             break;
         }
-        case AST_VAR_DEF: {
+        case AST_VARIABLE: {
             if(!sema_analize_node(sema, node->left)) return 0; // Undefined type
 
             sema_define(sema, node->token->text, SK_VARIABLE, node->left->token->text,
@@ -138,7 +138,7 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
 
             break;
         }
-        case AST_CONST_DEF: {
+        case AST_CONSTANT: {
             if(!sema_analize_node(sema, node->left)) return 0; // Undefined type
 
             sema_define(sema, node->token->text, SK_CONSTANT, node->left->token->text,
@@ -155,14 +155,14 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
 
             break;
         }
-        case AST_FUNC_DEF_PARAM: {
+        case AST_PARAMETER: {
             if(!sema_analize_node(sema, node->left)) return 0; // Undefined return type
 
             sema_define(sema, node->token->text, SK_VARIABLE, node->left->token->text,
                         node->pointer_level, node->token);
             break;
         }
-        case AST_FUNC_DEF: {
+        case AST_FUNCTION: {
             if(!sema_analize_node(sema, node->left)) return 0; // Undefined type
 
             sema_define(sema, node->token->text, SK_FUNCTION, node->left->resolved_type,
@@ -226,11 +226,11 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             }
             break;
         }
-        case AST_FUNC_EXEC_PARAM: {
+        case AST_ARGUMENT: {
             if(!sema_analize_node(sema, node->right)) return 0; // Undefined return type
             break;
         }
-        case AST_FUNC_EXEC: {
+        case AST_CALL: {
             Symbol *symbol = sema_lookup(sema, node->token->text);
 
             if (symbol == NULL) {
