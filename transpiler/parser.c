@@ -555,7 +555,7 @@ ASTNode * parse_if(Parser *p)
 
     parser_match(p, TOKEN_RPAREN, "')' needed in if condition");
 
-    node->right = parse_block(p);
+    node->right = parse_statement(p);
 
     return node;
 }
@@ -647,7 +647,8 @@ ASTNode * parse_statement(Parser *p)
         parse_if,
         parse_else,
         parse_while,
-        parse_for
+        parse_for,
+        parse_block,
     };
 
     ASTNode *node = try_parses(p, parses, parses_count(parses));
@@ -677,7 +678,14 @@ ASTNode * parse_block(Parser *p)
     };
 
     int is_root = p->level == 0;
-    if (!is_root) parser_match(p, TOKEN_LBRACE, "'{' needed start a block");
+    Token *token = parser_peek(p, 0);
+    if (!is_root) {
+        if (token->type != TOKEN_LBRACE) {
+            parser_set_error(p, 0, "'{' needed start a block", token, 0);
+            return NULL;
+        }
+        parser_advance(p, 1); // {
+    }
 
     ASTNode *block = create_ast_node(AST_BLOCK);
     block->children = array_list_create(sizeof(ASTNode), 1);
