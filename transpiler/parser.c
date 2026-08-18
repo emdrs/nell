@@ -325,11 +325,31 @@ ASTNode * parse_constant(Parser *p)
     return node;
 }
 
+// add var.member
+ASTNode * parse_lvalue(Parser *p)
+{
+    ParseFunction parses[] = {
+        parse_name,
+    };
+
+    return try_parses(p, parses, parses_count(parses));
+}
+
+// add var.member
+ASTNode * parse_rvalue(Parser *p)
+{
+    ParseFunction parses[] = {
+        parse_expression,
+    };
+
+    return try_parses(p, parses, parses_count(parses));
+}
+
 ASTNode * parse_assignment(Parser *p)
 {
-    ASTNode *name = parse_name(p);
+    ASTNode *lvalue = parse_lvalue(p);
 
-    if (name == NULL) return NULL;
+    if (lvalue == NULL) return NULL;
 
     Token *token = parser_peek(p, 0);
     if (!is_assign(token)) {
@@ -344,13 +364,13 @@ ASTNode * parse_assignment(Parser *p)
 
     token = parser_peek(p, 0);
 
-    ASTNode *expression = parse_expression(p);
-    if (expression == NULL)
+    ASTNode *rvalue = parse_rvalue(p);
+    if (rvalue == NULL)
         parser_set_error_and_abort(p, 2.0f/3.0f, "Expression needed on assignment",
                 token);
 
-    node->left = name;
-    node->right = expression;
+    node->left = lvalue;
+    node->right = rvalue;
 
     return node;
 }
