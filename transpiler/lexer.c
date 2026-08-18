@@ -106,6 +106,9 @@ void token_show(Token *token)
         case TOKEN_FOR:
             printf("FOR");
             break;
+        case TOKEN_DOT:
+            printf("DOT");
+            break;
         case TOKEN_DOUBLE_DOT:
             printf("DOUBLE_DOT");
             break;
@@ -275,6 +278,7 @@ Token get_token(Lexer *l)
             lexer_advance(l);
             return (Token){ TOKEN_DOT_LESS, ".<" };
         }
+        return (Token){ TOKEN_DOT, "." };
     }
 
     if (is_keyword(l, "const"))    return (Token){ TOKEN_CONST,       "const" };

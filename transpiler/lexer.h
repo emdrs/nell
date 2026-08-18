@@ -43,6 +43,7 @@ typedef enum {
     TOKEN_RETURN,         // return
     TOKEN_STRUCT,         // struct
     TOKEN_COMMA,          // ,
+    TOKEN_DOT,            // .
     TOKEN_DOUBLE_DOT,     // ..
     TOKEN_GREATER_DOT,    // >.
     TOKEN_DOT_LESS,       // .<
