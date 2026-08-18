@@ -21,6 +21,8 @@ typedef enum {
     AST_ELSE,
     AST_WHILE,
     AST_FOR,
+    AST_STRUCT,
+    AST_FIELD,
     AST_BLOCK,
     AST_BREAK,
     AST_CONTINUE,

@@ -82,6 +82,27 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             sema->loop_depth--;
             break;
         }
+        case AST_FIELD: {
+            if(!sema_analize_node(sema, node->left)) return 0; // Undefined type
+
+            sema_define(sema, node->right->token->text, SK_VARIABLE, node->left->token->text,
+                        node->pointer_level, node->right->token);
+            break;
+        }
+        case AST_STRUCT: {
+            char *scope_name;
+            if (node->left->token == NULL)
+                asprintf(&scope_name, "%d", sema->anonymous_block_count++);
+            else
+                asprintf(&scope_name, "struct %s", node->left->token->text);
+            sema_define(sema, scope_name, SK_STRUCT, scope_name, 0, node->left->token);
+            sema_scope_push(sema, scope_name);
+            for (int i = 0; i < node->children->size; i++)
+                sema_analize_node(sema, array_list_get(node->children, i));
+            sema_scope_pop(sema);
+            free(scope_name);
+            break;
+        }
         case AST_BLOCK: {
             char *scope_name;
             if (node->token == NULL)

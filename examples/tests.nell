@@ -1,8 +1,6 @@
-int main() {
-    int a = 10;
-    int b = 10;
+struct massa {
+    int a;
+    int a;
+};
 
-    if(a == b) return 1;
-
-    return 0;
-}
+struct massa a;

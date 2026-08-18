@@ -20,7 +20,7 @@ void show_ast_node(ASTNode *node, int indent)
             break;
         }
         case AST_IDENTIFIER: {
-            printf("NAME(%s)\n", node->token->text);
+            printf("IDENTIFIER(%s)\n", node->token->text);
             break;
         }
         case AST_STRING: {
@@ -112,6 +112,23 @@ void show_ast_node(ASTNode *node, int indent)
             for (int i = 0; i < 3; i++)
                 show_ast_node(array_list_get(node->children, i), indent + 1);
             show_ast_node(node->right, indent + 1);
+            break;
+        }
+        case AST_FIELD: {
+            printf("FIELD\n");
+            show_ast_node(node->left, indent + 1);
+            show_ast_node(node->right, indent + 1);
+            break;
+        }
+        case AST_STRUCT: {
+            printf("STRUCT\n");
+            show_ast_node(node->left, indent + 1);
+
+            print_indent(indent);
+            printf("FIELDS\n");
+
+            for (int i = 0; i < node->children->size; i++)
+                show_ast_node(array_list_get(node->children, i), indent + 2);
             break;
         }
         case AST_BLOCK: {
@@ -654,10 +671,59 @@ ASTNode * parse_instruction(Parser *p)
         parse_constant,
         parse_break,
         parse_continue,
-        parse_factor,
+        parse_expression,
     };
 
     return try_parses(p, parses, parses_count(parses));
+}
+
+ASTNode * parse_field(Parser *p)
+{
+    ASTNode *type = parse_type(p);
+    ASTNode *name = parse_name(p);
+    parser_match(p, TOKEN_SEMICOLON, "';' needed to define a field");
+
+    ASTNode *node = create_ast_node(AST_FIELD);
+    node->left = type;
+    node->right = name;
+
+    return node;
+}
+
+ASTNode * parse_struct(Parser *p)
+{
+    if (parser_peek(p, 0)->type != TOKEN_STRUCT) return NULL;
+    parser_advance(p, 1); // struct
+    
+    ASTNode *name = NULL;
+
+    Token *token = parser_peek(p, 0);
+    if (token->type != TOKEN_LBRACE) {
+        name = parse_name(p);
+        if (name == NULL)
+            parser_set_error_and_abort(p, 1.0/3.0, "struct name has to be identifier",
+                    token);
+    }
+
+    parser_match(p, TOKEN_LBRACE, "struct need a block");
+
+    ASTNode *node = create_ast_node(AST_STRUCT);
+    node->left = name;
+    node->children = array_list_create(sizeof(ASTNode), 1);
+
+    while (parser_peek(p, 0)-> type != TOKEN_RBRACE) {
+        ASTNode *field = parse_field(p);
+        if (field == NULL) {
+            parser_report_error(p);
+            exit(1);
+        }
+
+        array_list_add(node->children, field);
+    }
+    parser_advance(p, 1); // }
+    parser_match(p, TOKEN_SEMICOLON, "';' needed to define a struct");
+
+    return node;
 }
 
 ASTNode * parse_statement(Parser *p)
@@ -668,6 +734,7 @@ ASTNode * parse_statement(Parser *p)
         parse_else,
         parse_while,
         parse_for,
+        parse_struct,
         parse_block,
     };
 

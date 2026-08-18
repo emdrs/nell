@@ -146,6 +146,38 @@ char * generate_code(ASTNode *node, int level)
 
             break;
         }
+        case AST_FIELD: {
+            char *type = generate_code(node->left, level);
+            char *name = generate_code(node->right, level);
+
+            asprintf(&result, "%s %s;", type, name);
+
+            free(type);
+            free(name);
+            break;
+        }
+        case AST_STRUCT: {
+            char *name = node->left->token == NULL ? "" : node->left->token->text;
+
+            char *fields = NULL;
+            for (int i = 0; i < node->children->size; i++) {
+                char *field = generate_code(array_list_get(node->children, i), level);
+                if (fields == NULL)
+                    asprintf(&fields, "%s", field);
+                else {
+                    char *old = fields;
+                    asprintf(&fields, "%s %s", fields, field);
+                    free(old);
+                }
+                free(field);
+            }
+
+            asprintf(&result, "struct %s { %s }", name, fields);
+            free(name);
+            free(fields);
+
+            break;
+        }
         case AST_BLOCK: {
             for (int i = 0; i < node->children->size; i++) {
                 char *statement =
