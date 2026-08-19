@@ -94,7 +94,7 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             if (node->left->token == NULL)
                 asprintf(&scope_name, "%d", sema->anonymous_block_count++);
             else
-                asprintf(&scope_name, "struct %s", node->left->token->text);
+                asprintf(&scope_name, "%s", node->left->token->text);
             sema_define(sema, scope_name, SK_STRUCT, scope_name, 0, node->left->token);
             sema_scope_push(sema, scope_name);
             for (int i = 0; i < node->children->size; i++)
