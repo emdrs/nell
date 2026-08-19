@@ -101,6 +101,7 @@ ASTNode * create_ast_node(int type);
 void parser_set_error(Parser *p, float progress, char *error_message, Token *token, int priority);
 void parser_set_error_and_abort(Parser *p, float progress, char *error_message, Token *token);
 void parser_report_error(Parser *p);
+void parser_reset_error(Parser *p);
 void parser_advance(Parser *p, int amount);
 Token * parser_peek(Parser *p, int offset);
 void parser_match(Parser* p, int token_type, char* error_msg);
@@ -110,10 +111,10 @@ void parser_match(Parser* p, int token_type, char* error_msg);
 
 int is_number(Token *token);
 int is_string(Token *token);
-int is_name(Token *token);
+int is_identifier(Token *token);
 
 ASTNode * parse_number(Parser *p);
-ASTNode * parse_name(Parser *p);
+ASTNode * parse_identifier(Parser *p);
 ASTNode * parse_string(Parser *p);
 
 ASTNode * try_parses(Parser *p, ParseFunction functions[], int count);
@@ -431,12 +432,17 @@ void parser_set_error_and_abort(Parser *p, float progress, char *error_message, 
     exit(1);
 }
 
+void parser_reset_error(Parser *p)
+{
+    p->error_info = (ErrorInfo) { 0, NULL, NULL };
+}
+
 int is_number(Token *token)
 {
     return token->type == TOKEN_INT || token->type == TOKEN_FLOAT;
 }
 
-int is_name(Token *token)
+int is_identifier(Token *token)
 {
     return token->type == TOKEN_IDENTIFIER;
 }
@@ -459,11 +465,11 @@ ASTNode * parse_number(Parser *p)
     return node;
 }
 
-ASTNode * parse_name(Parser *p)
+ASTNode * parse_identifier(Parser *p)
 {
     Token *token = parser_peek(p, 0);
 
-    if (!is_name(token)) return NULL;
+    if (!is_identifier(token)) return NULL;
 
     ASTNode *node = create_ast_node(AST_IDENTIFIER);
     node->token = token;
@@ -493,6 +499,8 @@ ASTNode * try_parses(Parser *p, ParseFunction functions[], int count)
         p->pos = start; // Reset in case a parser consume a token and got error.
         node = functions[i](p);
     }
+
+    if (node != NULL) parser_reset_error(p);
 
     return node;
 }
