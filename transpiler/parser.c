@@ -175,15 +175,26 @@ void show_ast_node(ASTNode *node, int indent)
 }
 
 // name, struct name, type (*name)(type, type)
-int is_type(Parser *p, int offset) { return is_name(parser_peek(p, offset)); }
+int is_type(Parser *p, int offset) {
+    if (parser_peek(p, 0)->type == TOKEN_STRUCT)
+        return is_identifier(parser_peek(p, offset + 1));
+    return is_identifier(parser_peek(p, offset));
+}
 
 ASTNode * parse_type(Parser *p)
 {
     if(!is_type(p, 0)) return NULL;
 
     ASTNode *node = create_ast_node(AST_TYPE);
-    node->token = parser_peek(p, 0);
-    parser_advance(p, 1); // name
+
+    Token *token = parser_peek(p, 0);
+    if (token->type == TOKEN_STRUCT) {
+        parser_advance(p, 1); // struct
+        token = parser_peek(p, 0);
+    }
+
+    node->token = token;
+    parser_advance(p, 1); // identifier
 
     while (parser_peek(p, 0)->type == TOKEN_STAR) {
         node->pointer_level++;
@@ -193,7 +204,7 @@ ASTNode * parse_type(Parser *p)
     return node;
 }
 
-int is_factor(Token *token) { return is_number(token) || is_name(token); }
+int is_factor(Token *token) { return is_number(token) || is_identifier(token); }
 
 ASTNode * parse_factor(Parser *p)
 {
@@ -201,7 +212,7 @@ ASTNode * parse_factor(Parser *p)
         parse_call,
         parse_string,
         parse_number,
-        parse_name,
+        parse_identifier,
     };
 
     return try_parses(p, parses, parses_count(parses));
@@ -267,7 +278,7 @@ ASTNode * parse_variable(Parser *p)
     node->left = parse_type(p);
 
     Token *token = parser_peek(p, 0);
-    if(!is_name(token)) {
+    if(!is_identifier(token)) {
         parser_set_error(p, 1.0f/4.0f, "Name needed in variable", token, 0);
         return NULL;
     }
@@ -313,7 +324,7 @@ ASTNode * parse_constant(Parser *p)
     node->left = parse_type(p);
 
     Token *token = parser_peek(p, 0);
-    if(!is_name(token))
+    if(!is_identifier(token))
         parser_set_error_and_abort(p, 2.0f/5.0f, "Name needed in constant",
                 token);
 
@@ -346,7 +357,7 @@ ASTNode * parse_constant(Parser *p)
 ASTNode * parse_lvalue(Parser *p)
 {
     ParseFunction parses[] = {
-        parse_name,
+        parse_identifier,
     };
 
     return try_parses(p, parses, parses_count(parses));
@@ -442,7 +453,7 @@ ASTNode * parse_parameter(Parser *p)
         parser_set_error_and_abort(p, 0, "Type needed on parameter",
                 parser_peek(p, 0));
 
-    ASTNode *name = parse_name(p);
+    ASTNode *name = parse_identifier(p);
 
     if (name == NULL)
         parser_set_error_and_abort(p, 0, "Name needed on parameter",
@@ -489,7 +500,7 @@ ASTNode * parse_function(Parser *p)
 
     if (type == NULL) return NULL;
 
-    ASTNode *name = parse_name(p);
+    ASTNode *name = parse_identifier(p);
 
     if (name == NULL) return NULL;
 
@@ -545,7 +556,7 @@ ArrayList * parse_arguments(Parser *p)
 
 ASTNode * parse_call(Parser *p)
 {
-    ASTNode *name = parse_name(p);
+    ASTNode *name = parse_identifier(p);
 
     if (name == NULL) return NULL;
 
@@ -680,7 +691,7 @@ ASTNode * parse_instruction(Parser *p)
 ASTNode * parse_field(Parser *p)
 {
     ASTNode *type = parse_type(p);
-    ASTNode *name = parse_name(p);
+    ASTNode *name = parse_identifier(p);
     parser_match(p, TOKEN_SEMICOLON, "';' needed to define a field");
 
     ASTNode *node = create_ast_node(AST_FIELD);
@@ -693,19 +704,20 @@ ASTNode * parse_field(Parser *p)
 ASTNode * parse_struct(Parser *p)
 {
     if (parser_peek(p, 0)->type != TOKEN_STRUCT) return NULL;
+    Token *token = parser_peek(p, 1);
+    if (token->type != TOKEN_IDENTIFIER) {
+        parser_set_error(p, 1.0/3.0, "struct name has to be identifier", token, 0);
+        return NULL;
+    }
+    if (parser_peek(p, 2)->type != TOKEN_LBRACE) {
+        parser_set_error(p, 2.0/3.0, "struct need a block", token, 0);
+        return NULL;
+    }
     parser_advance(p, 1); // struct
     
-    ASTNode *name = NULL;
+    ASTNode *name = parse_identifier(p);
 
-    Token *token = parser_peek(p, 0);
-    if (token->type != TOKEN_LBRACE) {
-        name = parse_name(p);
-        if (name == NULL)
-            parser_set_error_and_abort(p, 1.0/3.0, "struct name has to be identifier",
-                    token);
-    }
-
-    parser_match(p, TOKEN_LBRACE, "struct need a block");
+    parser_advance(p, 1); // {
 
     ASTNode *node = create_ast_node(AST_STRUCT);
     node->left = name;
