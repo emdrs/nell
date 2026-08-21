@@ -589,10 +589,10 @@ void sema_analize(char *file_name, char *source, ASTNode *root) {
     sema.source = source;
     sema_scope_push(&sema, "global");
 
-    sema_define(&sema, "void", SK_STRUCT, "void", 0, NULL);
-    sema_define(&sema, "int", SK_STRUCT, "int", 0, NULL);
-    sema_define(&sema, "float", SK_STRUCT, "int", 0, NULL);
-    sema_define(&sema, "char", SK_STRUCT, "int", 0, NULL);
+    sema_define(&sema, "void", SK_BUILTIN, "void", 0, NULL);
+    sema_define(&sema, "int", SK_BUILTIN, "int", 0, NULL);
+    sema_define(&sema, "float", SK_BUILTIN, "float", 0, NULL);
+    sema_define(&sema, "char", SK_BUILTIN, "char", 0, NULL);
     
     sema_analize_node(&sema, root);
 

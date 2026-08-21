@@ -2,6 +2,7 @@
 #define SEMA_H
 
 typedef enum {
+    SK_BUILTIN,
     SK_VARIABLE,
     SK_CONSTANT,
     SK_FUNCTION,
