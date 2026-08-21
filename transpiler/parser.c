@@ -131,6 +131,12 @@ void show_ast_node(ASTNode *node, int indent)
                 show_ast_node(array_list_get(node->children, i), indent + 2);
             break;
         }
+        case AST_MEMBER: {
+            printf("MEMBER\n");
+            show_ast_node(node->left, indent + 1);
+            show_ast_node(node->right, indent + 1);
+            break;
+        }
         case AST_BLOCK: {
             printf("BLOCK\n");
             for (int i = 0; i < node->children->size; i++)
@@ -191,6 +197,7 @@ ASTNode * parse_type(Parser *p)
     if (token->type == TOKEN_STRUCT) {
         parser_advance(p, 1); // struct
         token = parser_peek(p, 0);
+        node->is_struct = 1;
     }
 
     node->token = token;
@@ -212,6 +219,7 @@ ASTNode * parse_factor(Parser *p)
         parse_call,
         parse_string,
         parse_number,
+        parse_member,
         parse_identifier,
     };
 
@@ -357,6 +365,7 @@ ASTNode * parse_constant(Parser *p)
 ASTNode * parse_lvalue(Parser *p)
 {
     ParseFunction parses[] = {
+        parse_member,
         parse_identifier,
     };
 
@@ -673,6 +682,7 @@ ASTNode * parse_for(Parser *p)
     return node;
 }
 
+
 ASTNode * parse_instruction(Parser *p)
 {
     ParseFunction parses[] = {
@@ -734,6 +744,38 @@ ASTNode * parse_struct(Parser *p)
     }
     parser_advance(p, 1); // }
     parser_match(p, TOKEN_SEMICOLON, "';' needed to define a struct");
+
+    return node;
+}
+
+ASTNode * parse_member(Parser *p)
+{
+    if (!is_identifier(parser_peek(p, 0)))    return NULL;
+    if (parser_peek(p, 1)->type != TOKEN_DOT) return NULL;
+
+    ASTNode *node = create_ast_node(AST_MEMBER);
+    node->left = parse_identifier(p);
+    parser_advance(p, 1); // .
+
+    Token *token = parser_peek(p, 0);
+    node->right = parse_identifier(p);
+    if (node->right == NULL)
+        parser_set_error_and_abort(p, 2.0/3.0, "member needs a identifier", token);
+
+    while (parser_peek(p, 0)->type == TOKEN_DOT) {
+        parser_advance(p, 1); // .
+
+        token = parser_peek(p, 0);
+
+        if (!is_identifier(token))
+            parser_set_error_and_abort(p, 2.0/3.0, "member needs a identifier", token);
+        
+        ASTNode *node2 = create_ast_node(AST_MEMBER);
+
+        node2->left = node;
+        node2->right = parse_identifier(p);
+        node = node2;
+    }
 
     return node;
 }

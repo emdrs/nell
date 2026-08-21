@@ -23,6 +23,7 @@ typedef enum {
     AST_FOR,
     AST_STRUCT,
     AST_FIELD,
+    AST_MEMBER,
     AST_BLOCK,
     AST_BREAK,
     AST_CONTINUE,
@@ -68,5 +69,7 @@ ASTNode * parse_if(Parser *p);
 ASTNode * parse_while(Parser *p);
 
 ASTNode * parse_for(Parser *p);
+
+ASTNode * parse_member(Parser *p);
 
 #endif

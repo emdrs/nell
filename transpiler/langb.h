@@ -84,6 +84,7 @@ typedef struct ASTNode {
     int type;
     Token *token;
     int pointer_level;
+    int is_struct;
     
     struct ASTNode *left;
     struct ASTNode *right;
@@ -161,7 +162,7 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node); // YOU NEED TO IMP
 void sema_analize(char *file_name, char *source, ASTNode *root);
 void sema_scope_push(SemanticAnalyzer *sema, char *name);
 void sema_scope_pop(SemanticAnalyzer *sema);
-void sema_define(SemanticAnalyzer *sema, char *name, int kind, char *type,
+Symbol * sema_define(SemanticAnalyzer *sema, char *name, int kind, char *type,
         int pointer_level, Token *token);
 Symbol * sema_lookup(SemanticAnalyzer *sema, char *name);
 
@@ -537,7 +538,7 @@ void sema_scope_pop(SemanticAnalyzer *sema)
     sema->current_scope = sema->current_scope->parent;
 }
 
-void sema_define(SemanticAnalyzer *sema, char *name, int kind, char *type,
+Symbol * sema_define(SemanticAnalyzer *sema, char *name, int kind, char *type,
         int pointer_level, Token *token)
 {
     unsigned int h = hash(name);
@@ -550,7 +551,7 @@ void sema_define(SemanticAnalyzer *sema, char *name, int kind, char *type,
                     sema->current_scope->scope_name);
             sema_report_error(sema, token, error_msg);
             free(error_msg);
-            return;
+            return NULL;
         }
         s = s->next;
     }
@@ -563,6 +564,7 @@ void sema_define(SemanticAnalyzer *sema, char *name, int kind, char *type,
 
     symbol->next = sema->current_scope->buckets[h];
     sema->current_scope->buckets[h] = symbol;
+    return symbol;
 }
 
 Symbol * sema_lookup(SemanticAnalyzer *sema, char *name)

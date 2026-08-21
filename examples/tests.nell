@@ -1,6 +1,13 @@
-struct massa {
-    int a;
-    int a;
+struct Vector2 {
+    int x;
+    int y;
+};
+struct Vector3 {
+    struct Vector2 base;
+    int z;
 };
 
-struct massa a;
+struct Vector3 vec;
+vec.base.x = 10;
+vec.base.y = 10;
+vec.z = 10;

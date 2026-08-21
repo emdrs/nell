@@ -26,6 +26,15 @@ int compare_nodes_types(ASTNode *node1, ASTNode *node2)
     return strcmp(node1->resolved_type, node2->resolved_type) == 0;
 }
 
+Symbol * sema_lookup_member(SymbolTable *scope, char *name)
+{
+    if (scope == NULL) return NULL;
+    unsigned int h = hash(name);
+    for (Symbol *s = scope->buckets[h]; s != NULL; s = s->next)
+        if (strcmp(s->name, name) == 0) return s;
+    return NULL;
+}
+
 int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
 {
     if (node == NULL) return 0;
@@ -92,16 +101,41 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
         }
         case AST_STRUCT: {
             char *scope_name;
-            if (node->left->token == NULL)
-                asprintf(&scope_name, "%d", sema->anonymous_block_count++);
-            else
-                asprintf(&scope_name, "%s", node->left->token->text);
-            sema_define(sema, scope_name, SK_STRUCT, scope_name, 0, node->left->token);
+            asprintf(&scope_name, "%s", node->left->token->text);
+            Symbol *struct_symbol = sema_define(sema, scope_name, SK_STRUCT,
+                                                scope_name, 0, node->left->token);
             sema_scope_push(sema, scope_name);
+            if (struct_symbol != NULL)
+                struct_symbol->nested_scope = sema->current_scope;
             for (int i = 0; i < node->children->size; i++)
                 sema_analize_node(sema, array_list_get(node->children, i));
             sema_scope_pop(sema);
             free(scope_name);
+            break;
+        }
+        case AST_MEMBER: {
+            if (!sema_analize_node(sema, node->left)) return 0;
+            Symbol *struct_sym = sema_lookup(sema, node->left->resolved_type);
+
+            if (struct_sym == NULL || struct_sym->kind != SK_STRUCT) {
+                sema_report_error(sema, node->right->token,
+                        "Member access on non-struct value");
+                return 0;
+            }
+
+            Symbol *field = sema_lookup_member(struct_sym->nested_scope,
+                    node->right->token->text);
+
+            if (field == NULL) {
+                char *msg = NULL;
+                asprintf(&msg, "Undefined member '%s' in %s",
+                        node->right->token->text, struct_sym->name);
+                sema_report_error(sema, node->right->token, msg);
+                free(msg);
+                return 0;
+            }
+
+            node->resolved_type = field->type_name;
             break;
         }
         case AST_BLOCK: {

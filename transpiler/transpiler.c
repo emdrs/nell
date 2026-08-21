@@ -66,7 +66,10 @@ char * generate_code(ASTNode *node, int level)
             break;
         }
         case AST_TYPE: {
-            asprintf(&result, "%s", node->token->text);
+            if (node->is_struct)
+                asprintf(&result, "struct %s", node->token->text);
+            else
+                asprintf(&result, "%s", node->token->text);
             break;
         }
         case AST_IDENTIFIER: {
@@ -172,9 +175,20 @@ char * generate_code(ASTNode *node, int level)
                 free(field);
             }
 
-            asprintf(&result, "struct %s { %s }", name, fields);
+            asprintf(&result, "struct %s { %s };", name, fields);
             free(name);
             free(fields);
+
+            break;
+        }
+        case AST_MEMBER: {
+            char *base = generate_code(node->left, level);
+            char *member = generate_code(node->right, level);
+
+            asprintf(&result, "%s.%s", base, member);
+
+            free(base);
+            free(member);
 
             break;
         }
