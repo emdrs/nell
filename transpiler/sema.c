@@ -6,6 +6,30 @@
 #include <stdlib.h>
 #include <string.h>
 
+Symbol * sema_lookup_member(SymbolTable *scope, char *name)
+{
+    if (scope == NULL) return NULL;
+    unsigned int h = hash(name);
+    for (Symbol *s = scope->buckets[h]; s != NULL; s = s->next)
+        if (strcmp(s->name, name) == 0) return s;
+    return NULL;
+}
+
+int resolve_pointer_level(SemanticAnalyzer *sema, ASTNode *node) {
+    if (node->type == AST_IDENTIFIER) {
+        Symbol *sym = sema_lookup(sema, node->token->text);
+        return sym ? sym->pointer_level : 0;
+    }
+    if (node->type == AST_MEMBER) {
+        Symbol *struct_sym = sema_lookup(sema, node->left->resolved_type);
+        if (struct_sym == NULL || struct_sym->nested_scope == NULL) return 0;
+        Symbol *field = sema_lookup_member(struct_sym->nested_scope,
+                                           node->right->token->text);
+        return field ? field->pointer_level : 0;
+    }
+    return 0;
+}
+
 Symbol * sema_check_type(SemanticAnalyzer *sema, Token *token)
 {
     Symbol *symbol = sema_lookup(sema, token->text);
@@ -23,16 +47,8 @@ Symbol * sema_check_type(SemanticAnalyzer *sema, Token *token)
 int compare_nodes_types(ASTNode *node1, ASTNode *node2)
 {
     if (node1->resolved_type == NULL || node2->resolved_type == NULL) return 0;
-    return strcmp(node1->resolved_type, node2->resolved_type) == 0;
-}
-
-Symbol * sema_lookup_member(SymbolTable *scope, char *name)
-{
-    if (scope == NULL) return NULL;
-    unsigned int h = hash(name);
-    for (Symbol *s = scope->buckets[h]; s != NULL; s = s->next)
-        if (strcmp(s->name, name) == 0) return s;
-    return NULL;
+    return strcmp(node1->resolved_type, node2->resolved_type) == 0 &&
+           node1->pointer_level == node2->pointer_level;
 }
 
 int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
@@ -71,6 +87,7 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
                 return 0;
             }
 
+            node->pointer_level = symbol->pointer_level;
             node->resolved_type = symbol->type_name;
             break;
         }
@@ -135,7 +152,7 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             }
 
             Symbol *field = sema_lookup_member(struct_sym->nested_scope,
-                    node->right->token->text);
+                                               node->right->token->text);
 
             if (field == NULL) {
                 char *msg = NULL;
@@ -146,6 +163,19 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
                 return 0;
             }
 
+            int base_pl = resolve_pointer_level(sema, node->left);
+            int is_arrow = node->token->type == TOKEN_ARROW;
+
+            if (is_arrow && base_pl == 0) {
+                sema_report_error(sema, node->token, "Use '.' for non-pointer values");
+                return 0;
+            }
+            if (!is_arrow && base_pl > 0) {
+                sema_report_error(sema, node->token, "Use '->' for pointer values");
+                return 0;
+            }
+
+            node->pointer_level = field->pointer_level;
             node->resolved_type = field->type_name;
             break;
         }
@@ -180,7 +210,7 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             if(!sema_analize_node(sema, node->left)) return 0; // Undefined type
 
             sema_define(sema, node->token->text, SK_VARIABLE, node->left->token->text,
-                        node->pointer_level, node->token);
+                        node->left->pointer_level, node->token);
 
             if (node->right != NULL) {
                 if (!sema_analize_node(sema, node->right)) return 0;
@@ -209,7 +239,7 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             if(!sema_analize_node(sema, node->left)) return 0; // Undefined type
 
             sema_define(sema, node->token->text, SK_CONSTANT, node->left->token->text,
-                        node->pointer_level, node->token);
+                        node->left->pointer_level, node->token);
 
             if (node->right != NULL) {
                 if(!sema_analize_node(sema, node->right)) return 0;
@@ -226,14 +256,14 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             if(!sema_analize_node(sema, node->left)) return 0; // Undefined return type
 
             sema_define(sema, node->token->text, SK_VARIABLE, node->left->token->text,
-                        node->pointer_level, node->token);
+                        node->left->pointer_level, node->token);
             break;
         }
         case AST_FUNCTION: {
             if(!sema_analize_node(sema, node->left)) return 0; // Undefined type
 
             sema_define(sema, node->token->text, SK_FUNCTION, node->left->resolved_type,
-                        node->pointer_level, node->token);
+                        node->left->pointer_level, node->token);
 
 
             sema_scope_push(sema, node->token->text);
@@ -305,6 +335,7 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
                 return 0;
             }
 
+            node->pointer_level = symbol->pointer_level;
             node->resolved_type = symbol->type_name;
 
             for (int i = 0; i < node->children->size; i++)

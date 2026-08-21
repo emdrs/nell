@@ -24,6 +24,7 @@ typedef enum {
     TOKEN_INCREMENT,      // ++
     TOKEN_MINUS,          // -
     TOKEN_DECREMENT,      // --
+    TOKEN_ARROW,          // ->
     TOKEN_STAR,           // *
     TOKEN_SLASH,          // /
     TOKEN_LBRACE,         // {

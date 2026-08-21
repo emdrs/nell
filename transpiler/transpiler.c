@@ -78,14 +78,27 @@ char * generate_code(ASTNode *node, int level)
         }
         case AST_VARIABLE: {
             char *type = generate_code(node->left, level);
+            char *name = node->token->text;
             char *value = generate_code(node->right, level);
+
+            if (node->left->pointer_level > 0) {
+                char *pointers = malloc(node->left->pointer_level + 1);
+                for (int i = 0; i < node->left->pointer_level; i++)
+                    pointers[i] = '*';
+                pointers[node->left->pointer_level] = '\0';
+
+                old = name;
+                asprintf(&name, "%s%s", pointers, name);
+                free(old);
+            }
             if (value == NULL)
-                asprintf(&result, "%s %s", type, node->token->text);
+                asprintf(&result, "%s %s", type, name);
             else
-                asprintf(&result, "%s %s = %s", type, node->token->text, value);
+                asprintf(&result, "%s %s = %s", type, name, value);
 
             free(type);
             free(value);
+            free(name);
             break;
         }
         case AST_CONSTANT: {
@@ -185,7 +198,7 @@ char * generate_code(ASTNode *node, int level)
             char *base = generate_code(node->left, level);
             char *member = generate_code(node->right, level);
 
-            asprintf(&result, "%s.%s", base, member);
+            asprintf(&result, "%s%s%s", base, node->token->text, member);
 
             free(base);
             free(member);

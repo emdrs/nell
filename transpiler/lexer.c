@@ -216,6 +216,10 @@ Token get_token(Lexer *l)
             lexer_advance(l);
             return (Token){ TOKEN_MINUS_ASSIGN, "-=" };
         }
+        if (l->next_ch == '>') {
+            lexer_advance(l);
+            return (Token){ TOKEN_ARROW, "->" };
+        }
         return (Token){ TOKEN_MINUS, "-" };
     }
 

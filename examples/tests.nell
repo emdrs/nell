@@ -7,7 +7,10 @@ struct Vector3 {
     int z;
 };
 
-struct Vector3 vec;
-vec.base.x = 10;
-vec.base.y = 10;
-vec.z = 10;
+struct Vector3 v;
+struct Vector3 *v2;
+struct Vector3 *v3 = v2;
+struct Vector3 *vec;
+vec->base.x = 10;
+vec->base.y = 10;
+vec->z = 10;
