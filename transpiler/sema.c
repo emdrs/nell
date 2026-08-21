@@ -45,7 +45,18 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
             break;
         }
         case AST_TYPE: {
-            if (sema_check_type(sema, node->token) == NULL) return 0;
+            Symbol *sym = sema_check_type(sema, node->token);
+            if (sym == NULL) return 0;
+
+            if (node->is_struct && sym->kind != SK_STRUCT) {
+                sema_report_error(sema, node->token, "Not a struct");
+                return 0;
+            }
+            if (!node->is_struct && sym->kind == SK_STRUCT) {
+                sema_report_error(sema, node->token, "Missing struct keyword");
+                return 0;
+            }
+            
             node->resolved_type = node->token->text;
             break;
         }
