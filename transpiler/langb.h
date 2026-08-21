@@ -548,7 +548,8 @@ void sema_define(SemanticAnalyzer *sema, char *name, int kind, char *type,
             char *error_msg = NULL;
             asprintf(&error_msg, "Redefinition of '%s' in %s", name,
                     sema->current_scope->scope_name);
-            report_error(sema->file_name, sema->source, token, error_msg);
+            sema_report_error(sema, token, error_msg);
+            free(error_msg);
             return;
         }
         s = s->next;

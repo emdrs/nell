@@ -85,8 +85,9 @@ int sema_analize_node(SemanticAnalyzer *sema, ASTNode *node)
         case AST_FIELD: {
             if(!sema_analize_node(sema, node->left)) return 0; // Undefined type
 
-            sema_define(sema, node->right->token->text, SK_VARIABLE, node->left->token->text,
-                        node->pointer_level, node->right->token);
+            sema_define(sema, node->right->token->text, SK_VARIABLE,
+                        node->left->token->text, node->pointer_level,
+                        node->right->token);
             break;
         }
         case AST_STRUCT: {
